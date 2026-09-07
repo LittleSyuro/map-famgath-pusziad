@@ -1,0 +1,46 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js build output
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+
+# Vercel / Netlify
+.vercel
+.netlify
+
+# Raw working assets & debug dumps
+/*.png
+/*.jpg
+/legend_rounded/
+public/debug_crops/
+public/debug_iso/
+public/map_clean_3d.jpg
+public/map_only_clean.jpg
+public/maps-3d-model.png
+public/maps-diorama.jpg
+public/maps-diorama.png
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
