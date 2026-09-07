@@ -352,7 +352,12 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
       "/resort_media/masjid/masjid_3.jpg"
     ],
     defaultWaypoints: [
-      { x: 73.5, y: 38.0 }
+      { x: 58.9, y: 24.9 },
+      { x: 63.3, y: 21.7 },
+      { x: 70.3, y: 22.6 },
+      { x: 71.4, y: 30.1 },
+      { x: 74.7, y: 31.1 },
+      { x: 78.3, y: 34.6 },
     ],
   },
   {

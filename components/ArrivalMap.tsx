@@ -609,7 +609,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                 >
                   {/* 3D Master Diorama Map Background */}
                   <Image
-                    src="/maps-3d-model.png"
+                    src="/maps-area.png"
                     alt="Peta Jalur Kedatangan Tamu VIP"
                     fill
                     priority
