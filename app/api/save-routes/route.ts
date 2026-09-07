@@ -22,15 +22,23 @@ export async function POST(req: NextRequest) {
 
     // Update defaultWaypoints for each activity in the file content
     for (const [id, pts] of Object.entries(routesToUpdate)) {
-      // Find the activity block by its id: "d1-arrival", "d1-checkin", etc.
-      const idRegex = new RegExp(`id:\\s*["']${id}["']([\\s\\S]*?defaultWaypoints:\\s*\\[)[\\s\\S]*?(\\])`, "m");
-      
+      if (!Array.isArray(pts) || pts.length === 0) continue;
+
       const formattedPoints = pts
         .map((p) => `      { x: ${Number(p.x).toFixed(1)}, y: ${Number(p.y).toFixed(1)} },`)
         .join("\n");
-      
-      if (idRegex.test(fileContent)) {
-        fileContent = fileContent.replace(idRegex, `id: "${id}"$1\n${formattedPoints}\n    $2`);
+
+      // Regex matching the specific item object by id and replacing its defaultWaypoints array
+      const itemRegex = new RegExp(
+        `(id:\\s*["']${id}["'][\\s\\S]*?defaultWaypoints:\\s*\\[)([\\s\\S]*?)(\\])`,
+        "m"
+      );
+
+      if (itemRegex.test(fileContent)) {
+        fileContent = fileContent.replace(
+          itemRegex,
+          `$1\n${formattedPoints}\n    $3`
+        );
       }
     }
 
@@ -49,3 +57,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

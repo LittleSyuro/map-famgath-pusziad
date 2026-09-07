@@ -454,6 +454,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             setSelectedNodeIndex(null);
           }}
           currentWaypoints={activeWaypoints}
+          allCustomRoutes={customRoutes}
           onUpdateWaypoints={handleUpdateWaypoints}
           onTestRoute={startRouteAnimation}
         />

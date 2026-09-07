@@ -46,6 +46,7 @@ interface PathEditorOverlayProps {
   activeActivityId: string;
   onSelectActivity: (id: string) => void;
   currentWaypoints: Waypoint[];
+  allCustomRoutes?: Record<string, Waypoint[]>;
   onUpdateWaypoints: (waypoints: Waypoint[]) => void;
   onTestRoute: () => void;
 }
@@ -56,18 +57,21 @@ export const PathEditorOverlay: React.FC<PathEditorOverlayProps> = ({
   activeActivityId,
   onSelectActivity,
   currentWaypoints,
+  allCustomRoutes = {},
   onUpdateWaypoints,
   onTestRoute,
 }) => {
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
   const [draggedNodeIndex, setDraggedNodeIndex] = useState<number | null>(null);
 
   const activeActivity =
     ROUTE_ACTIVITIES.find((a) => a.id === activeActivityId) || ROUTE_ACTIVITIES[0];
 
-  // Copy waypoints array formatted as TypeScript
+  // Copy active waypoints array formatted as TypeScript / JSON
   const handleCopyCode = () => {
     const code = JSON.stringify(
       currentWaypoints.map((pt) => ({
@@ -83,30 +87,54 @@ export const PathEditorOverlay: React.FC<PathEditorOverlayProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  // Save to LocalStorage and Permanent Source File
+  // Copy ALL routes across all agenda items as JSON
+  const handleCopyAllRoutes = () => {
+    const combined: Record<string, any> = {
+      ...allCustomRoutes,
+      [activeActivityId]: currentWaypoints,
+    };
+    navigator.clipboard.writeText(JSON.stringify(combined, null, 2));
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 2500);
+  };
+
+  // Save to LocalStorage and Permanent Source File (data/arrivals.ts)
   const handleSaveToStorage = async () => {
     try {
-      localStorage.setItem(
-        `famgath_route_${activeActivityId}`,
-        JSON.stringify(currentWaypoints)
-      );
+      const combined: Record<string, Waypoint[]> = {
+        ...allCustomRoutes,
+        [activeActivityId]: currentWaypoints,
+      };
 
-      // Call API to write permanently to data/arrivals.ts
-      await fetch("/api/save-routes", {
+      // Save each to localStorage
+      Object.entries(combined).forEach(([actId, pts]) => {
+        localStorage.setItem(`famgath_route_${actId}`, JSON.stringify(pts));
+      });
+
+      // Call API to write permanently to data/arrivals.ts in the codebase
+      const res = await fetch("/api/save-routes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           activityId: activeActivityId,
           waypoints: currentWaypoints,
+          allRoutes: combined,
         }),
       });
 
+      const data = await res.json();
+      if (data?.success) {
+        setSavedMessage("Tersimpan ke Default (arrivals.ts)! ✓");
+      } else {
+        setSavedMessage("Tersimpan di Browser ✓");
+      }
       setSavedToast(true);
-      setTimeout(() => setSavedToast(false), 3000);
+      setTimeout(() => setSavedToast(false), 3500);
     } catch (e) {
       console.error(e);
+      setSavedMessage("Tersimpan di Browser ✓");
       setSavedToast(true);
-      setTimeout(() => setSavedToast(false), 3000);
+      setTimeout(() => setSavedToast(false), 3500);
     }
   };
 
@@ -207,17 +235,17 @@ export const PathEditorOverlay: React.FC<PathEditorOverlayProps> = ({
               type="button"
               onClick={handleSaveToStorage}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 text-xs font-black transition-all shadow-md cursor-pointer hover:scale-105"
-              title="Simpan permanen ke file proyek (data/arrivals.ts) & browser agar saat project dikirim/dibuka di tempat lain tidak kereset"
+              title="Simpan permanen ke file proyek (data/arrivals.ts) agar menjadi default untuk SEMUA DEVICE dan Netlify"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{savedToast ? "Tersimpan ke File! ✓" : "Simpan Permanen"}</span>
+              <span>{savedToast ? (savedMessage || "Tersimpan ke File! ✓") : "💾 Simpan Permanen (Semua Device)"}</span>
             </button>
 
             <button
               type="button"
               onClick={handleCopyCode}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer"
-              title="Salin array koordinat untuk disimpan ke file kode"
+              title="Salin koordinat rute agenda aktif ini"
             >
               {copied ? (
                 <>
@@ -226,8 +254,27 @@ export const PathEditorOverlay: React.FC<PathEditorOverlayProps> = ({
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-gold-400" />
-                  <span>Salin Kode</span>
+                  <Copy className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Salin Rute Ini</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyAllRoutes}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer"
+              title="Salin SELURUH rute semua agenda dalam bentuk JSON"
+            >
+              {copiedAll ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Semua Tersalin!</span>
+                </>
+              ) : (
+                <>
+                  <Layers className="w-3.5 h-3.5 text-teal-400" />
+                  <span>Salin Semua Rute (JSON)</span>
                 </>
               )}
             </button>
