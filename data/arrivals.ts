@@ -274,6 +274,219 @@ export const DAY2_GAMES_ACTIVITIES: RundownSubActivity[] = [
 export const HELIPAD_COORDS: Waypoint = { x: 80.5, y: 35.5 };
 export const SPAWN_BEHIND_HELIPAD: Waypoint = { x: 82.5, y: 33.0 };
 
+// 11 Pin Point Utama Seluruh Kegiatan Famgath (Resto, Masjid, Ballroom, Kamar PJU, Kamar Rombongan, Helipad, Spot Wisata)
+export interface KeyEventPinpoint {
+  id: string;
+  name: string;
+  category: string;
+  legendNumber: string;
+  image: string;
+  galleryImages?: string[];
+  coords: Waypoint;
+  description: string;
+  badge: string;
+  color: string;
+  isPJU?: boolean;
+  facilities?: string[];
+  menuCategories?: MenuItem[];
+  subActivities?: RundownSubActivity[];
+}
+
+export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
+  {
+    id: "pin-alpine",
+    name: "Alpine House",
+    category: "Kamar Utama PJU",
+    legendNumber: "25",
+    isPJU: true,
+    image: "/resort_media/alpine/alpine_1.png",
+    galleryImages: [
+      "/resort_media/alpine/alpine_1.png",
+      "/resort_media/alpine/alpine_2.png",
+      "/resort_media/alpine/alpine_3.png",
+      "/resort_media/alpine/alpine_4.png",
+      "/resort_media/alpine/alpine_5.png",
+      "/resort_media/alpine/alpine_6.png",
+      "/resort_media/alpine/alpine_7.png"
+    ],
+    coords: { x: 58.5, y: 22.5 },
+    description: "Kamar Utama A-Frame bergaya Alpine Eropa dengan panorama asri Gunung Salak untuk Pejabat Utama (PJU).",
+    badge: "Kamar Utama PJU",
+    color: "#eab308",
+    facilities: [
+      "King Size Bed Luxury",
+      "Balkon Panorama Gunung",
+      "Private Bathroom & Water Heater",
+      "Smart TV & Free High Speed Wi-Fi",
+      "Mini Bar & Coffee Maker",
+      "Living Room Area"
+    ],
+  },
+  {
+    id: "pin-cave",
+    name: "The Cave",
+    category: "Kamar Rombongan 3",
+    legendNumber: "24",
+    image: "/resort_media/the_cave/the_cave_12.png",
+    galleryImages: [
+      "/resort_media/the_cave/the_cave_12.png",
+      "/resort_media/the_cave/the_cave_14.png",
+      "/resort_media/the_cave/the_cave_16.png",
+      "/resort_media/the_cave/the_cave_21.jpg",
+      "/resort_media/the_cave/the_cave_22.mp4"
+    ],
+    coords: { x: 43.0, y: 53.5 },
+    description: "Penginapan unik bertema goa alami dengan interior batu eksotis dan kenyamanan hotel bintang.",
+    badge: "Kamar Rombongan 3",
+    color: "#10b981",
+    facilities: [
+      "Double Bed Comfort",
+      "Batu Alami & Unique Ambiance",
+      "Private Shower & Water Heater",
+      "Full Amenities & Tea Set",
+      "Dekat Area Rekreasi & Danau"
+    ],
+  },
+  {
+    id: "pin-mongolian",
+    name: "Mongolian Superior Camp",
+    category: "Kamar Rombongan 2",
+    legendNumber: "42",
+    image: "/resort_media/mongolian/mongolian_2.jpg",
+    galleryImages: [
+      "/resort_media/mongolian/mongolian_2.jpg",
+      "/resort_media/mongolian/mongolian_3.jpg",
+      "/resort_media/mongolian/mongolian_4.jpg",
+      "/resort_media/mongolian/mongolian_5.jpg",
+      "/resort_media/mongolian/mongolian_12.mp4"
+    ],
+    coords: { x: 15.0, y: 84.0 },
+    description: "Kamar tematik tenda khas suku Mongolia berfasilitas modern dan berpendingin udara lengkap.",
+    badge: "Kamar Rombongan 2",
+    color: "#10b981",
+    facilities: [
+      "Twin / Double Bed",
+      "Air Conditioning (AC)",
+      "En-suite Bathroom",
+      "Water Heater & Amenities",
+      "Dekat Lapangan Hijau & Resto"
+    ],
+  },
+  {
+    id: "pin-resto",
+    name: "Resto Anthurium Lt. 2",
+    category: "Restoran & Sky Lounge",
+    legendNumber: "36a",
+    image: "/resort_media/anthurium/DSCF3443.jpg",
+    galleryImages: [
+      "/resort_media/anthurium/DSCF3443.jpg",
+      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg",
+      "/resort_media/mountain_lounge/Foto/SOFA SKY LOUNGE.jpg",
+      "/resort_media/mountain_lounge/Foto/SKY LOUNGE VIEW.jpg",
+      "/resort_media/anthurium/Mountain Lounge.mp4"
+    ],
+    coords: { x: 48.5, y: 43.5 },
+    description: "Restoran utama santap buffet makan malam dan sarapan pagi bersama seluruh rombongan.",
+    badge: "Restoran Anthurium",
+    color: "#10b981",
+    menuCategories: ANTHURIUM_MENU,
+  },
+  {
+    id: "pin-masjid",
+    name: "Masjid / Mushola Resort",
+    category: "Fasilitas Ibadah",
+    legendNumber: "04",
+    image: "/resort_media/masjid/masjid_1.jpg",
+    galleryImages: [
+      "/resort_media/masjid/masjid_1.jpg",
+      "/resort_media/masjid/masjid_2.jpg",
+      "/resort_media/masjid/masjid_3.jpg"
+    ],
+    coords: { x: 73.5, y: 38.0 },
+    description: "Tempat ibadah Sholat Maghrib, Isya, Subuh, dan istirahat mandiri peserta Famgath.",
+    badge: "Masjid Resort",
+    color: "#6366f1",
+  },
+  {
+    id: "pin-ballroom",
+    name: "Grand Ballroom & Plaza Aster",
+    category: "Aula Acara & Grand Prize",
+    legendNumber: "07",
+    image: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+    galleryImages: [
+      "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+      "/resort_media/grand_ballroom/grand_ballroom_2.jpg",
+      "/games/pju_games.jpg",
+      "/games/ibu_pju_games.jpg",
+      "/resort_media/grand_ballroom/grand_ballroom_47.mp4"
+    ],
+    coords: { x: 78.5, y: 24.5 },
+    description: "Gedung pertemuan megah untuk turnamen PJU Games, hiburan, dan pengundian Grand Prize.",
+    badge: "Grand Ballroom",
+    color: "#a855f7",
+  },
+  {
+    id: "pin-helipad",
+    name: "Lapangan Helipad",
+    category: "Area Outdoor & SKJ",
+    legendNumber: "12",
+    image: "/resort_media/helipad/helipad_1.jpg",
+    galleryImages: [
+      "/resort_media/helipad/helipad_1.jpg",
+      "/resort_media/helipad/helipad_2.jpg",
+      "/resort_media/helipad/helipad_3.jpg"
+    ],
+    coords: { x: 80.5, y: 35.5 },
+    description: "Area terbuka berumput hijau untuk penyambutan kedatangan, senam SKJ pagi, dan family games.",
+    badge: "Lapangan Helipad",
+    color: "#f59e0b",
+  },
+  {
+    id: "pin-bridge",
+    name: "Invisible Bridge",
+    category: "Spot Foto & Panorama",
+    legendNumber: "15",
+    image: "/legend/15_Invisible_Bridge.png",
+    coords: { x: 54.0, y: 47.0 },
+    description: "Jembatan kaca transparan ikonik di atas lembah dengan pemandangan Gunung Salak.",
+    badge: "Invisible Bridge",
+    color: "#06b6d4",
+  },
+  {
+    id: "pin-noah",
+    name: "Wahana Noah AR & Satwa",
+    category: "Wahana Edukasi & Satwa",
+    legendNumber: "51",
+    image: "/legend/51_Rumah_Kelinci.png",
+    coords: { x: 31.0, y: 64.0 },
+    description: "Spot wisata interaktif bertema bahtera satwa dan Augmented Reality (AR) ramah keluarga.",
+    badge: "Wahana Noah",
+    color: "#06b6d4",
+  },
+  {
+    id: "pin-pinus",
+    name: "Hutan Pinus Resort",
+    category: "Jalur Alam & Relaksasi",
+    legendNumber: "03",
+    image: "/legend/03_Hutan_Pinus.png",
+    coords: { x: 86.0, y: 22.0 },
+    description: "Jalur jalan sehat berhawa sejuk diapit deretan pohon pinus rindang yang asri dan tenang.",
+    badge: "Hutan Pinus",
+    color: "#10b981",
+  },
+  {
+    id: "pin-gerbera",
+    name: "Lapangan Gerbera",
+    category: "Area Olahraga & Senam",
+    legendNumber: "45",
+    image: "/resort_media/gerbera/gerbera_2.png",
+    coords: { x: 37.0, y: 68.0 },
+    description: "Lapangan rumput hijau terbuka nan luas untuk rute jalan sehat dan kebersamaan keluarga.",
+    badge: "Lapangan Gerbera",
+    color: "#10b981",
+  },
+];
+
 export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
   {
     id: "d1-arrival",
@@ -599,33 +812,36 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
       "/resort_media/helipad/helipad_16.jpg"
     ],
     defaultWaypoints: [
-      { x: 78.5, y: 24.5 },
+      { x: 31.0, y: 64.0 },
+      { x: 54.0, y: 47.0 },
+      { x: 72.0, y: 30.0 },
       { x: 78.5, y: 24.5 },
     ],
   },
   {
-    id: "d2-doorprize",
+    id: "d2-grandprize",
     day: 2,
     startTime: "10.00",
     endTime: "12.00",
     startMinutes: 600, // 10:00
     endMinutes: 720, // 12:00
-    title: "Grand Prize",
-    locationName: "Grand Ballroom",
+    title: "Acara Hiburan & Pembagian Hadiah / Grand Prize",
+    locationName: "Grand Ballroom & Plaza Aster",
     locationNumber: "7",
-    description: "",
-    badge: "Grand Prize",
-    color: "#8b5cf6",
+    description: "Puncak acara kekeluargaan Famgath Pusziad: Hiburan musik, santap kudapan, dan pengundian Grand Prize utama di Grand Ballroom & Plaza Aster.",
+    badge: "Grand Prize & Hiburan",
+    color: "#a855f7",
     destLegendNumber: "7",
-    destImage: "/legend/07_Grand_Ballroom.png",
+    destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
     destCoordinates: { x: 78.5, y: 24.5 },
     galleryImages: [
-      "/legend/07_Grand_Ballroom.png",
       "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
+      "/resort_media/grand_ballroom/grand_ballroom_2.jpg",
+      "/resort_media/grand_ballroom/grand_ballroom_47.mp4"
     ],
     defaultWaypoints: [
-      { x: 78.5, y: 24.5 },
+      { x: 80.5, y: 35.5 },
+      { x: 75.0, y: 30.0 },
       { x: 78.5, y: 24.5 },
     ],
   },
@@ -639,7 +855,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     title: "Makan Siang",
     locationName: "Resto Anthurium Lt. 2",
     locationNumber: "36a",
-    description: "Makan siang bersama di Resto Anthurium Lantai 2 setelah rangkaian acara utama selesai.",
+    description: "Makan siang buffet bersama di Resto Anthurium Lt. 2 sebelum persiapan check-out dan kepulangan.",
     badge: "Makan Siang",
     color: "#10b981",
     destLegendNumber: "36a",

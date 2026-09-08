@@ -4,7 +4,14 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { VIPArrival, RundownItem, AccommodationRoom, MenuItem, HighlightSpot } from "@/data/arrivals";
+import {
+  VIPArrival,
+  RundownItem,
+  AccommodationRoom,
+  MenuItem,
+  HighlightSpot,
+  KeyEventPinpoint,
+} from "@/data/arrivals";
 import {
   Clock,
   X,
@@ -23,16 +30,18 @@ import {
   MapPin,
   Video,
   Play,
+  Trees,
 } from "lucide-react";
 
 interface ArrivalPopupCardProps {
-  vip: VIPArrival;
+  vip?: VIPArrival;
   isOpen: boolean;
   onClose: () => void;
   onOpen: () => void;
   agendaItem?: RundownItem;
   roomData?: AccommodationRoom;
   spotData?: HighlightSpot;
+  keyPinpoint?: KeyEventPinpoint;
   autoCollapseMs?: number;
   onFocusPinPoint?: () => void;
 }
@@ -50,6 +59,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   agendaItem,
   roomData,
   spotData,
+  keyPinpoint,
   autoCollapseMs = 6000,
   onFocusPinPoint,
 }) => {
@@ -58,16 +68,18 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const [isFullFrame, setIsFullFrame] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Edge detection reference & shift offset
-  const cardRef = React.useRef<HTMLDivElement>(null);
-  const [edgeShift, setEdgeShift] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-
   useEffect(() => {
     setMounted(true);
   }, []);
 
   // Determine images / videos array
   const imageList = React.useMemo(() => {
+    if (keyPinpoint?.galleryImages && keyPinpoint.galleryImages.length > 0) {
+      return keyPinpoint.galleryImages;
+    }
+    if (keyPinpoint?.image) {
+      return [keyPinpoint.image];
+    }
     if (agendaItem?.galleryImages && agendaItem.galleryImages.length > 0) {
       return agendaItem.galleryImages;
     }
@@ -77,10 +89,10 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
     if (spotData?.image) {
       return [spotData.image];
     }
-    return [vip.roomImage];
-  }, [agendaItem, roomData, spotData, vip.roomImage]);
+    return vip?.roomImage ? [vip.roomImage] : [];
+  }, [keyPinpoint, agendaItem, roomData, spotData, vip?.roomImage]);
 
-  const currentImage = imageList[activeImageIndex] || imageList[0] || vip.roomImage;
+  const currentImage = imageList[activeImageIndex] || imageList[0] || keyPinpoint?.image || vip?.roomImage || "";
 
   // Auto-collapse timer (disabled when user is inspecting menu, games, or full frame)
   useEffect(() => {
@@ -111,19 +123,29 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFullFrame, imageList.length]);
 
-  const isTopHalf = vip.roomY < 45;
-  const offsetX = vip.popupOffsetX || 0;
-  const offsetY = vip.popupOffsetY || 0;
+  const pinX = keyPinpoint?.coords.x ?? roomData?.coords.x ?? spotData?.coords.x ?? vip?.roomX ?? 50;
+  const pinY = keyPinpoint?.coords.y ?? roomData?.coords.y ?? spotData?.coords.y ?? vip?.roomY ?? 50;
+  const isTopHalf = pinY < 45;
+  const offsetX = vip?.popupOffsetX || 0;
+  const offsetY = vip?.popupOffsetY || 0;
 
-  const titleText = spotData
-    ? `${spotData.legendNumber}. ${spotData.name}`
-    : roomData
-    ? `${roomData.legendNumber}. ${roomData.name}`
-    : `${vip.roomLegendNumber}. ${vip.mapLocationName}`;
+  const legendNum = keyPinpoint?.legendNumber || roomData?.legendNumber || spotData?.legendNumber || vip?.roomLegendNumber || "";
+  const placeName = keyPinpoint?.name || roomData?.name || spotData?.name || vip?.mapLocationName || "";
+  const titleText = `No. ${legendNum} ${placeName}`;
 
-  const hasMenu = agendaItem?.menuCategories && agendaItem.menuCategories.length > 0;
-  const hasGames = agendaItem?.subActivities && agendaItem.subActivities.length > 0;
-  const hasFacilities = roomData?.facilities && roomData.facilities.length > 0;
+  const subtitleText = keyPinpoint?.category || roomData?.role || spotData?.category || vip?.title || "";
+  const descriptionText = keyPinpoint?.description || spotData?.description || roomData?.description || agendaItem?.description || vip?.title || "";
+
+  const menuList = keyPinpoint?.menuCategories || agendaItem?.menuCategories;
+  const hasMenu = !!(menuList && menuList.length > 0);
+
+  const gamesList = keyPinpoint?.subActivities || agendaItem?.subActivities;
+  const hasGames = !!(gamesList && gamesList.length > 0);
+
+  const facilitiesList = keyPinpoint?.facilities || roomData?.facilities;
+  const hasFacilities = !!(facilitiesList && facilitiesList.length > 0);
+
+  const isPJU = !!(keyPinpoint?.isPJU || roomData?.isPJU || vip?.isPJU || placeName.toLowerCase().includes("alpine"));
 
   return (
     <>
@@ -131,8 +153,8 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
       <div
         className="absolute pointer-events-auto z-50 select-none"
         style={{
-          left: `calc(${vip.roomX}% + ${offsetX}px)`,
-          top: `calc(${vip.roomY}% + ${offsetY}px)`,
+          left: `calc(${pinX}% + ${offsetX}px)`,
+          top: `calc(${pinY}% + ${offsetY}px)`,
           transform: isTopHalf ? "translate(-50%, 20px)" : "translate(-50%, -100%)",
         }}
       >
@@ -163,7 +185,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
               <div className="rounded-3xl overflow-hidden flex flex-col max-h-[82vh]">
                 {/* Photo Area / Video / Carousel */}
                 <div className="relative w-full h-40 sm:h-44 bg-[#0b1a03] overflow-hidden group shrink-0">
-                  {isVideo(currentImage) ? (
+                  {currentImage && isVideo(currentImage) ? (
                     <div className="relative w-full h-full bg-black flex items-center justify-center">
                       <video
                         src={currentImage}
@@ -178,7 +200,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                         <span>Video Media</span>
                       </div>
                     </div>
-                  ) : (
+                  ) : currentImage ? (
                     <Image
                       src={currentImage}
                       alt={titleText}
@@ -187,6 +209,10 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       sizes="400px"
                       className="object-cover transition-transform duration-500 hover:scale-105"
                     />
+                  ) : (
+                    <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-500">
+                      <Building className="w-8 h-8" />
+                    </div>
                   )}
 
                   {/* Gradient Scrim */}
@@ -197,35 +223,37 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     <div className="flex items-center gap-1.5">
                       <span className="px-3 py-1 rounded-full bg-[#0b1a03]/95 backdrop-blur-md text-butter-200 border border-lime-500/40 text-xs font-black font-mono shadow-lg flex items-center gap-1.5">
                         <Building className="w-3.5 h-3.5 text-lime-400" />
-                        <span>No. {roomData?.legendNumber || spotData?.legendNumber || vip.roomLegendNumber}</span>
+                        <span>No. {legendNum}</span>
                       </span>
 
-                      {roomData?.role && (
+                      {subtitleText && (
                         <span
                           className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-md ${
-                            roomData.isPJU
+                            isPJU
                               ? "bg-butter-pill text-lime-950 border-amber-300 shadow-glow-butter"
                               : "bg-[#0b1a03]/90 text-lime-200 border-lime-500/40"
                           }`}
                         >
-                          {roomData.role}
+                          {subtitleText}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-1.5">
                       {/* Fullscreen Zoom / Slideshow Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsFullFrame(true);
-                        }}
-                        title="Perbesar Galeri Foto & Video (Full Screen)"
-                        className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-lime-950 text-lime-300 backdrop-blur-md border border-lime-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
+                      {imageList.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsFullFrame(true);
+                          }}
+                          title="Perbesar Galeri Foto & Video (Full Screen)"
+                          className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-lime-950 text-lime-300 backdrop-blur-md border border-lime-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
 
                       {/* Minimize Button */}
                       <button
@@ -376,21 +404,16 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                         <h4 className="text-sm font-extrabold text-white tracking-tight">
                           {titleText}
                         </h4>
-                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                          {spotData?.description || roomData?.description || agendaItem?.description || vip.title}
+                        <p className="text-xs text-lime-100/90 mt-0.5 leading-relaxed">
+                          {descriptionText}
                         </p>
                       </div>
 
                       {/* Info Pills */}
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {roomData?.role && (
-                          <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-bold">
-                            🏠 {roomData.role}
-                          </span>
-                        )}
-                        {spotData?.category && (
-                          <span className="px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-[10px] font-bold">
-                            🧭 {spotData.category}
+                        {subtitleText && (
+                          <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-[10px] font-bold">
+                            ✨ {subtitleText}
                           </span>
                         )}
                       </div>
@@ -400,7 +423,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* MENU TAB */}
                   {activeTab === "menu" && hasMenu && (
                     <div className="space-y-3">
-                      {agendaItem?.menuCategories?.map((cat, cIdx) => (
+                      {menuList?.map((cat, cIdx) => (
                         <div key={cIdx} className="space-y-1.5">
                           <div className="text-xs font-black text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider">
                             <span>{cat.category}</span>
@@ -424,7 +447,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* GAMES TAB */}
                   {activeTab === "games" && hasGames && (
                     <div className="space-y-2.5">
-                      {agendaItem?.subActivities?.map((sub, sIdx) => (
+                      {gamesList?.map((sub, sIdx) => (
                         <div
                           key={sIdx}
                           className="p-2.5 rounded-2xl bg-slate-900/90 border border-emerald-500/20 space-y-1.5"
@@ -457,7 +480,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* FASILITAS TAB */}
                   {activeTab === "fasilitas" && hasFacilities && (
                     <div className="grid grid-cols-2 gap-1.5">
-                      {roomData?.facilities?.map((fac, fIdx) => (
+                      {facilitiesList?.map((fac, fIdx) => (
                         <div
                           key={fIdx}
                           className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-200"
@@ -508,53 +531,114 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
               title={`Klik untuk melihat ${titleText}`}
-              className="flex flex-col items-center group cursor-pointer"
+              className="flex flex-col items-center group cursor-pointer relative"
             >
-              <div
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold transition-all ${
-                  spotData
-                    ? "bg-slate-950/95 text-cyan-200 border-cyan-400 ring-2 ring-cyan-400/30 shadow-[0_0_15px_rgba(6,182,212,0.35)]"
-                    : roomData?.isPJU
-                    ? "bg-gradient-to-r from-amber-400 to-amber-300 text-slate-950 border-white ring-2 ring-amber-400/50 font-black shadow-glow-gold"
-                    : roomData
-                    ? "bg-slate-950/95 text-emerald-300 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-950/50"
-                    : "bg-slate-950/95 text-emerald-200 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-950/50"
-                }`}
-              >
-                {spotData ? (
-                  <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin-slow shrink-0" />
-                ) : roomData?.isPJU ? (
-                  <Building className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                ) : (
-                  <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                )}
+              {(() => {
+                const combinedName = `${titleText} ${placeName} ${subtitleText}`.toLowerCase();
+                const isResto = combinedName.includes("resto") || combinedName.includes("anthurium");
+                const isMasjid = combinedName.includes("masjid") || combinedName.includes("mushola");
+                const isBallroom = combinedName.includes("ballroom") || combinedName.includes("aster");
+                const isHelipad = combinedName.includes("helipad") || combinedName.includes("gerbera");
+                const isSpot = !!spotData || combinedName.includes("bridge") || combinedName.includes("noah") || combinedName.includes("pinus");
 
-                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="font-mono font-black opacity-90">
-                    No. {roomData?.legendNumber || spotData?.legendNumber || vip.roomLegendNumber}
-                  </span>
-                  <span className="font-extrabold max-w-[150px] truncate">
-                    {roomData?.name || spotData?.name || vip.mapLocationName}
-                  </span>
-                </div>
+                return (
+                  <>
+                    {/* If PJU (Alpine House), display 4 PJU standing cutout above the badge as shown in screenshot */}
+                    {isPJU && (
+                      <div className="mb-0.5 -mt-6 pointer-events-none drop-shadow-md">
+                        <Image
+                          src="/avatars/pju_squad_4.png"
+                          alt="Pimpinan PJU"
+                          width={110}
+                          height={40}
+                          unoptimized
+                          className="object-contain"
+                        />
+                      </div>
+                    )}
 
-                <span
-                  className={`w-2 h-2 rounded-full animate-ping ${
-                    spotData ? "bg-cyan-400" : roomData?.isPJU ? "bg-white" : "bg-emerald-400"
-                  }`}
-                />
-              </div>
+                    <div
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold transition-all ${
+                        isPJU
+                          ? "bg-gradient-to-r from-amber-400 via-lime-400 to-yellow-300 text-slate-950 border-white ring-2 ring-amber-400/60 font-black shadow-glow-gold"
+                          : isResto
+                          ? "bg-[#0b1f0c]/95 text-emerald-200 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-950/60"
+                          : isMasjid
+                          ? "bg-[#0d1527]/95 text-indigo-200 border-indigo-400/80 ring-1 ring-indigo-400/30 shadow-lg shadow-indigo-950/60"
+                          : isBallroom
+                          ? "bg-[#1c0d29]/95 text-purple-200 border-purple-400/80 ring-1 ring-purple-400/30 shadow-lg shadow-purple-950/60"
+                          : isHelipad
+                          ? "bg-[#241706]/95 text-amber-200 border-amber-400/80 ring-1 ring-amber-400/30 shadow-lg shadow-amber-950/60"
+                          : isSpot
+                          ? "bg-[#06181f]/95 text-cyan-200 border-cyan-400 ring-2 ring-cyan-400/30 shadow-[0_0_15px_rgba(6,182,212,0.35)]"
+                          : "bg-[#062419]/95 text-emerald-300 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-950/60"
+                      }`}
+                    >
+                      {isPJU ? (
+                        <Building className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                      ) : isResto ? (
+                        <Utensils className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      ) : isMasjid ? (
+                        <Compass className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                      ) : isBallroom ? (
+                        <Building className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                      ) : isHelipad ? (
+                        <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      ) : isSpot ? (
+                        <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin-slow shrink-0" />
+                      ) : (
+                        <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      )}
 
-              {/* Pin Arrow Pointing down to node */}
-              <div
-                className={`w-2.5 h-2.5 rotate-45 -mt-1 border-r border-b ${
-                  spotData
-                    ? "bg-slate-950 border-cyan-400"
-                    : roomData?.isPJU
-                    ? "bg-amber-400 border-amber-300"
-                    : "bg-slate-950 border-emerald-400"
-                }`}
-              />
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <span className="font-mono font-black opacity-90">
+                          No. {legendNum}
+                        </span>
+                        <span className="font-extrabold max-w-[150px] truncate">
+                          {placeName}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`w-2 h-2 rounded-full animate-ping ${
+                          isPJU
+                            ? "bg-slate-950"
+                            : isResto
+                            ? "bg-emerald-400"
+                            : isMasjid
+                            ? "bg-indigo-400"
+                            : isBallroom
+                            ? "bg-purple-400"
+                            : isHelipad
+                            ? "bg-amber-400"
+                            : isSpot
+                            ? "bg-cyan-400"
+                            : "bg-emerald-400"
+                        }`}
+                      />
+                    </div>
+
+                    {/* Pin Arrow Pointing down to node */}
+                    <div
+                      className={`w-2.5 h-2.5 rotate-45 -mt-1 border-r border-b ${
+                        isPJU
+                          ? "bg-amber-400 border-amber-300"
+                          : isResto
+                          ? "bg-[#0b1f0c] border-emerald-400"
+                          : isMasjid
+                          ? "bg-[#0d1527] border-indigo-400"
+                          : isBallroom
+                          ? "bg-[#1c0d29] border-purple-400"
+                          : isHelipad
+                          ? "bg-[#241706] border-amber-400"
+                          : isSpot
+                          ? "bg-[#06181f] border-cyan-400"
+                          : "bg-[#062419] border-emerald-400"
+                      }`}
+                    />
+                  </>
+                );
+              })()}
             </motion.button>
           )}
         </AnimatePresence>
@@ -625,7 +709,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
               {/* Active Display */}
               <div className="relative w-full h-full max-h-[75vh] flex items-center justify-center">
-                {isVideo(currentImage) ? (
+                {currentImage && isVideo(currentImage) ? (
                   <video
                     key={currentImage}
                     src={currentImage}
@@ -635,7 +719,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     playsInline
                     className="max-h-[75vh] max-w-full rounded-2xl shadow-2xl border border-gold-400/40 bg-black"
                   />
-                ) : (
+                ) : currentImage ? (
                   <div className="relative w-full h-full">
                     <Image
                       key={currentImage}
@@ -647,7 +731,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       className="object-contain"
                     />
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Next Button */}
@@ -672,7 +756,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
             >
               {/* Description Caption */}
               <p className="text-xs text-zinc-300 text-center line-clamp-1">
-                {spotData?.description || roomData?.description || agendaItem?.description}
+                {descriptionText}
               </p>
 
               {/* Filmstrip Strip */}

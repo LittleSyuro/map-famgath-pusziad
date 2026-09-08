@@ -17,6 +17,8 @@ import {
   DAY2_HIGHLIGHT_SPOTS,
   AccommodationRoom,
   HighlightSpot,
+  KEY_EVENT_PINPOINTS,
+  KeyEventPinpoint,
 } from "@/data/arrivals";
 import { LOCATIONS, LocationItem } from "@/data/locations";
 import { Pawn } from "./Pawn";
@@ -81,6 +83,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   // Active room & spot popups
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
   const [openSpotPopupIds, setOpenSpotPopupIds] = useState<Record<string, boolean>>({});
+  const [openKeyPinpointIds, setOpenKeyPinpointIds] = useState<Record<string, boolean>>({});
 
   const [customRoutes, setCustomRoutes] = useState<Record<string, Waypoint[]>>(() => {
     const initial: Record<string, Waypoint[]> = {};
@@ -937,127 +940,44 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       </div>
                     )}
 
-                  {/* Render Destination Room Popups / Collapsed Badges */}
+                  {/* Render All Key Event Pin Points (Resto, Masjid, Ballroom, Kamar PJU & Rombongan, Helipad, Spot Wisata) from Agenda 2 onwards */}
                   {!isEditorOpen &&
                     activeActivityId !== "d1-arrival" &&
-                    activeActivityId !== "d2-jalan-sehat" &&
-                    activeVIPs.map((vip) => (
-                      <ArrivalPopupCard
-                        key={`popup-${vip.id}-${activeActivityId}`}
-                        vip={vip}
-                        agendaItem={currentAgendaItem}
-                        roomData={
-                          activeActivityId === "d1-checkin"
-                            ? ACCOMMODATION_ROOMS.find((r) => r.isPJU)
-                            : undefined
-                        }
-                        isOpen={!!openPopupIds[vip.id]}
-                        onClose={() => handleClosePopup(vip.id)}
-                        onOpen={() => handleOpenPopup(vip.id)}
-                        onFocusPinPoint={() =>
-                          focusOnCoordinate({ x: vip.roomX, y: vip.roomY }, 1.75)
-                        }
-                      />
-                    ))}
+                    KEY_EVENT_PINPOINTS.map((pin) => {
+                      const isDestinationOfCurrentAgenda =
+                        (activeActivityId === "d1-checkin" && pin.id === "pin-alpine") ||
+                        (activeActivityId === "d1-ishoma" && pin.id === "pin-resto") ||
+                        (activeActivityId === "d1-malam-keakraban" && pin.id === "pin-ballroom") ||
+                        (activeActivityId === "d2-senam" && pin.id === "pin-helipad") ||
+                        (activeActivityId === "d2-sarapan" && pin.id === "pin-resto") ||
+                        (activeActivityId === "d2-outbound" && pin.id === "pin-helipad") ||
+                        (activeActivityId === "d2-jalan-sehat" && pin.id === "pin-bridge");
 
-                  {/* Render 2 Additional Rombongan Accommodation Rooms on Check-in */}
-                  {activeActivityId === "d1-checkin" &&
-                    !isEditorOpen &&
-                    ACCOMMODATION_ROOMS.filter((r) => !r.isPJU).map((room) => {
-                      const dummyVip: VIPArrival = {
-                        id: room.id,
-                        name: room.name,
-                        title: room.role,
-                        isPJU: false,
-                        photo: "",
-                        color: "#f59e0b",
-                        gateArrivalTimeStr: "17:00",
-                        gateArrivalMinutes: 1020,
-                        walkStartTimeStr: "17:00",
-                        walkStartMinutes: 1020,
-                        roomArrivalTimeStr: "18:00",
-                        roomArrivalMinutes: 1080,
-                        internalNumber: room.internalNumber,
-                        roomLegendNumber: room.legendNumber,
-                        roomImage: room.image,
-                        mapLocationName: room.name,
-                        roomX: room.coords.x,
-                        roomY: room.coords.y,
-                        pathWaypoints: [room.coords],
-                      };
+                      const isOpen =
+                        openKeyPinpointIds[pin.id] !== undefined
+                          ? !!openKeyPinpointIds[pin.id]
+                          : isDestinationOfCurrentAgenda;
 
                       return (
                         <ArrivalPopupCard
-                          key={room.id}
-                          vip={dummyVip}
-                          roomData={room}
-                          isOpen={!!openRoomPopupIds[room.id]}
+                          key={`keypin-${pin.id}-${activeActivityId}`}
+                          keyPinpoint={pin}
+                          agendaItem={isDestinationOfCurrentAgenda ? currentAgendaItem : undefined}
+                          isOpen={isOpen}
                           onClose={() =>
-                            setOpenRoomPopupIds((prev) => ({
+                            setOpenKeyPinpointIds((prev) => ({
                               ...prev,
-                              [room.id]: false,
+                              [pin.id]: false,
                             }))
                           }
                           onOpen={() =>
-                            setOpenRoomPopupIds((prev) => ({
+                            setOpenKeyPinpointIds((prev) => ({
                               ...prev,
-                              [room.id]: true,
+                              [pin.id]: true,
                             }))
                           }
                           onFocusPinPoint={() =>
-                            focusOnCoordinate(room.coords, 1.75)
-                          }
-                        />
-                      );
-                    })}
-
-                  {/* Render 4 Highlight Spots on Day 2 Jalan Sehat */}
-                  {activeActivityId === "d2-jalan-sehat" &&
-                    !isEditorOpen &&
-                    DAY2_HIGHLIGHT_SPOTS.map((spot) => {
-                      const dummyVip: VIPArrival = {
-                        id: spot.id,
-                        name: spot.name,
-                        title: spot.category,
-                        isPJU: false,
-                        photo: "",
-                        color: "#14b8a6",
-                        gateArrivalTimeStr: "07:45",
-                        gateArrivalMinutes: 465,
-                        walkStartTimeStr: "07:45",
-                        walkStartMinutes: 465,
-                        roomArrivalTimeStr: "08:45",
-                        roomArrivalMinutes: 525,
-                        internalNumber: spot.legendNumber,
-                        roomLegendNumber: spot.legendNumber,
-                        roomImage: spot.image,
-                        mapLocationName: spot.name,
-                        roomX: spot.coords.x,
-                        roomY: spot.coords.y,
-                        pathWaypoints: [spot.coords],
-                      };
-
-                      return (
-                        <ArrivalPopupCard
-                          key={spot.id}
-                          vip={dummyVip}
-                          spotData={spot}
-                          agendaItem={currentAgendaItem}
-                          isOpen={!!openSpotPopupIds[spot.id]}
-                          onClose={() =>
-                            setOpenSpotPopupIds((prev) => ({
-                              ...prev,
-                              [spot.id]: false,
-                            }))
-                          }
-                          onOpen={() =>
-                            setOpenSpotPopupIds((prev) => ({
-                              ...prev,
-                              [spot.id]: true,
-                            }))
-                          }
-                          onFocusPinPoint={() =>
-                            focusOnCoordinate(spot.coords, 1.75)
+                            focusOnCoordinate(pin.coords, 1.75)
                           }
                         />
                       );
