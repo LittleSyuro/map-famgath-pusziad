@@ -73,21 +73,21 @@ export const LocationMarker: React.FC<LocationMarkerProps> = ({
           onClick(location);
         }}
         aria-label={`Lokasi ${label}: ${location.name}`}
-        className={`group relative flex items-center justify-center min-w-[28px] h-[28px] px-1.5 rounded-full text-xs font-bold font-mono tracking-tight shadow-xl transition-all duration-300 border-2 cursor-pointer select-none ${
+        className={`group relative flex items-center justify-center min-w-[28px] h-[28px] px-1.5 rounded-full text-xs font-black font-mono tracking-tight shadow-xl transition-all duration-300 border-2 cursor-pointer select-none ${
           is3DMode ? "mb-4" : ""
         } ${
           isSelected
-            ? "bg-gradient-to-tr from-gold-600 via-amber-500 to-yellow-300 text-resort-950 border-white shadow-glow-gold ring-4 ring-gold-400/50 z-30"
+            ? "bg-gradient-to-tr from-amber-400 via-lime-400 to-yellow-300 text-slate-950 border-white shadow-glow-butter ring-4 ring-lime-400/60 z-30 scale-110"
             : isHovered
-            ? "bg-gradient-to-tr from-gold-500 to-amber-400 text-resort-950 border-white shadow-lg ring-2 ring-gold-300 z-30"
-            : "bg-gradient-to-tr from-resort-800 to-resort-600 text-white border-gold-400/80 hover:border-gold-300 shadow-md"
+            ? "bg-gradient-to-tr from-amber-300 to-yellow-200 text-slate-950 border-white shadow-lg ring-2 ring-lime-300 z-30"
+            : "bg-[#0b1a03] text-lime-200 border-lime-400/80 hover:border-lime-200 hover:text-white shadow-md"
         }`}
       >
         <span className="leading-none">{label}</span>
 
         {/* Pulse indicator for selected or highlighted markers */}
         {isSelected && (
-          <span className="absolute -inset-1 rounded-full bg-gold-400/30 animate-ping pointer-events-none" />
+          <span className="absolute -inset-1 rounded-full bg-lime-400/40 animate-ping pointer-events-none" />
         )}
       </button>
 
@@ -96,14 +96,14 @@ export const LocationMarker: React.FC<LocationMarkerProps> = ({
         <div
           className={`absolute bottom-full left-1/2 -translate-x-1/2 ${
             is3DMode ? "mb-6" : "mb-2"
-          } w-52 p-2.5 rounded-2xl bg-resort-950/98 text-white border border-gold-400 shadow-2xl backdrop-blur-md z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150`}
+          } w-52 p-2.5 rounded-2xl bg-[#0e1d03]/98 text-white border-2 border-lime-400/80 shadow-2xl backdrop-blur-md z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150`}
           style={{
             transformStyle: "flat",
             transform: is3DMode ? `rotateX(${tiltAngle}deg) rotateZ(${rotateAngle}deg)` : "none",
           }}
         >
           {/* Thumbnail photo */}
-          <div className="relative w-full h-24 rounded-lg overflow-hidden bg-resort-900/60 mb-2 border border-gold-500/20">
+          <div className="relative w-full h-24 rounded-lg overflow-hidden bg-[#142807] mb-2 border border-lime-500/30">
             <Image
               src={location.image}
               alt={location.name}
@@ -112,29 +112,29 @@ export const LocationMarker: React.FC<LocationMarkerProps> = ({
               sizes="200px"
               className="object-contain p-1"
             />
-            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-gold-500/90 text-resort-950 text-[10px] font-bold font-mono">
+            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-butter-pill text-slate-950 text-[10px] font-black font-mono shadow-sm">
               #{label}
             </div>
           </div>
 
           {/* Details */}
-          <div className="px-0.5">
-            <p className="text-[10px] uppercase tracking-wider text-gold-400 font-medium truncate">
+          <div className="px-0.5 space-y-0.5">
+            <p className="text-[10px] uppercase tracking-wider text-lime-400 font-bold truncate">
               {location.category}
             </p>
-            <h4 className="text-xs font-bold text-white line-clamp-1">
+            <h4 className="text-xs font-black text-white line-clamp-1">
               {location.name}
             </h4>
-            <div className="mt-1.5 flex items-center justify-between text-[10px] text-zinc-300">
-              <span className="flex items-center gap-1 text-gold-300">
-                <MapPin className="w-3 h-3 text-gold-400" /> Klik detail
+            <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-200 pt-0.5 border-t border-lime-500/20">
+              <span className="flex items-center gap-1 text-butter-300 font-bold">
+                <MapPin className="w-3 h-3 text-lime-400" /> Klik detail
               </span>
-              <ChevronRight className="w-3 h-3 text-gold-400" />
+              <ChevronRight className="w-3 h-3 text-lime-400" />
             </div>
           </div>
 
           {/* Tooltip arrow */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-resort-950" />
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-[#0e1d03]" />
         </div>
       )}
     </div>

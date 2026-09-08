@@ -44,6 +44,8 @@ import {
   X,
   Users,
   UserCheck,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface ArrivalMapProps {
@@ -520,25 +522,59 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         >
           {({ zoomIn, zoomOut, resetTransform }) => (
             <>
+              {/* Floating Quick Toggle Pill: Angka Legenda (Hide / Show) */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-35 no-print">
+                <button
+                  type="button"
+                  onClick={() => setShowAllLocations(!showAllLocations)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-2xl backdrop-blur-md transition-all duration-200 cursor-pointer border-2 select-none hover:scale-105 active:scale-95 ${
+                    showAllLocations
+                      ? "bg-[#0e1d03]/95 text-lime-300 border-lime-400/80 shadow-glow-lime ring-2 ring-lime-400/30"
+                      : "bg-[#1f1304]/95 text-amber-300 border-amber-400/80 shadow-glow-butter ring-2 ring-amber-400/30"
+                  }`}
+                  title={
+                    showAllLocations
+                      ? "Klik untuk menyembunyikan angka legenda (86 titik pin lokasi)"
+                      : "Klik untuk menampilkan angka legenda (86 titik pin lokasi)"
+                  }
+                >
+                  {showAllLocations ? (
+                    <>
+                      <Eye className="w-4 h-4 text-lime-400" />
+                      <span className="tracking-wide">Hide Angka Legenda</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-4 h-4 text-amber-400" />
+                      <span className="tracking-wide">Show Angka Legenda</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               {/* Floating Map Toolbar */}
               <div className="absolute top-4 right-4 z-40 flex flex-col gap-1.5 no-print">
                 <div className="flex flex-col bg-[#0b1a03]/95 backdrop-blur-md rounded-2xl shadow-xl border-2 border-lime-400/40 p-1.5 gap-1">
-                  {/* Toggle All Location Pins Button */}
+                  {/* Toggle All Location Pins (Angka Legenda) Button */}
                   <button
                     type="button"
                     onClick={() => setShowAllLocations(!showAllLocations)}
                     title={
                       showAllLocations
-                        ? "Sembunyikan Pin Tempat (86 Titik Lokasi)"
-                        : "Tampilkan Pin Tempat (86 Titik Lokasi)"
+                        ? "Sembunyikan Angka Legenda (86 Titik Lokasi)"
+                        : "Tampilkan Angka Legenda (86 Titik Lokasi)"
                     }
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl transition-all cursor-pointer relative ${
                       showAllLocations
-                        ? "text-butter-pill bg-lime-800/80 shadow-sm ring-1 ring-lime-400/40 font-black"
-                        : "text-lime-300 hover:text-white hover:bg-lime-800/40"
+                        ? "text-slate-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
+                        : "text-slate-400 hover:text-white hover:bg-lime-800/40"
                     }`}
                   >
-                    <MapPin className="w-5 h-5" />
+                    {showAllLocations ? (
+                      <Eye className="w-5 h-5 text-slate-950" />
+                    ) : (
+                      <EyeOff className="w-5 h-5" />
+                    )}
                   </button>
 
                   {/* Edit Nodes Mode Button */}

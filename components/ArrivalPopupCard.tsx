@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,6 +56,10 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const [isFullFrame, setIsFullFrame] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Edge detection reference & shift offset
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  const [edgeShift, setEdgeShift] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -75,6 +79,59 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   }, [agendaItem, roomData, spotData, vip.roomImage]);
 
   const currentImage = imageList[activeImageIndex] || imageList[0] || vip.roomImage;
+
+  // Real-time Edge Detection: prevent card from overflowing bottom, top, left, or right edges
+  const checkEdgeCollision = useCallback(() => {
+    if (!isOpen || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const margin = 16;
+    let shiftY = 0;
+    let shiftX = 0;
+
+    // Detect bottom edge collision (e.g. when card hangs below a centered pin)
+    if (rect.bottom > window.innerHeight - margin) {
+      shiftY = window.innerHeight - margin - rect.bottom;
+    }
+    // Detect top edge collision
+    if (rect.top + shiftY < margin + 65) {
+      shiftY = margin + 65 - rect.top;
+    }
+    // Detect right edge collision
+    if (rect.right > window.innerWidth - margin) {
+      shiftX = window.innerWidth - margin - rect.right;
+    }
+    // Detect left edge collision
+    if (rect.left + shiftX < margin) {
+      shiftX = margin - rect.left;
+    }
+
+    setEdgeShift((prev) => {
+      if (Math.abs(prev.x - shiftX) > 1 || Math.abs(prev.y - shiftY) > 1) {
+        return { x: shiftX, y: shiftY };
+      }
+      return prev;
+    });
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setEdgeShift({ x: 0, y: 0 });
+      return;
+    }
+    // Initial check & continuous check on resize and animation frames
+    checkEdgeCollision();
+    const timer = setTimeout(checkEdgeCollision, 50);
+    const timer2 = setTimeout(checkEdgeCollision, 200);
+    window.addEventListener("resize", checkEdgeCollision);
+    const interval = setInterval(checkEdgeCollision, 300);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+      clearInterval(interval);
+      window.removeEventListener("resize", checkEdgeCollision);
+    };
+  }, [isOpen, checkEdgeCollision]);
 
   // Auto-collapse timer (disabled when user is inspecting menu, games, or full frame)
   useEffect(() => {
@@ -133,26 +190,32 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
         <AnimatePresence>
           {isOpen ? (
             <motion.div
+              ref={cardRef}
               key="full-popup"
               initial={{ scale: 0.3, opacity: 0, y: isTopHalf ? -20 : 20 }}
-              animate={{ scale: 1, opacity: 1, y: isTopHalf ? 0 : -15 }}
+              animate={{
+                scale: 1,
+                opacity: 1,
+                x: edgeShift.x,
+                y: (isTopHalf ? 0 : -15) + edgeShift.y,
+              }}
               exit={{ scale: 0.4, opacity: 0, y: isTopHalf ? -15 : 15 }}
               transition={{
                 type: "spring",
                 stiffness: 420,
                 damping: 28,
               }}
-              className="relative w-[340px] sm:w-[380px] rounded-3xl overflow-visible shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/80 ring-2 ring-lime-400/30 shadow-glow-lime"
+              className="relative w-[340px] sm:w-[380px] max-h-[85vh] rounded-3xl overflow-visible shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/80 ring-2 ring-lime-400/30 shadow-glow-lime"
             >
-              {/* Top Pointer Triangle */}
-              {isTopHalf && (
+              {/* Top Pointer Triangle (only when not shifted significantly) */}
+              {isTopHalf && Math.abs(edgeShift.y) < 20 && (
                 <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-t border-l z-20 bg-[#142807] border-lime-400/80" />
               )}
 
               {/* Inner container */}
-              <div className="rounded-3xl overflow-hidden flex flex-col">
+              <div className="rounded-3xl overflow-hidden flex flex-col max-h-[85vh]">
                 {/* Photo Area / Video / Carousel */}
-                <div className="relative w-full h-48 sm:h-52 bg-[#0b1a03] overflow-hidden group">
+                <div className="relative w-full h-44 sm:h-48 bg-[#0b1a03] overflow-hidden group shrink-0">
                   {isVideo(currentImage) ? (
                     <div className="relative w-full h-full bg-black flex items-center justify-center">
                       <video
