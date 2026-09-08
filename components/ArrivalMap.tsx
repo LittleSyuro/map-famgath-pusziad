@@ -53,6 +53,10 @@ import {
   EyeOff,
   Search,
   Crosshair,
+  Play,
+  Pause,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface ArrivalMapProps {
@@ -78,6 +82,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [activeActivityId, setActiveActivityId] = useState<string>("d1-arrival");
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
+
+  // Prezi-Style Autoplay State
+  const [isAutoplay, setIsAutoplay] = useState<boolean>(false);
+  const [autoplayProgress, setAutoplayProgress] = useState<number>(0);
+  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const AUTOPLAY_STEP_DURATION_MS = 8000;
 
   // Clickable Resort Places State (Default: Hidden Angka Legenda)
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
@@ -203,8 +213,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
   }, []);
 
-  // Smooth Focus & Zoom to a specific coordinate on map with exact mathematical centering of the popup card
-  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.85) => {
+  // Smooth Prezi Focus & Zoom to a specific coordinate on map with exact centering of popup card
+  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 2.2, duration = 850) => {
     if (transformRef.current && containerRef.current && mapCanvasRef.current) {
       const { setTransform } = transformRef.current;
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -219,43 +229,26 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       const pointInElementX = canvasOffsetLeft + (coord.x / 100) * canvasWidth;
       const pointInElementY = canvasOffsetTop + (coord.y / 100) * canvasHeight;
       
-      // Smart camera framing:
-      // When card expands below pin (coord.y < 45), card vertical center is ~140px below pin.
-      // When card expands above pin (coord.y >= 45), card vertical center is ~140px above pin.
-      // Offset so the popup card itself is dead-center on the user's screen.
       const isTopHalf = coord.y < 45;
-      const cardCenterOffset = isTopHalf ? 140 : -140;
+      const cardCenterOffset = isTopHalf ? 110 : -110;
 
       const posX = containerRect.width / 2 - pointInElementX * zoomFactor;
       const posY = (containerRect.height / 2 - cardCenterOffset) - pointInElementY * zoomFactor;
-      setTransform(posX, posY, zoomFactor, 750, "easeOutQuad");
+      setTransform(posX, posY, zoomFactor, duration, "easeInOutQuad");
     }
   }, []);
 
-  // Determine if a specific key pinpoint is currently expanded/open
+  // Determine if a specific key pinpoint is currently opened by user click
   const activeOpenPinId = useMemo(() => {
-    // If selected legend popup is open, no key pinpoint is open
     if (selectedLegendLocation) return null;
+    if (openKeyPinpointIds["__closed__"]) return null;
 
-    // Check if explicitly open in state
     for (const pin of KEY_EVENT_PINPOINTS) {
       if (openKeyPinpointIds[pin.id]) return pin.id;
     }
 
-    // If user explicitly closed all popups
-    if (openKeyPinpointIds["__closed__"]) return null;
-
-    // Default open for current active agenda destination
-    if (activeActivityId === "d1-checkin") return "pin-alpine";
-    if (activeActivityId === "d1-ishoma") return "pin-resto";
-    if (activeActivityId === "d1-malam-keakraban") return "pin-ballroom";
-    if (activeActivityId === "d2-senam") return "pin-helipad";
-    if (activeActivityId === "d2-sarapan") return "pin-resto";
-    if (activeActivityId === "d2-outbound") return "pin-helipad";
-    if (activeActivityId === "d2-jalan-sehat") return "pin-bridge";
-
     return null;
-  }, [openKeyPinpointIds, selectedLegendLocation, activeActivityId]);
+  }, [openKeyPinpointIds, selectedLegendLocation]);
 
   // Handle Select Legend from Search or Map Marker
   const handleSelectLegend = useCallback(
@@ -365,21 +358,105 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     };
   }, [activeActivityId, startRouteAnimation]);
 
-  // Handle Select Agenda from Sidebar: Zoom in & focus on destination
-  const handleSelectAgenda = (agendaId: string) => {
-    setActiveActivityId(agendaId);
-    setSelectedNodeIndex(null);
-    const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId);
-    if (item) {
-      const dest =
-        customRoutes[agendaId]?.[customRoutes[agendaId].length - 1] ||
-        item.destCoordinates ||
-        item.defaultWaypoints?.[item.defaultWaypoints.length - 1];
-      if (dest) {
-        focusOnCoordinate(dest, 1.75);
+// Helper mapping agenda activity ID to key event pinpoint ID
+const getPinIdForAgenda = (agendaId: string): string => {
+  switch (agendaId) {
+    case "d1-arrival":
+      return "pin-helipad";
+    case "d1-checkin":
+      return "pin-alpine";
+    case "d1-worship":
+      return "pin-masjid";
+    case "d1-dinner":
+    case "d1-ishoma":
+    case "d2-sarapan":
+      return "pin-resto";
+    case "d1-malam-keakraban":
+    case "d1-acara-malam":
+      return "pin-ballroom";
+    case "d2-senam":
+    case "d2-outbound":
+      return "pin-helipad";
+    case "d2-jalan-sehat":
+    case "d2-closing":
+      return "pin-bridge";
+    default:
+      return "pin-alpine";
+  }
+};
+
+  // Handle Select Agenda: Smooth Prezi fly & zoom to destination and automatically pop up destination card
+  const handleSelectAgenda = useCallback(
+    (agendaId: string) => {
+      setActiveActivityId(agendaId);
+      setSelectedNodeIndex(null);
+      setSelectedLegendLocation(null);
+
+      const pinId = getPinIdForAgenda(agendaId);
+      setOpenKeyPinpointIds({ [pinId]: true });
+
+      const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId);
+      if (item) {
+        const targetPinCoords = customPinCoords[pinId] || KEY_EVENT_PINPOINTS.find((p) => p.id === pinId)?.coords;
+        const dest =
+          targetPinCoords ||
+          customRoutes[agendaId]?.[customRoutes[agendaId].length - 1] ||
+          item.destCoordinates ||
+          item.defaultWaypoints?.[item.defaultWaypoints.length - 1];
+        if (dest) {
+          const zoom = agendaId === "d2-jalan-sehat" ? 2.35 : agendaId === "d1-checkin" ? 2.3 : 2.15;
+          focusOnCoordinate(dest, zoom);
+        }
       }
+    },
+    [customRoutes, customPinCoords, focusOnCoordinate]
+  );
+
+  // Next / Prev agenda helpers for Prezi Autoplay
+  const goToNextAgenda = useCallback(() => {
+    const currentIndex = ALL_RUNDOWN_ITEMS.findIndex((item) => item.id === activeActivityId);
+    const nextIndex = currentIndex < ALL_RUNDOWN_ITEMS.length - 1 ? currentIndex + 1 : 0;
+    const nextItem = ALL_RUNDOWN_ITEMS[nextIndex];
+    handleSelectAgenda(nextItem.id);
+    setAutoplayProgress(0);
+  }, [activeActivityId, handleSelectAgenda]);
+
+  const goToPrevAgenda = useCallback(() => {
+    const currentIndex = ALL_RUNDOWN_ITEMS.findIndex((item) => item.id === activeActivityId);
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : ALL_RUNDOWN_ITEMS.length - 1;
+    const prevItem = ALL_RUNDOWN_ITEMS[prevIndex];
+    handleSelectAgenda(prevItem.id);
+    setAutoplayProgress(0);
+  }, [activeActivityId, handleSelectAgenda]);
+
+  // Advance to next agenda strictly when active spot's full photo slideshow/task is complete
+  const handleCardSlideCycleComplete = useCallback(() => {
+    if (isAutoplay) {
+      goToNextAgenda();
     }
-  };
+  }, [isAutoplay, goToNextAgenda]);
+
+  // Keyboard navigation for Autoplay & Camera
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+      if (isSearchModalOpen || isLocationModalOpen || isEditorOpen || isCalibratorOpen) return;
+
+      if (e.key === " " || e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setIsAutoplay((prev) => !prev);
+      } else if (e.key === "ArrowRight" || e.key === "PageDown") {
+        e.preventDefault();
+        goToNextAgenda();
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        goToPrevAgenda();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToNextAgenda, goToPrevAgenda, isSearchModalOpen, isLocationModalOpen, isEditorOpen, isCalibratorOpen]);
 
   // Handle Select Location directly from Map pin
   const handleSelectLocation = useCallback(
@@ -638,6 +715,61 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         ref={containerRef}
         className="relative flex-1 w-full overflow-hidden rounded-3xl border-2 border-lime-400/40 shadow-2xl bg-[#0e1d03] select-none h-[88vh] sm:h-[91vh] min-h-[680px] max-h-[1400px]"
       >
+        {/* Top Center: Prezi Autoplay HUD Controller */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 no-print flex items-center gap-2 select-none">
+          <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[#0b1803]/95 border-2 border-lime-400/80 shadow-2xl backdrop-blur-xl">
+            {/* Prev Agenda Button */}
+            <button
+              type="button"
+              onClick={goToPrevAgenda}
+              title="Agenda Sebelumnya (←)"
+              className="p-2 rounded-full hover:bg-lime-500/20 text-slate-200 hover:text-lime-300 transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Play / Pause Autoplay Button */}
+            <button
+              type="button"
+              onClick={() => setIsAutoplay((prev) => !prev)}
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black transition-all shadow-lg overflow-hidden border cursor-pointer ${
+                isAutoplay
+                  ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white shadow-glow-gold"
+                  : "bg-gradient-to-r from-lime-500 to-emerald-500 text-slate-950 hover:brightness-110 border-lime-300 shadow-glow-lime"
+              }`}
+              title="Mulai / Jeda Simulasi Rangkaian Kegiatan Famgath (Tekan Spasi)"
+            >
+              {isAutoplay ? (
+                <>
+                  <Pause className="w-4 h-4" />
+                  <span>Jeda Simulasi Acara</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Mulai Simulasi Rangkaian Acara</span>
+                </>
+              )}
+            </button>
+
+            {/* Next Agenda Button */}
+            <button
+              type="button"
+              onClick={goToNextAgenda}
+              title="Agenda Berikutnya (→)"
+              className="p-2 rounded-full hover:bg-lime-500/20 text-slate-200 hover:text-lime-300 transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Active Agenda Pill Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 border border-white/20 text-xs font-bold text-lime-300">
+              <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping" />
+              <span className="max-w-[150px] truncate">{currentAgendaItem.title}</span>
+            </div>
+          </div>
+        </div>
+
         {/* Floating Button to Re-open Schedule Sidebar when Hidden */}
         {!showSidebar && (
           <div className="absolute top-4 left-4 z-40 no-print flex items-center gap-2">
@@ -1136,22 +1268,19 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                   {!isEditorOpen &&
                     !isCalibratorOpen &&
                     !showAllLocations &&
-                    activeActivityId !== "d1-arrival" &&
-                    (activeOpenPinId
-                      ? KEY_EVENT_PINPOINTS.filter((p) => p.id === activeOpenPinId)
-                      : !selectedLegendLocation
-                      ? KEY_EVENT_PINPOINTS
-                      : []
-                    ).map((pin) => {
+                    !selectedLegendLocation &&
+                    KEY_EVENT_PINPOINTS.map((pin) => {
                       const pinActualCoords = customPinCoords[pin.id] || pin.coords;
                       const isDestinationOfCurrentAgenda =
+                        (activeActivityId === "d1-arrival" && pin.id === "pin-helipad") ||
                         (activeActivityId === "d1-checkin" && pin.id === "pin-alpine") ||
-                        (activeActivityId === "d1-ishoma" && pin.id === "pin-resto") ||
+                        (activeActivityId === "d1-worship" && pin.id === "pin-masjid") ||
+                        ((activeActivityId === "d1-ishoma" || activeActivityId === "d1-dinner") && pin.id === "pin-resto") ||
                         (activeActivityId === "d1-malam-keakraban" && pin.id === "pin-ballroom") ||
                         (activeActivityId === "d2-senam" && pin.id === "pin-helipad") ||
                         (activeActivityId === "d2-sarapan" && pin.id === "pin-resto") ||
                         (activeActivityId === "d2-outbound" && pin.id === "pin-helipad") ||
-                        (activeActivityId === "d2-jalan-sehat" && pin.id === "pin-bridge");
+                        ((activeActivityId === "d2-jalan-sehat" || activeActivityId === "d2-closing") && pin.id === "pin-bridge");
 
                       const isOpen = activeOpenPinId ? pin.id === activeOpenPinId : false;
 
@@ -1161,6 +1290,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                           keyPinpoint={{ ...pin, coords: pinActualCoords }}
                           agendaItem={isDestinationOfCurrentAgenda ? currentAgendaItem : undefined}
                           isOpen={isOpen}
+                          isTourAutoplay={isAutoplay && isDestinationOfCurrentAgenda}
+                          onSlideCycleComplete={handleCardSlideCycleComplete}
                           onClose={() =>
                             setOpenKeyPinpointIds({ __closed__: true })
                           }

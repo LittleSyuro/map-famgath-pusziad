@@ -171,13 +171,13 @@ export const Pawn: React.FC<PawnProps> = ({
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-52 p-2.5 rounded-2xl bg-resort-950/98 text-white border border-lime-400 shadow-2xl backdrop-blur-md z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-100 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
               <span className="px-2 py-0.5 rounded-full bg-butter-pill text-slate-950 text-[10px] font-black uppercase tracking-wider">
-                {avatarMode === "squad" ? "4 PIMPINAN PJU" : "PEJABAT UTAMA (PJU)"}
+                {avatarMode === "squad" ? "PIMPINAN PJU PUSZIAD" : "PEJABAT UTAMA (PJU)"}
               </span>
             </div>
 
             <h4 className="text-xs font-bold text-white mt-1">
               {avatarMode === "squad"
-                ? "Mayjen TNI Budi Hariswanto & Rombongan PJU"
+                ? "Mayjen TNI Budi Hariswanto, Pak Nurdihin & Rombongan PJU"
                 : vip.name}
             </h4>
             <p className="text-[10px] text-lime-300 mt-0.5">
