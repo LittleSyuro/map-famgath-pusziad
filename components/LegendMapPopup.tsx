@@ -85,22 +85,22 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-sm animate-in fade-in duration-200 select-none"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-md animate-in fade-in duration-200 select-none"
           onClick={onClose}
         >
           <motion.div
             key={`legend-popup-${location.id}`}
-            initial={{ scale: 0.9, opacity: 0, y: 15 }}
+            initial={{ scale: 0.92, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 15 }}
-            transition={{ type: "spring", stiffness: 380, damping: 28 }}
-            className="relative w-full max-w-[380px] sm:max-w-[420px] max-h-[88vh] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/90 ring-4 ring-lime-400/25 shadow-glow-lime flex flex-col"
+            exit={{ scale: 0.92, opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 360, damping: 28 }}
+            className="relative w-full max-w-[560px] sm:max-w-[640px] md:max-w-[700px] max-h-[92vh] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/90 ring-4 ring-lime-400/25 shadow-glow-lime flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="rounded-3xl overflow-hidden flex flex-col">
               {/* Media Area (Photo or Video) */}
               <div
-                className="relative w-full h-44 sm:h-48 bg-[#0b1a03] overflow-hidden group cursor-pointer shrink-0"
+                className="relative w-full h-56 sm:h-64 md:h-72 bg-[#0b1a03] overflow-hidden group cursor-pointer shrink-0"
                 onClick={() => setIsFullScreen(true)}
                 title="Klik untuk memperbesar (Full Screen)"
               >
@@ -114,8 +114,8 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
                       playsInline
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-lg bg-[#0b1a03]/90 text-butter-200 text-[10px] font-bold border border-lime-500/40 flex items-center gap-1 z-10">
-                      <Video className="w-3 h-3 text-lime-400" />
+                    <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-[#0b1a03]/90 text-butter-200 text-xs font-bold border border-lime-500/40 flex items-center gap-1.5 z-10">
+                      <Video className="w-3.5 h-3.5 text-lime-400" />
                       <span>Video Media</span>
                     </div>
                   </div>
@@ -125,30 +125,30 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
                     alt={location.name}
                     fill
                     unoptimized
-                    sizes="450px"
+                    sizes="(max-width: 768px) 100vw, 700px"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 )}
 
                 {/* Hover Full Screen Overlay Prompt */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-black">
-                  <div className="px-3 py-1.5 rounded-full bg-[#0b1a03]/90 border border-lime-400/60 shadow-lg flex items-center gap-1.5">
-                    <Maximize2 className="w-3.5 h-3.5 text-lime-400" />
+                  <div className="px-3.5 py-2 rounded-full bg-[#0b1a03]/90 border border-lime-400/60 shadow-lg flex items-center gap-2">
+                    <Maximize2 className="w-4 h-4 text-lime-400" />
                     <span>Klik untuk Full Screen</span>
                   </div>
                 </div>
 
                 {/* Gradient Scrim */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#142807] via-transparent to-black/40 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#142807] via-transparent to-black/50 pointer-events-none" />
 
                 {/* Top Controls */}
-                <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                  <span className="px-3 py-1 rounded-full bg-butter-pill text-slate-950 font-black font-mono text-xs shadow-lg border border-white flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-slate-950" />
+                <div className="absolute top-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10">
+                  <span className="px-3.5 py-1.5 rounded-full bg-butter-pill text-slate-950 font-black font-mono text-xs shadow-lg border border-white flex items-center gap-1.5">
+                    <Building className="w-4 h-4 text-slate-950" />
                     <span>No. {label}</span>
                   </span>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     {/* Full Screen Button */}
                     <button
                       type="button"
@@ -156,10 +156,10 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
                         e.stopPropagation();
                         setIsFullScreen(true);
                       }}
-                      className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-slate-950 text-lime-300 backdrop-blur-md border border-lime-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-slate-950 text-lime-300 backdrop-blur-md border border-lime-400/50 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
                       title="Perbesar Galeri (Full Screen)"
                     >
-                      <Maximize2 className="w-3.5 h-3.5" />
+                      <Maximize2 className="w-4 h-4" />
                     </button>
 
                     {/* Close Button */}
@@ -169,7 +169,7 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
                         e.stopPropagation();
                         onClose();
                       }}
-                      className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-[#0b1a03]/90 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
                       title="Tutup Popup"
                     >
                       <X className="w-4 h-4" />
@@ -179,30 +179,30 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
               </div>
 
               {/* Description & Details */}
-              <div className="p-4 space-y-2.5 bg-[#142807]">
+              <div className="p-4 sm:p-5 space-y-3 bg-[#142807]">
                 <div>
-                  <h4 className="text-base font-extrabold text-white tracking-tight leading-snug">
+                  <h4 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
                     No. {label} {location.name}
                   </h4>
-                  <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-lg bg-lime-900/60 text-lime-200 border border-lime-400/40 text-[11px] font-bold">
-                    <Tag className="w-3 h-3 text-butter-300" />
+                  <span className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-xl bg-lime-900/60 text-lime-200 border border-lime-400/40 text-xs font-bold">
+                    <Tag className="w-3.5 h-3.5 text-butter-300" />
                     {location.category}
                   </span>
                 </div>
 
-                <p className="text-xs text-lime-100/90 leading-relaxed max-h-28 overflow-y-auto custom-scrollbar bg-[#0d1d03]/90 p-2.5 rounded-xl border border-lime-500/25">
+                <p className="text-xs sm:text-sm text-lime-100/90 leading-relaxed max-h-32 overflow-y-auto custom-scrollbar bg-[#0d1d03]/90 p-3 rounded-2xl border border-lime-500/25">
                   {location.description ||
                     `Fasilitas ${location.name} bernomor ${label} yang terletak di ${location.category}, The Highland Park Resort.`}
                 </p>
 
                 {/* Action Buttons Row */}
-                <div className="pt-1 flex items-center gap-2">
+                <div className="pt-2 flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => setIsFullScreen(true)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#0b1a03] hover:bg-lime-800 text-lime-200 border border-lime-500/40 text-xs font-bold transition-all cursor-pointer shadow-md"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b1a03] hover:bg-lime-800 text-lime-200 border border-lime-500/40 text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-md"
                   >
-                    <Eye className="w-3.5 h-3.5 text-lime-400" />
+                    <Eye className="w-4 h-4 text-lime-400" />
                     <span>Lihat Full Screen</span>
                   </button>
 
@@ -212,9 +212,9 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
                       onFocusOnMap(location);
                       onClose();
                     }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs shadow-md transition-all hover:scale-[1.02] cursor-pointer border border-lime-200"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer border border-lime-200"
                   >
-                    <Compass className="w-3.5 h-3.5 text-slate-950" />
+                    <Compass className="w-4 h-4 text-slate-950" />
                     <span>Fokus Titik</span>
                   </button>
                 </div>

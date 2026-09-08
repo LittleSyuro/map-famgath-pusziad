@@ -11,6 +11,8 @@ import {
   MenuItem,
   HighlightSpot,
   KeyEventPinpoint,
+  ACCOMMODATION_ROOMS,
+  Waypoint,
 } from "@/data/arrivals";
 import {
   Clock,
@@ -44,7 +46,7 @@ interface ArrivalPopupCardProps {
   spotData?: HighlightSpot;
   keyPinpoint?: KeyEventPinpoint;
   autoCollapseMs?: number;
-  onFocusPinPoint?: () => void;
+  onFocusPinPoint?: (coords?: Waypoint) => void;
 }
 
 const isVideo = (url?: string) => {
@@ -74,8 +76,44 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
     setMounted(true);
   }, []);
 
+  // Check if this popup is for accommodation checkin or any of the 3 rooms
+  const isAccommodation = React.useMemo(() => {
+    if (agendaItem?.id === "d1-checkin") return true;
+    if (roomData) return true;
+    if (keyPinpoint?.id === "pin-alpine" || keyPinpoint?.id === "pin-cave" || keyPinpoint?.id === "pin-mongolian") return true;
+    const cat = (keyPinpoint?.category || "").toLowerCase();
+    const nm = (keyPinpoint?.name || "").toLowerCase();
+    if (cat.includes("kamar") || cat.includes("penginapan") || nm.includes("alpine") || nm.includes("cave") || nm.includes("mongolian")) return true;
+    return false;
+  }, [agendaItem, roomData, keyPinpoint]);
+
+  // Initial room selection index based on incoming props
+  const initialRoomIdx = React.useMemo(() => {
+    if (keyPinpoint?.id === "pin-mongolian" || roomData?.id === "room-mongolian" || keyPinpoint?.name?.toLowerCase().includes("mongolian")) return 1;
+    if (keyPinpoint?.id === "pin-cave" || roomData?.id === "room-the-cave" || keyPinpoint?.name?.toLowerCase().includes("cave")) return 2;
+    return 0; // Alpine House (PJU) by default
+  }, [keyPinpoint, roomData]);
+
+  const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
+
+  // Synchronize initial room selection when opened
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedRoomIndex(initialRoomIdx);
+      setActiveImageIndex(0);
+    }
+  }, [isOpen, initialRoomIdx]);
+
+  const activeRoom = isAccommodation ? ACCOMMODATION_ROOMS[selectedRoomIndex] : null;
+
   // Determine images / videos array
   const imageList = React.useMemo(() => {
+    if (activeRoom) {
+      if (activeRoom.detailImages && activeRoom.detailImages.length > 0) {
+        return activeRoom.detailImages;
+      }
+      return [activeRoom.image];
+    }
     if (keyPinpoint?.galleryImages && keyPinpoint.galleryImages.length > 0) {
       return keyPinpoint.galleryImages;
     }
@@ -92,9 +130,9 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
       return [spotData.image];
     }
     return vip?.roomImage ? [vip.roomImage] : [];
-  }, [keyPinpoint, agendaItem, roomData, spotData, vip?.roomImage]);
+  }, [activeRoom, keyPinpoint, agendaItem, roomData, spotData, vip?.roomImage]);
 
-  const currentImage = imageList[activeImageIndex] || imageList[0] || keyPinpoint?.image || vip?.roomImage || "";
+  const currentImage = imageList[activeImageIndex] || imageList[0] || (activeRoom ? activeRoom.image : keyPinpoint?.image) || vip?.roomImage || "";
 
   // Auto-collapse timer (disabled when user is inspecting menu, games, or full frame)
   useEffect(() => {
@@ -127,27 +165,27 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
   const pinX = keyPinpoint?.coords.x ?? roomData?.coords.x ?? spotData?.coords.x ?? vip?.roomX ?? 50;
   const pinY = keyPinpoint?.coords.y ?? roomData?.coords.y ?? spotData?.coords.y ?? vip?.roomY ?? 50;
-  const isTopHalf = pinY < 45;
   const offsetX = vip?.popupOffsetX || 0;
   const offsetY = vip?.popupOffsetY || 0;
 
-  const legendNum = keyPinpoint?.legendNumber || roomData?.legendNumber || spotData?.legendNumber || vip?.roomLegendNumber || "";
-  const placeName = keyPinpoint?.name || roomData?.name || spotData?.name || vip?.mapLocationName || "";
+  const legendNum = activeRoom?.legendNumber || keyPinpoint?.legendNumber || roomData?.legendNumber || spotData?.legendNumber || vip?.roomLegendNumber || "";
+  const placeName = activeRoom?.name || keyPinpoint?.name || roomData?.name || spotData?.name || vip?.mapLocationName || "";
   const titleText = `No. ${legendNum} ${placeName}`;
 
-  const subtitleText = keyPinpoint?.category || roomData?.role || spotData?.category || vip?.title || "";
-  const descriptionText = keyPinpoint?.description || spotData?.description || roomData?.description || agendaItem?.description || vip?.title || "";
+  const subtitleText = activeRoom?.role || keyPinpoint?.category || roomData?.role || spotData?.category || vip?.title || "";
+  const descriptionText = activeRoom?.description || keyPinpoint?.description || spotData?.description || roomData?.description || agendaItem?.description || vip?.title || "";
 
   const menuList = keyPinpoint?.menuCategories || agendaItem?.menuCategories;
-  const hasMenu = !!(menuList && menuList.length > 0);
+  const hasMenu = !activeRoom && !!(menuList && menuList.length > 0);
 
   const gamesList = keyPinpoint?.subActivities || agendaItem?.subActivities;
-  const hasGames = !!(gamesList && gamesList.length > 0);
+  const hasGames = !activeRoom && !!(gamesList && gamesList.length > 0);
 
-  const facilitiesList = keyPinpoint?.facilities || roomData?.facilities;
+  const facilitiesList = activeRoom?.facilities || keyPinpoint?.facilities || roomData?.facilities;
   const hasFacilities = !!(facilitiesList && facilitiesList.length > 0);
 
-  const isPJU = !!(keyPinpoint?.isPJU || roomData?.isPJU || vip?.isPJU || placeName.toLowerCase().includes("alpine"));
+  const isPJU = activeRoom ? activeRoom.isPJU : !!(keyPinpoint?.isPJU || roomData?.isPJU || vip?.isPJU || placeName.toLowerCase().includes("alpine"));
+  const activeFocusCoords = activeRoom ? activeRoom.coords : { x: pinX, y: pinY };
 
   return (
     <>
@@ -248,24 +286,24 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
         })()}
       </div>
 
-      {/* Centered Screen Modal Popup Card (Never Floating, Always Perfectly Centered) */}
+      {/* Centered Screen Modal Popup Card (Large, Spacious, & Beautiful) */}
       {mounted && isOpen && createPortal(
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-sm animate-in fade-in duration-200 select-none"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-md animate-in fade-in duration-200 select-none"
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 15 }}
+            initial={{ scale: 0.92, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 15 }}
-            transition={{ type: "spring", stiffness: 380, damping: 28 }}
-            className="relative w-full max-w-[380px] sm:max-w-[420px] max-h-[88vh] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/90 ring-4 ring-lime-400/25 shadow-glow-lime flex flex-col"
+            exit={{ scale: 0.92, opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 360, damping: 28 }}
+            className="relative w-full max-w-[560px] sm:max-w-[640px] md:max-w-[700px] max-h-[92vh] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/90 ring-4 ring-lime-400/25 shadow-glow-lime flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Photo Area / Video / Carousel */}
-            <div className="relative w-full h-44 sm:h-48 bg-[#0b1a03] overflow-hidden group shrink-0">
+            <div className="relative w-full h-56 sm:h-64 md:h-72 bg-[#0b1a03] overflow-hidden group shrink-0">
               {currentImage && isVideo(currentImage) ? (
                 <div className="relative w-full h-full bg-black flex items-center justify-center">
                   <video
@@ -276,8 +314,8 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-lg bg-[#0b1a03]/90 text-butter-200 text-[10px] font-bold border border-lime-500/40 flex items-center gap-1 z-10">
-                    <Video className="w-3 h-3 text-lime-400" />
+                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-[#0b1a03]/90 text-butter-200 text-xs font-bold border border-lime-500/40 flex items-center gap-1.5 z-10">
+                    <Video className="w-3.5 h-3.5 text-lime-400" />
                     <span>Video Media</span>
                   </div>
                 </div>
@@ -287,29 +325,29 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   alt={titleText}
                   fill
                   unoptimized
-                  sizes="450px"
+                  sizes="(max-width: 768px) 100vw, 700px"
                   className="object-cover transition-transform duration-500 hover:scale-105"
                 />
               ) : (
                 <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-500">
-                  <Building className="w-8 h-8" />
+                  <Building className="w-10 h-10" />
                 </div>
               )}
 
               {/* Gradient Scrim */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#142807] via-transparent to-black/40 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#142807] via-transparent to-black/50 pointer-events-none" />
 
               {/* Top Bar: Badges & Window Controls */}
-              <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                <div className="flex items-center gap-1.5">
-                  <span className="px-3 py-1 rounded-full bg-[#0b1a03]/95 backdrop-blur-md text-butter-200 border border-lime-500/40 text-xs font-black font-mono shadow-lg flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-lime-400" />
+              <div className="absolute top-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10">
+                <div className="flex items-center gap-2">
+                  <span className="px-3.5 py-1.5 rounded-full bg-[#0b1a03]/95 backdrop-blur-md text-butter-200 border border-lime-500/50 text-xs font-black font-mono shadow-lg flex items-center gap-1.5">
+                    <Building className="w-4 h-4 text-lime-400" />
                     <span>No. {legendNum}</span>
                   </span>
 
                   {subtitleText && (
                     <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-md ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border shadow-md ${
                         isPJU
                           ? "bg-butter-pill text-lime-950 border-amber-300 shadow-glow-butter"
                           : "bg-[#0b1a03]/90 text-lime-200 border-lime-500/40"
@@ -320,7 +358,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   {/* Fullscreen Zoom / Slideshow Button */}
                   {imageList.length > 0 && (
                     <button
@@ -330,9 +368,9 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                         setIsFullFrame(true);
                       }}
                       title="Perbesar Galeri Foto & Video (Full Screen)"
-                      className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-lime-950 text-lime-300 backdrop-blur-md border border-lime-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-lime-950 text-lime-300 backdrop-blur-md border border-lime-400/50 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
                     >
-                      <Maximize2 className="w-3.5 h-3.5" />
+                      <Maximize2 className="w-4 h-4" />
                     </button>
                   )}
 
@@ -344,7 +382,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       onClose();
                     }}
                     title="Kecilkan Popup (Minimize)"
-                    className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-butter-pill hover:text-lime-950 text-butter-300 backdrop-blur-md border border-amber-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                    className="w-9 h-9 rounded-full bg-[#0b1a03]/90 hover:bg-butter-pill hover:text-lime-950 text-butter-300 backdrop-blur-md border border-amber-400/50 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -357,7 +395,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       onClose();
                     }}
                     title="Tutup Popup"
-                    className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                    className="w-9 h-9 rounded-full bg-[#0b1a03]/90 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -366,16 +404,16 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
               {/* Multi-Photo Carousel Navigation Arrows */}
               {imageList.length > 1 && (
-                <div className="absolute inset-y-0 inset-x-2 flex items-center justify-between pointer-events-none z-10">
+                <div className="absolute inset-y-0 inset-x-3 flex items-center justify-between pointer-events-none z-10">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : imageList.length - 1));
                     }}
-                    className="w-7 h-7 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 text-white hover:text-lime-950 flex items-center justify-center border border-lime-500/40 pointer-events-auto transition-colors shadow-md cursor-pointer"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 text-white hover:text-lime-950 flex items-center justify-center border border-lime-500/50 pointer-events-auto transition-colors shadow-lg cursor-pointer"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     type="button"
@@ -383,16 +421,16 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       e.stopPropagation();
                       setActiveImageIndex((prev) => (prev < imageList.length - 1 ? prev + 1 : 0));
                     }}
-                    className="w-7 h-7 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 text-white hover:text-lime-950 flex items-center justify-center border border-lime-500/40 pointer-events-auto transition-colors shadow-md cursor-pointer"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 text-white hover:text-lime-950 flex items-center justify-center border border-lime-500/50 pointer-events-auto transition-colors shadow-lg cursor-pointer"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
               )}
 
               {/* Photo Index Dots */}
               {imageList.length > 1 && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10 bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
                   {imageList.map((img, pIdx) => (
                     <button
                       key={pIdx}
@@ -401,26 +439,102 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                         e.stopPropagation();
                         setActiveImageIndex(pIdx);
                       }}
-                      className={`h-1.5 rounded-full transition-all cursor-pointer flex items-center justify-center ${
+                      className={`h-2 rounded-full transition-all cursor-pointer flex items-center justify-center ${
                         pIdx === activeImageIndex
-                          ? "w-5 bg-lime-400 shadow-glow-lime"
-                          : "w-1.5 bg-white/50 hover:bg-white"
+                          ? "w-6 bg-lime-400 shadow-glow-lime"
+                          : "w-2 bg-white/50 hover:bg-white"
                       }`}
                     >
-                      {isVideo(img) && <span className="w-1 h-1 rounded-full bg-red-400" />}
+                      {isVideo(img) && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
+            {/* 3 KAMAR PENGINAPAN SELECTOR CARDS (Tampilkan Ketiga Card Kamar) */}
+            {isAccommodation && (
+              <div className="bg-[#0b1a03] p-3 sm:p-3.5 border-t border-b border-lime-500/30 space-y-2 shrink-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase text-lime-300 tracking-wider flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-lime-400" />
+                    Pilihan 3 Kamar Penginapan
+                  </span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-butter-300 bg-black/40 px-2.5 py-0.5 rounded-full border border-lime-500/30">
+                    Klik untuk beralih kamar
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                  {ACCOMMODATION_ROOMS.map((room, rIdx) => {
+                    const isSelected = rIdx === selectedRoomIndex;
+                    return (
+                      <button
+                        key={room.id}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRoomIndex(rIdx);
+                          setActiveImageIndex(0);
+                        }}
+                        className={`relative p-2 sm:p-2.5 rounded-2xl border transition-all text-left flex flex-col gap-1.5 cursor-pointer select-none group ${
+                          isSelected
+                            ? "bg-[#1c3a0b] border-lime-400 ring-2 ring-lime-400/80 shadow-glow-lime scale-[1.02]"
+                            : "bg-black/50 border-lime-500/25 hover:border-lime-400/60 hover:bg-[#142807]/80 opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        {/* Image Thumbnail */}
+                        <div className="relative w-full h-16 sm:h-20 rounded-xl overflow-hidden bg-black border border-lime-500/30">
+                          <Image
+                            src={room.image}
+                            alt={room.name}
+                            fill
+                            unoptimized
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <span
+                            className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-black font-mono shadow ${
+                              room.isPJU
+                                ? "bg-amber-400 text-slate-950 font-black shadow-glow-gold"
+                                : "bg-black/85 text-white border border-white/20"
+                            }`}
+                          >
+                            No. {room.legendNumber}
+                          </span>
+                          {isSelected && (
+                            <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-lime-400 text-slate-950 text-[9px] font-black shadow flex items-center gap-0.5">
+                              ✓ Aktif
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Room Info */}
+                        <div className="flex flex-col">
+                          <span
+                            className={`text-[10px] sm:text-[11px] font-black uppercase tracking-tight truncate ${
+                              room.isPJU ? "text-amber-300" : "text-lime-200"
+                            }`}
+                          >
+                            {room.role}
+                          </span>
+                          <span className="text-xs sm:text-sm font-extrabold text-white truncate">
+                            {room.name}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Sub-Navigation Tabs if Menu / Games / Facilities are available */}
             {(hasMenu || hasGames || hasFacilities) && (
-              <div className="flex items-center bg-[#0b1a03] border-t border-b border-lime-500/25 px-3 py-1.5 gap-1.5 text-xs font-bold shrink-0">
+              <div className="flex items-center bg-[#0b1a03] border-t border-b border-lime-500/25 px-3.5 sm:px-4 py-2 gap-2 text-xs font-bold shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveTab("foto")}
-                  className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeTab === "foto"
                       ? "bg-butter-pill text-lime-950 font-black shadow-md"
                       : "text-lime-200 hover:text-white"
@@ -433,7 +547,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab("menu")}
-                    className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeTab === "menu"
                         ? "bg-butter-pill text-lime-950 font-black shadow-md"
                         : "text-lime-200 hover:text-white"
@@ -448,7 +562,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab("games")}
-                    className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeTab === "games"
                         ? "bg-butter-pill text-lime-950 font-black shadow-md"
                         : "text-lime-200 hover:text-white"
@@ -463,38 +577,43 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab("fasilitas")}
-                    className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeTab === "fasilitas"
                         ? "bg-butter-pill text-lime-950 font-black shadow-md"
                         : "text-lime-200 hover:text-white"
                     }`}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Fasilitas</span>
+                    <span>Fasilitas ({facilitiesList.length})</span>
                   </button>
                 )}
               </div>
             )}
 
-            {/* Tab Contents */}
-            <div className="p-3.5 space-y-2.5 max-h-60 sm:max-h-72 overflow-y-auto custom-scrollbar bg-[#142807]">
+            {/* Tab Contents (Spacious & Scrollable) */}
+            <div className="p-4 sm:p-5 space-y-3 max-h-[42vh] sm:max-h-[48vh] overflow-y-auto custom-scrollbar bg-[#142807]">
               {/* FOTO TAB */}
               {activeTab === "foto" && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div>
-                    <h4 className="text-sm font-extrabold text-white tracking-tight">
+                    <h4 className="text-base sm:text-lg font-black text-white tracking-tight">
                       {titleText}
                     </h4>
-                    <p className="text-xs text-lime-100/90 mt-0.5 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-lime-100/90 mt-1 leading-relaxed">
                       {descriptionText}
                     </p>
                   </div>
 
                   {/* Info Pills */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {subtitleText && (
-                      <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-[10px] font-bold">
+                      <span className="px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs font-bold">
                         ✨ {subtitleText}
+                      </span>
+                    )}
+                    {isPJU && (
+                      <span className="px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold">
+                        👑 Pejabat Utama (PJU)
                       </span>
                     )}
                   </div>
@@ -505,11 +624,11 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
               {activeTab === "menu" && hasMenu && (
                 <div className="space-y-3">
                   {/* Sub-selector for Menu Filter */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-lime-500/20 text-[11px] font-bold">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-lime-500/20 text-xs font-bold">
                     <button
                       type="button"
                       onClick={() => setMenuFilter("all")}
-                      className={`flex-1 py-1 rounded-lg transition-all text-center ${
+                      className={`flex-1 py-1.5 rounded-lg transition-all text-center ${
                         menuFilter === "all"
                           ? "bg-lime-400 text-slate-950 font-black shadow-md"
                           : "text-lime-200/80 hover:text-white"
@@ -520,24 +639,24 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     <button
                       type="button"
                       onClick={() => setMenuFilter("lunch")}
-                      className={`flex-1 py-1 rounded-lg transition-all text-center flex items-center justify-center gap-1 ${
+                      className={`flex-1 py-1.5 rounded-lg transition-all text-center flex items-center justify-center gap-1 ${
                         menuFilter === "lunch"
                           ? "bg-lime-400 text-slate-950 font-black shadow-md"
                           : "text-lime-200/80 hover:text-white"
                       }`}
                     >
-                      <Utensils className="w-3 h-3" /> Lunch (B)
+                      <Utensils className="w-3.5 h-3.5" /> Lunch (B)
                     </button>
                     <button
                       type="button"
                       onClick={() => setMenuFilter("coffeebreak")}
-                      className={`flex-1 py-1 rounded-lg transition-all text-center flex items-center justify-center gap-1 ${
+                      className={`flex-1 py-1.5 rounded-lg transition-all text-center flex items-center justify-center gap-1 ${
                         menuFilter === "coffeebreak"
                           ? "bg-lime-400 text-slate-950 font-black shadow-md"
                           : "text-lime-200/80 hover:text-white"
                       }`}
                     >
-                      <Coffee className="w-3 h-3" /> Coffee Break
+                      <Coffee className="w-3.5 h-3.5" /> Coffee Break
                     </button>
                   </div>
 
@@ -545,13 +664,13 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {(menuFilter === "all" || menuFilter === "lunch") && (
                     <div className="rounded-2xl overflow-hidden border-2 border-[#1c4e25] shadow-lg bg-[#faf8f2]">
                       {/* Header Bar */}
-                      <div className="bg-[#1c4e25] px-3 py-1.5 flex items-center justify-between">
-                        <span className="font-black text-white text-xs tracking-wider uppercase flex items-center gap-1.5">
-                          <Utensils className="w-3.5 h-3.5 text-lime-300" />
+                      <div className="bg-[#1c4e25] px-3.5 py-2 flex items-center justify-between">
+                        <span className="font-black text-white text-xs sm:text-sm tracking-wider uppercase flex items-center gap-1.5">
+                          <Utensils className="w-4 h-4 text-lime-300" />
                           LUNCH
                         </span>
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-[#a3442a] text-white font-black text-[10px] px-2 py-0.5 rounded shadow-sm">
+                          <span className="bg-[#a3442a] text-white font-black text-xs px-2.5 py-0.5 rounded shadow-sm">
                             B
                           </span>
                           <div className="w-4 h-4 rounded bg-white border border-slate-300 flex items-center justify-center shadow-inner">
@@ -561,19 +680,19 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       </div>
 
                       {/* Menu Items Table Content */}
-                      <div className="p-3 text-slate-900 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+                      <div className="p-3.5 text-slate-900 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                         <div className="space-y-1.5">
                           {["Steamed Rice", "Cream Potato Soup", "Capcay", "Gepuk Chicken", "Sweet and Sour Snapper"].map((item, i) => (
-                            <div key={i} className="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0" />
+                            <div key={i} className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800">
+                              <span className="w-2 h-2 rounded-full bg-slate-900 shrink-0" />
                               <span>{item}</span>
                             </div>
                           ))}
                         </div>
                         <div className="space-y-1.5">
                           {["Mixed Fruits", "Pudding"].map((item, i) => (
-                            <div key={i} className="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0" />
+                            <div key={i} className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800">
+                              <span className="w-2 h-2 rounded-full bg-slate-900 shrink-0" />
                               <span>{item}</span>
                             </div>
                           ))}
@@ -586,13 +705,13 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {(menuFilter === "all" || menuFilter === "coffeebreak") && (
                     <div className="rounded-2xl overflow-hidden border-2 border-[#1c4e25] shadow-lg bg-[#faf8f2]">
                       {/* Header Bar */}
-                      <div className="bg-[#1c4e25] px-3 py-1.5 flex items-center justify-between">
-                        <span className="font-black text-white text-xs tracking-wider uppercase flex items-center gap-1.5">
-                          <Coffee className="w-3.5 h-3.5 text-lime-300" />
+                      <div className="bg-[#1c4e25] px-3.5 py-2 flex items-center justify-between">
+                        <span className="font-black text-white text-xs sm:text-sm tracking-wider uppercase flex items-center gap-1.5">
+                          <Coffee className="w-4 h-4 text-lime-300" />
                           COFFEE BREAK
                         </span>
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-[#a3442a] text-white font-black text-[10px] px-2 py-0.5 rounded shadow-sm">
+                          <span className="bg-[#a3442a] text-white font-black text-xs px-2.5 py-0.5 rounded shadow-sm">
                             B
                           </span>
                           <div className="w-4 h-4 rounded bg-white border border-slate-300 flex items-center justify-center shadow-inner">
@@ -602,18 +721,18 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       </div>
 
                       {/* Sessions in Cream Card */}
-                      <div className="p-3 text-slate-900 space-y-3">
+                      <div className="p-3.5 text-slate-900 space-y-3">
                         {/* CB 1 (MORNING) */}
                         <div className="space-y-1.5 pb-2.5 border-b border-slate-200">
-                          <div className="flex items-center gap-1.5 font-black text-xs text-slate-900 uppercase">
-                            <div className="w-3.5 h-3.5 rounded bg-white border border-slate-400 flex items-center justify-center shadow-inner">
-                              <span className="text-[9px] font-black text-emerald-700">✓</span>
+                          <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-slate-900 uppercase">
+                            <div className="w-4 h-4 rounded bg-white border border-slate-400 flex items-center justify-center shadow-inner">
+                              <span className="text-[10px] font-black text-emerald-700">✓</span>
                             </div>
                             <span>CB 1 (MORNING)</span>
                           </div>
-                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 pl-4">
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 pl-4">
                             {["Chicken Nugget", "Panettone", "Velvet Roll", "Assorted Chips", "Coffee & Tea"].map((item, i) => (
-                              <div key={i} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-800">
+                              <div key={i} className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0" />
                                 <span>{item}</span>
                               </div>
@@ -623,15 +742,15 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
                         {/* CB 2 (AFTERNOON) */}
                         <div className="space-y-1.5 pb-2.5 border-b border-slate-200">
-                          <div className="flex items-center gap-1.5 font-black text-xs text-slate-900 uppercase">
-                            <div className="w-3.5 h-3.5 rounded bg-white border border-slate-400 flex items-center justify-center shadow-inner">
-                              <span className="text-[9px] font-black text-emerald-700">✓</span>
+                          <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-slate-900 uppercase">
+                            <div className="w-4 h-4 rounded bg-white border border-slate-400 flex items-center justify-center shadow-inner">
+                              <span className="text-[10px] font-black text-emerald-700">✓</span>
                             </div>
                             <span>CB 2 (AFTERNOON)</span>
                           </div>
-                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 pl-4">
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 pl-4">
                             {["Marble Green Tea Cake", "Black Forest Roll", "Sausage Orly", "Assorted Chips", "Coffee & Tea"].map((item, i) => (
-                              <div key={i} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-800">
+                              <div key={i} className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0" />
                                 <span>{item}</span>
                               </div>
@@ -641,15 +760,15 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
                         {/* CB 3 (EVENING) */}
                         <div className="space-y-1.5">
-                          <div className="flex items-center gap-1.5 font-black text-xs text-slate-900 uppercase">
-                            <div className="w-3.5 h-3.5 rounded bg-white border border-slate-400 flex items-center justify-center shadow-inner">
-                              <span className="text-[9px] font-black text-emerald-700">✓</span>
+                          <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-slate-900 uppercase">
+                            <div className="w-4 h-4 rounded bg-white border border-slate-400 flex items-center justify-center shadow-inner">
+                              <span className="text-[10px] font-black text-emerald-700">✓</span>
                             </div>
                             <span>CB 3 (EVENING)</span>
                           </div>
-                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 pl-4">
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 pl-4">
                             {["Pisang Rebus", "Jagung Rebus", "Kacang Rebus", "Assorted Chips", "Coffee & Tea"].map((item, i) => (
-                              <div key={i} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-800">
+                              <div key={i} className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0" />
                                 <span>{item}</span>
                               </div>
@@ -664,26 +783,26 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
               {/* GAMES TAB */}
               {activeTab === "games" && hasGames && (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {gamesList?.map((sub, sIdx) => (
                     <div
                       key={sIdx}
-                      className="p-2.5 rounded-2xl bg-slate-900/90 border border-emerald-500/20 space-y-1.5"
+                      className="p-3 rounded-2xl bg-slate-900/90 border border-emerald-500/20 space-y-2"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         {sub.image && (
-                          <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-emerald-500/30">
+                          <div className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-emerald-500/30">
                             <Image src={sub.image} alt={sub.title} fill unoptimized className="object-cover" />
                           </div>
                         )}
-                        <div className="text-xs font-bold text-emerald-300">{sub.title}</div>
+                        <div className="text-sm font-black text-emerald-300">{sub.title}</div>
                       </div>
                       {sub.items && (
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {sub.items.map((it, itIdx) => (
                             <span
                               key={itIdx}
-                              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-slate-300"
+                              className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300"
                             >
                               • {it}
                             </span>
@@ -697,14 +816,14 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
               {/* FASILITAS TAB */}
               {activeTab === "fasilitas" && hasFacilities && (
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {facilitiesList?.map((fac, fIdx) => (
                     <div
                       key={fIdx}
-                      className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-200"
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs sm:text-sm text-slate-200"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="font-medium text-[11px]">{fac}</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-semibold">{fac}</span>
                     </div>
                   ))}
                 </div>
@@ -712,20 +831,20 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
             </div>
 
             {/* Selalu Munculkan Tombol Menampilkan Pin Point */}
-            <div className="p-2.5 bg-[#0e1d03] border-t border-lime-500/30 shrink-0">
+            <div className="p-3 sm:p-3.5 bg-[#0e1d03] border-t border-lime-500/30 shrink-0">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (onFocusPinPoint) {
-                    onFocusPinPoint();
+                    onFocusPinPoint(activeFocusCoords);
                   }
                   onClose();
                 }}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs shadow-lg transition-all hover:scale-[1.02] cursor-pointer border border-lime-200 select-none"
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all hover:scale-[1.01] cursor-pointer border border-lime-200 select-none"
               >
-                <Compass className="w-4 h-4 text-slate-950" />
-                <span>Fokuskan & Jelajahi Titik di Peta</span>
+                <Compass className="w-4 h-4 text-slate-950 shrink-0" />
+                <span className="truncate">Fokuskan & Jelajahi Titik {placeName} di Peta</span>
               </button>
             </div>
           </motion.div>
