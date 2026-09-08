@@ -85,7 +85,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [showAllLocations, setShowAllLocations] = useState<boolean>(false);
-  const [showLegendHint, setShowLegendHint] = useState<boolean>(true);
 
   // Active room & spot popups
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
@@ -681,72 +680,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         >
           {({ zoomIn, zoomOut, resetTransform }) => (
             <>
-              {/* Floating Quick Toggle & Search Bar */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-35 no-print flex flex-col sm:flex-row items-center gap-2 pointer-events-auto">
-                {/* Search Legenda Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsSearchModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-2xl backdrop-blur-md transition-all duration-200 cursor-pointer border-2 select-none hover:scale-105 active:scale-95 bg-[#0b1a03]/95 text-butter-200 border-lime-400/80 hover:border-lime-200 shadow-glow-lime ring-2 ring-lime-400/30"
-                  title="Cari Legenda & Fasilitas Resort (Tekan Ctrl+K atau /)"
-                >
-                  <Search className="w-4 h-4 text-lime-400" />
-                  <span>Cari Legenda (86 Lokasi)</span>
-                  <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded-md bg-[#142807] border border-lime-500/40 text-[10px] font-mono text-lime-300">
-                    Ctrl+K
-                  </kbd>
-                </button>
-
-                {/* Toggle Angka Legenda Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAllLocations(!showAllLocations);
-                    setShowLegendHint(false);
-                  }}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-2xl backdrop-blur-md transition-all duration-200 cursor-pointer border-2 select-none hover:scale-105 active:scale-95 ${
-                    showAllLocations
-                      ? "bg-[#0e1d03]/95 text-lime-300 border-lime-400/80 shadow-glow-lime ring-2 ring-lime-400/30"
-                      : "bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-slate-950 border-white shadow-glow-butter ring-2 ring-amber-300 font-black"
-                  }`}
-                  title={
-                    showAllLocations
-                      ? "Klik untuk menyembunyikan angka legenda (86 titik pin lokasi)"
-                      : "Klik untuk menampilkan angka legenda (86 titik pin lokasi)"
-                  }
-                >
-                  {showAllLocations ? (
-                    <>
-                      <Eye className="w-4 h-4 text-lime-400" />
-                      <span className="tracking-wide">Hide Angka Legenda</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="w-4 h-4 text-slate-950" />
-                      <span className="tracking-wide">Tampilkan Angka Legenda</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Popup Hint ketika Legenda sedang disembunyikan */}
-                {!showAllLocations && showLegendHint && (
-                  <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[#0b1a03]/95 text-lime-200 border-2 border-lime-400/80 shadow-2xl backdrop-blur-md text-[11px] font-black animate-bounce select-none">
-                    <span>👆 Tekan tombol ini untuk menampilkan legenda</span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowLegendHint(false);
-                      }}
-                      title="Tutup petunjuk"
-                      className="ml-1 p-0.5 rounded-full hover:bg-lime-800 text-lime-300 hover:text-white cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
               {/* Floating Map Toolbar */}
               <div className="absolute top-4 right-4 z-40 flex flex-col gap-1.5 no-print">
                 <div className="flex flex-col bg-[#0b1a03]/95 backdrop-blur-md rounded-2xl shadow-xl border-2 border-lime-400/40 p-1.5 gap-1">
