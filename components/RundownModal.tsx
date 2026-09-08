@@ -72,7 +72,7 @@ export const RundownModal: React.FC<RundownModalProps> = ({
             {/* Right: Date & Action Controls */}
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-white/15 text-butter-200 text-xs font-bold border border-white/20">
-                21 - 22 Februari 2026
+                10 - 11 Oktober 2026
               </span>
 
               <button
@@ -209,7 +209,7 @@ export const RundownModal: React.FC<RundownModalProps> = ({
           <div className="pt-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-lime-300 text-lime-950 text-xs font-bold shadow-sm">
               <TreePine className="w-4 h-4 text-lime-600" />
-              <span>The Highland Park Resort Hotel Bogor • Kawasan Mandiri Asri</span>
+              <span>The Highland Park Resort Hotel Bogor</span>
             </div>
           </div>
         </div>
@@ -217,8 +217,8 @@ export const RundownModal: React.FC<RundownModalProps> = ({
         {/* Modal Bottom Bar */}
         <div className="bg-lime-950 p-3 sm:px-6 text-white flex items-center justify-between text-xs border-t border-lime-800">
           <div className="flex items-center gap-2 text-lime-200 font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-butter-300" />
-            <span>Simulasi jalur & penempatan tenda/kamar tersedia di peta utama</span>
+            <Compass className="w-3.5 h-3.5 text-butter-300" />
+            <span>Simulasi jalur & penempatan kamar tersedia di peta utama</span>
           </div>
 
           <button
