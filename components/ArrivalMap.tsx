@@ -61,7 +61,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   // Direct Route Animation Progress: 0 (Start) to 1 (Destination)
   const [animProgress, setAnimProgress] = useState<number>(1);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const [showPaths, setShowPaths] = useState<boolean>(true);
+  const [showPaths, setShowPaths] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [avatarMode, setAvatarMode] = useState<"circle" | "squad">("squad");
   const [showF11Toast, setShowF11Toast] = useState<boolean>(false);
@@ -647,11 +647,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                   <button
                     type="button"
                     onClick={() => setShowPaths(!showPaths)}
-                    title="Tampilkan / Sembunyikan Jalur Lintasan"
-                    className={`p-2.5 rounded-xl transition-colors cursor-pointer ${showPaths
-                        ? "text-butter-pill bg-lime-800/60"
-                        : "text-lime-300 hover:text-white"
-                      }`}
+                    title={
+                      showPaths
+                        ? "Sembunyikan Garis Rute (Jalur Lintasan)"
+                        : "Tampilkan Garis Rute (Jalur Lintasan)"
+                    }
+                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                      showPaths
+                        ? "text-slate-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
+                        : "text-slate-400 hover:text-white hover:bg-lime-800/40"
+                    }`}
                   >
                     <Route className="w-5 h-5" />
                   </button>
