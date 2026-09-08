@@ -498,10 +498,8 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin-slow shrink-0" />
                 ) : roomData?.isPJU ? (
                   <Building className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                ) : roomData ? (
-                  <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 )}
 
                 <div className="flex items-center gap-1.5 whitespace-nowrap">
