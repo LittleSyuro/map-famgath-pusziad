@@ -540,11 +540,43 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     ],
   },
   {
-    id: "d2-games",
+    id: "d2-jalan-sehat",
     day: 2,
     startTime: "07.45",
-    endTime: "10.00",
+    endTime: "08.45",
     startMinutes: 465, // 07:45
+    endMinutes: 525, // 08:45
+    title: "Jalan Sehat",
+    locationName: "Kawasan Resort",
+    locationNumber: "15",
+    description: "Kegiatan jalan sehat seluruh peserta.",
+    badge: "Jalan Sehat",
+    color: "#14b8a6",
+    destLegendNumber: "15",
+    destImage: "/legend/15_Invisible_Bridge.png",
+    destCoordinates: { x: 54.0, y: 47.0 },
+    highlightSpots: DAY2_HIGHLIGHT_SPOTS,
+    galleryImages: [
+      "/legend/15_Invisible_Bridge.png",
+      "/legend/03_Hutan_Pinus.png",
+      "/legend/51_Rumah_Kelinci.png",
+      "/resort_media/gerbera/gerbera_2.png"
+    ],
+    defaultWaypoints: [
+      { x: 78.5, y: 24.5 },
+      { x: 86.0, y: 22.0 },
+      { x: 54.0, y: 47.0 },
+      { x: 37.0, y: 68.0 },
+      { x: 31.0, y: 64.0 },
+      { x: 78.5, y: 24.5 },
+    ],
+  },
+  {
+    id: "d2-games",
+    day: 2,
+    startTime: "08.45",
+    endTime: "10.00",
+    startMinutes: 525, // 08:45
     endMinutes: 600, // 10:00
     title: "Family Games & Outbound",
     locationName: "Lapangan Helipad",
