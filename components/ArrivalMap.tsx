@@ -18,9 +18,12 @@ import {
   AccommodationRoom,
   HighlightSpot,
 } from "@/data/arrivals";
+import { LOCATIONS, LocationItem } from "@/data/locations";
 import { Pawn } from "./Pawn";
 import { ScheduleSidebar } from "./ScheduleSidebar";
 import { ArrivalPopupCard } from "./ArrivalPopupCard";
+import { LocationMarker } from "./LocationMarker";
+import { LocationModal } from "./LocationModal";
 import { PathEditorOverlay, ROUTE_ACTIVITIES } from "./PathEditorOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -67,6 +70,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
 
+  // Clickable Resort Places State
+  const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
+  const [showAllLocations, setShowAllLocations] = useState<boolean>(true);
+
   // Active room & spot popups
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
   const [openSpotPopupIds, setOpenSpotPopupIds] = useState<Record<string, boolean>>({});
@@ -107,6 +115,24 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const activeWaypoints = useMemo(() => {
     return customRoutes[activeActivityId] || ROUTE_ACTIVITIES[0].defaultWaypoints;
   }, [customRoutes, activeActivityId]);
+
+  // All 86 Mapped Locations with valid coordinates
+  const mappedLocations = useMemo(() => {
+    return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
+  }, []);
+
+  // Smooth Focus & Zoom to a specific coordinate on map (Medium View / Zoom In)
+  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.75) => {
+    if (transformRef.current && containerRef.current) {
+      const { setTransform } = transformRef.current;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const targetX = (coord.x / 100) * containerRect.width;
+      const targetY = (coord.y / 100) * containerRect.height;
+      const posX = containerRect.width / 2 - targetX * zoomFactor;
+      const posY = containerRect.height / 2 - targetY * zoomFactor;
+      setTransform(posX, posY, zoomFactor, 700, "easeOutQuad");
+    }
+  }, []);
 
   // Find active agenda item
   const currentAgendaItem = useMemo(() => {
@@ -204,11 +230,33 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     };
   }, [activeActivityId, startRouteAnimation]);
 
-  // Handle Select Agenda from Sidebar
+  // Handle Select Agenda from Sidebar: Zoom in & focus on destination
   const handleSelectAgenda = (agendaId: string) => {
     setActiveActivityId(agendaId);
     setSelectedNodeIndex(null);
+    const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId);
+    if (item) {
+      const dest =
+        customRoutes[agendaId]?.[customRoutes[agendaId].length - 1] ||
+        item.destCoordinates ||
+        item.defaultWaypoints?.[item.defaultWaypoints.length - 1];
+      if (dest) {
+        focusOnCoordinate(dest, 1.75);
+      }
+    }
   };
+
+  // Handle Select Location directly from Map pin
+  const handleSelectLocation = useCallback(
+    (loc: LocationItem) => {
+      setSelectedLocation(loc);
+      setIsLocationModalOpen(true);
+      if (loc.mapX !== undefined && loc.mapY !== undefined) {
+        focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.75);
+      }
+    },
+    [focusOnCoordinate]
+  );
 
   // Toggle Popup manually
   const handleTogglePopup = (vipId: string) => {
@@ -461,8 +509,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
         <TransformWrapper
           ref={transformRef}
-          initialScale={1.35}
-          minScale={0.7}
+          initialScale={1.0}
+          minScale={0.6}
           maxScale={6}
           centerOnInit={true}
           wheel={{ step: 0.15 }}
@@ -475,15 +523,34 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               {/* Floating Map Toolbar */}
               <div className="absolute top-4 right-4 z-40 flex flex-col gap-1.5 no-print">
                 <div className="flex flex-col bg-[#0b1a03]/95 backdrop-blur-md rounded-2xl shadow-xl border-2 border-lime-400/40 p-1.5 gap-1">
+                  {/* Toggle All Location Pins Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowAllLocations(!showAllLocations)}
+                    title={
+                      showAllLocations
+                        ? "Sembunyikan Pin Tempat (86 Titik Lokasi)"
+                        : "Tampilkan Pin Tempat (86 Titik Lokasi)"
+                    }
+                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                      showAllLocations
+                        ? "text-butter-pill bg-lime-800/80 shadow-sm ring-1 ring-lime-400/40 font-black"
+                        : "text-lime-300 hover:text-white hover:bg-lime-800/40"
+                    }`}
+                  >
+                    <MapPin className="w-5 h-5" />
+                  </button>
+
                   {/* Edit Nodes Mode Button */}
                   <button
                     type="button"
                     onClick={() => setIsEditorOpen(!isEditorOpen)}
                     title={isEditorOpen ? "Tutup Editor Nodes" : "🛠️ Edit Titik / Nodes Rute"}
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${isEditorOpen
+                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                      isEditorOpen
                         ? "text-lime-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
                         : "text-lime-300 hover:text-white hover:bg-lime-800/40"
-                      }`}
+                    }`}
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
@@ -769,11 +836,26 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       );
                     })}
 
-                  {/* Starting Point Marker on Map (Only when pawn walking is active) */}
+                  {/* Interactive 86 Resort Location Markers (Clickable places across map) */}
+                  {!isEditorOpen && showAllLocations && (
+                    <div className="absolute inset-0 pointer-events-none z-15">
+                      {mappedLocations.map((loc) => (
+                        <div key={`loc-pin-${loc.id}`} className="pointer-events-auto">
+                          <LocationMarker
+                            location={loc}
+                            isSelected={selectedLocation?.id === loc.id}
+                            isHighlighted={true}
+                            onClick={handleSelectLocation}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Starting Point Marker on Map (Only when PJU arrival/check-in is active) */}
                   {!isEditorOpen &&
                     !currentAgendaItem.disablePawn &&
-                    activeActivityId !== "d1-arrival" &&
-                    activeActivityId !== "d2-jalan-sehat" &&
+                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin") &&
                     startPoint && (
                       <div
                         className="absolute z-20 -translate-x-1/2 -translate-y-full pointer-events-none"
@@ -905,9 +987,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       );
                     })}
 
-                  {/* Render All Animated Continuous Pawns */}
+                  {/* Render All Animated Continuous Pawns: Only active for d1-arrival and d1-checkin (until entering room) */}
                   {!isEditorOpen &&
                     !currentAgendaItem.disablePawn &&
+                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin") &&
                     activeVIPs.map((vip, idx) => (
                       <Pawn
                         key={vip.id}
@@ -927,6 +1010,20 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
           )}
         </TransformWrapper>
       </div>
+
+      {/* Location Details Modal when clicking any place on the map */}
+      <LocationModal
+        location={selectedLocation}
+        locations={LOCATIONS}
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        onSelectLocation={handleSelectLocation}
+        onFocusOnMap={(loc) => {
+          if (loc.mapX !== undefined && loc.mapY !== undefined) {
+            focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.75);
+          }
+        }}
+      />
 
       {/* F11 Full Screen Notification Banner Toast */}
       <AnimatePresence>

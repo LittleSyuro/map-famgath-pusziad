@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { LocationItem } from "@/data/locations";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 
 interface LocationMarkerProps {
   location: LocationItem;
@@ -127,7 +127,7 @@ export const LocationMarker: React.FC<LocationMarkerProps> = ({
             </h4>
             <div className="mt-1.5 flex items-center justify-between text-[10px] text-zinc-300">
               <span className="flex items-center gap-1 text-gold-300">
-                <Sparkles className="w-3 h-3 text-gold-400" /> Klik detail
+                <MapPin className="w-3 h-3 text-gold-400" /> Klik detail
               </span>
               <ChevronRight className="w-3 h-3 text-gold-400" />
             </div>

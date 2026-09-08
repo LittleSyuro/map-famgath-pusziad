@@ -62,39 +62,39 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
   };
 
   return (
-    <div className="w-full lg:w-[400px] xl:w-[440px] flex flex-col bg-white/98 border-2 border-lime-500/70 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-2xl shrink-0 space-y-4 select-none text-slate-900">
+    <div className="w-full lg:w-[290px] xl:w-[320px] flex flex-col bg-white/98 border-2 border-lime-500/70 rounded-3xl p-3 sm:p-3.5 shadow-2xl backdrop-blur-2xl shrink-0 space-y-2.5 select-none text-slate-900">
       {/* Top Header Card in Fresh White/Lime Theme */}
-      <div className="bg-lime-50/95 rounded-2xl p-3 sm:p-3.5 border border-lime-300 shadow-sm space-y-3">
+      <div className="bg-lime-50/95 rounded-2xl p-2.5 border border-lime-300 shadow-sm space-y-2">
         {/* Day Switcher & Hide Button */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-lime-500 to-amber-300 p-0.5 flex items-center justify-center shadow-sm">
-              <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-lime-800" />
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-lime-500 to-amber-300 p-0.5 flex items-center justify-center shadow-sm">
+              <div className="w-full h-full bg-white rounded-[8px] flex items-center justify-center">
+                <Calendar className="w-3.5 h-3.5 text-lime-800" />
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-lime-950 font-black flex items-center gap-1 font-fun">
+              <div className="text-[9px] uppercase tracking-wider text-lime-950 font-black flex items-center gap-1 font-fun">
                 <span>🌱 RUNDOWN ACARA</span>
               </div>
-              <div className="text-xs font-black text-slate-950 tracking-tight">
-                {selectedDay === 1 ? "Hari Ke-1 (Jumat)" : "Hari Ke-2 (Sabtu)"}
+              <div className="text-[11px] font-black text-slate-950 tracking-tight">
+                {selectedDay === 1 ? "Hari 1 (Jumat)" : "Hari 2 (Sabtu)"}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {/* Day 1 / Day 2 Pill Tabs */}
-            <div className="flex items-center bg-white rounded-full p-1 border border-lime-300 shadow-sm">
+            <div className="flex items-center bg-white rounded-full p-0.5 border border-lime-300 shadow-sm">
               <button
                 type="button"
                 onClick={() => {
                   setSelectedDay(1);
                   onSelectAgenda(RUNDOWN_SCHEDULE_DAY_1[0].id);
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer ${
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                   selectedDay === 1
-                    ? "bg-butter-pill text-slate-950 shadow-md shadow-amber-300/40 scale-105 border border-amber-300"
+                    ? "bg-butter-pill text-slate-950 shadow-sm shadow-amber-300/40 border border-amber-300"
                     : "text-slate-700 hover:text-lime-900 font-bold"
                 }`}
               >
@@ -106,9 +106,9 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
                   setSelectedDay(2);
                   onSelectAgenda(RUNDOWN_SCHEDULE_DAY_2[0].id);
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer ${
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                   selectedDay === 2
-                    ? "bg-butter-pill text-slate-950 shadow-md shadow-amber-300/40 scale-105 border border-amber-300"
+                    ? "bg-butter-pill text-slate-950 shadow-sm shadow-amber-300/40 border border-amber-300"
                     : "text-slate-700 hover:text-lime-900 font-bold"
                 }`}
               >
@@ -124,25 +124,25 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
                 title="Sembunyikan Panel Jadwal"
                 className="p-1.5 rounded-xl bg-white hover:bg-lime-100 text-slate-800 hover:text-lime-900 border border-lime-300 transition-colors cursor-pointer shadow-sm"
               >
-                <EyeOff className="w-4 h-4 text-lime-800" />
+                <EyeOff className="w-3.5 h-3.5 text-lime-800" />
               </button>
             )}
           </div>
         </div>
 
         {/* Action Buttons: Play Route Animation, Edit Nodes & Open Poster */}
-        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-lime-200/90">
+        <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-lime-200/90">
           {/* Replay / Play Route Animation */}
           <button
             type="button"
             onClick={onReplayAnimation}
-            className={`py-2 px-2 rounded-full text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
+            className={`py-1.5 px-1.5 rounded-full text-[11px] font-black flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer ${
               isAnimating
                 ? "bg-amber-400 text-slate-950 ring-2 ring-amber-400 animate-pulse font-black"
                 : "bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-400 hover:to-lime-500 text-slate-950 shadow-lime-500/25 hover:scale-[1.02]"
             }`}
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
+            <Play className="w-3 h-3 fill-current" />
             <span className="line-clamp-1">{isAnimating ? "Simulasi..." : "Putar"}</span>
           </button>
 
@@ -151,13 +151,13 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
             <button
               type="button"
               onClick={onToggleEditor}
-              className={`py-2 px-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+              className={`py-1.5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer ${
                 isEditorOpen
-                  ? "bg-butter-pill text-slate-950 ring-2 ring-amber-400 font-black border border-amber-300"
+                  ? "bg-butter-pill text-slate-950 ring-1 ring-amber-400 font-black border border-amber-300"
                   : "bg-white hover:bg-lime-50 text-slate-900 border border-slate-300"
               }`}
             >
-              <Edit3 className="w-3.5 h-3.5 text-lime-800" />
+              <Edit3 className="w-3 h-3 text-lime-800" />
               <span className="line-clamp-1">{isEditorOpen ? "Tutup" : "Nodes"}</span>
             </button>
           )}
@@ -168,9 +168,9 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
               type="button"
               onClick={onOpenRundownModal}
               title="Buka Rundown Acara Lengkap"
-              className="py-2 px-2 rounded-full text-xs font-black flex items-center justify-center gap-1.5 bg-butter-pill hover:bg-butter-300 text-slate-950 border border-amber-400/90 shadow-sm cursor-pointer"
+              className="py-1.5 px-1.5 rounded-full text-[11px] font-black flex items-center justify-center gap-1 bg-butter-pill hover:bg-butter-300 text-slate-950 border border-amber-400/90 shadow-xs cursor-pointer"
             >
-              <FileText className="w-3.5 h-3.5 text-slate-950" />
+              <FileText className="w-3 h-3 text-slate-950" />
               <span className="line-clamp-1">Poster</span>
             </button>
           )}
@@ -178,22 +178,22 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
       </div>
 
       {/* Schedule Items List Title Banner */}
-      <div className="flex items-center justify-between bg-lime-100/90 border border-lime-300/90 rounded-2xl px-3.5 py-2 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-lime-600 text-white flex items-center justify-center shadow-xs">
-            <Navigation className="w-3.5 h-3.5" />
+      <div className="flex items-center justify-between bg-lime-100/90 border border-lime-300/90 rounded-2xl px-3 py-1.5 shadow-xs">
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-md bg-lime-600 text-white flex items-center justify-center shadow-xs">
+            <Navigation className="w-3 h-3" />
           </div>
-          <span className="text-xs sm:text-sm font-black text-slate-950 uppercase tracking-wide font-fun">
-            Rundown Agenda ({selectedDay === 1 ? "Hari I" : "Hari II"})
+          <span className="text-xs font-black text-slate-950 uppercase tracking-wide font-fun">
+            Rundown Agenda
           </span>
         </div>
-        <span className="text-[10px] sm:text-[11px] font-black text-lime-900 bg-white px-2.5 py-1 rounded-full border border-lime-300 shadow-xs">
-          Klik untuk simulasi
+        <span className="text-[10px] font-black text-lime-900 bg-white px-2 py-0.5 rounded-full border border-lime-300 shadow-xs">
+          Klik rute
         </span>
       </div>
 
       {/* Interactive Schedule List with Clean White Cards */}
-      <div className="space-y-3 max-h-[62vh] lg:max-h-[calc(88vh-160px)] overflow-y-auto px-1.5 py-1 pb-8 select-none custom-scrollbar">
+      <div className="space-y-2.5 max-h-[62vh] lg:max-h-[calc(88vh-160px)] overflow-y-auto px-1 py-1 pb-6 select-none custom-scrollbar">
         {scheduleList.map((item) => {
           const isItemActive = activeAgendaId === item.id;
 
@@ -201,7 +201,7 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
             <div
               key={item.id}
               onClick={() => handleItemClick(item)}
-              className={`group relative rounded-2xl p-4 transition-all cursor-pointer border ${
+              className={`group relative rounded-2xl p-3 transition-all cursor-pointer border ${
                 isItemActive
                   ? "bg-lime-50/90 text-slate-950 border-2 border-lime-500 ring-2 ring-lime-400 shadow-md"
                   : "bg-white text-slate-900 border border-slate-200/95 shadow-sm hover:border-lime-400 hover:shadow-md"
