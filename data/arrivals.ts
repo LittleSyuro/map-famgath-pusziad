@@ -610,23 +610,19 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "12.00",
     startMinutes: 600, // 10:00
     endMinutes: 720, // 12:00
-    title: "Doorprize & Hiburan",
-    locationName: "Panggung Helipad",
-    locationNumber: "64",
-    description: "Pengundian doorprize menarik, pembagian hadiah lomba, dan hiburan musik live di panggung utama Helipad.",
-    badge: "Doorprize",
+    title: "Grand Prize",
+    locationName: "Grand Ballroom",
+    locationNumber: "7",
+    description: "",
+    badge: "Grand Prize",
     color: "#8b5cf6",
-    destLegendNumber: "64",
-    destImage: "/resort_media/helipad/helipad_3.jpg",
+    destLegendNumber: "7",
+    destImage: "/legend/07_Grand_Ballroom.png",
     destCoordinates: { x: 78.5, y: 24.5 },
     galleryImages: [
-      "/resort_media/helipad/helipad_3.jpg",
-      "/resort_media/helipad/helipad_5.jpg",
-      "/resort_media/helipad/helipad_7.jpg",
-      "/resort_media/helipad/helipad_9.jpg",
-      "/resort_media/helipad/helipad_11.jpg",
-      "/resort_media/helipad/helipad_13.jpg",
-      "/resort_media/helipad/helipad_15.jpg"
+      "/legend/07_Grand_Ballroom.png",
+      "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
     ],
     defaultWaypoints: [
       { x: 78.5, y: 24.5 },

@@ -170,9 +170,11 @@ export const RundownModal: React.FC<RundownModalProps> = ({
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-600 leading-snug">
-                      {item.description}
-                    </p>
+                    {item.description && (
+                      <p className="text-[11px] text-slate-600 leading-snug">
+                        {item.description}
+                      </p>
+                    )}
                   </div>
 
                   {/* Location Pin & Map Button */}

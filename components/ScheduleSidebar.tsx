@@ -243,9 +243,11 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
                   </div>
                 )}
 
-                <p className="text-xs text-slate-800 font-medium leading-relaxed break-words">
-                  {item.description}
-                </p>
+                {item.description && (
+                  <p className="text-xs text-slate-800 font-medium leading-relaxed break-words">
+                    {item.description}
+                  </p>
+                )}
               </div>
 
               {/* Sub-Activities / Games List if Available */}
