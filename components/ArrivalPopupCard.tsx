@@ -547,20 +547,6 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
                 return (
                   <>
-                    {/* If PJU (Alpine House), display 4 PJU standing cutout above the badge as shown in screenshot */}
-                    {isPJU && (
-                      <div className="mb-0.5 -mt-6 pointer-events-none drop-shadow-md">
-                        <Image
-                          src="/avatars/pju_squad_4.png"
-                          alt="Pimpinan PJU"
-                          width={110}
-                          height={40}
-                          unoptimized
-                          className="object-contain"
-                        />
-                      </div>
-                    )}
-
                     <div
                       className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold transition-all ${
                         isPJU
