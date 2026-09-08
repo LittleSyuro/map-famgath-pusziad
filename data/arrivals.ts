@@ -639,7 +639,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     title: "Makan Siang",
     locationName: "Resto Anthurium Lt. 2",
     locationNumber: "36a",
-    description: "Makan siang buffet bersama di Resto Anthurium Lantai 2 setelah rangkaian acara utama selesai.",
+    description: "Makan siang bersama di Resto Anthurium Lantai 2 setelah rangkaian acara utama selesai.",
     badge: "Makan Siang",
     color: "#10b981",
     destLegendNumber: "36a",
