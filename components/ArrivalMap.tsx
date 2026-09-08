@@ -204,23 +204,31 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
   }, []);
 
-  // Smooth Focus & Zoom to a specific coordinate on map with smart centering of the popup card
+  // Smooth Focus & Zoom to a specific coordinate on map with exact mathematical centering of the popup card
   const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.85) => {
-    if (transformRef.current && containerRef.current) {
+    if (transformRef.current && containerRef.current && mapCanvasRef.current) {
       const { setTransform } = transformRef.current;
       const containerRect = containerRef.current.getBoundingClientRect();
-      const targetX = (coord.x / 100) * containerRect.width;
-      const targetY = (coord.y / 100) * containerRect.height;
+      const canvasEl = mapCanvasRef.current;
+      
+      const canvasWidth = canvasEl.offsetWidth;
+      const canvasHeight = canvasEl.offsetHeight;
+      const canvasOffsetLeft = canvasEl.offsetLeft || 0;
+      const canvasOffsetTop = canvasEl.offsetTop || 0;
+
+      // Exact pixel position inside the transformed parent element
+      const pointInElementX = canvasOffsetLeft + (coord.x / 100) * canvasWidth;
+      const pointInElementY = canvasOffsetTop + (coord.y / 100) * canvasHeight;
       
       // Smart camera framing:
-      // When card expands below pin (coord.y < 45), card center is ~140px below pin.
-      // When card expands above pin (coord.y >= 45), card center is ~140px above pin.
-      // We offset the vertical positioning so the entire expanded card is centered in the viewport!
+      // When card expands below pin (coord.y < 45), card vertical center is ~140px below pin.
+      // When card expands above pin (coord.y >= 45), card vertical center is ~140px above pin.
+      // Offset so the popup card itself is dead-center on the user's screen.
       const isTopHalf = coord.y < 45;
       const cardCenterOffset = isTopHalf ? 140 : -140;
 
-      const posX = containerRect.width / 2 - targetX * zoomFactor;
-      const posY = (containerRect.height / 2 - cardCenterOffset) - targetY * zoomFactor;
+      const posX = containerRect.width / 2 - pointInElementX * zoomFactor;
+      const posY = (containerRect.height / 2 - cardCenterOffset) - pointInElementY * zoomFactor;
       setTransform(posX, posY, zoomFactor, 750, "easeOutQuad");
     }
   }, []);
