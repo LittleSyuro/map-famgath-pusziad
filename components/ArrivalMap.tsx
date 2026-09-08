@@ -1074,6 +1074,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
                   {/* Starting Point Marker on Map (Only when PJU arrival/check-in is active) */}
                   {!isEditorOpen &&
+                    !showAllLocations &&
                     !currentAgendaItem.disablePawn &&
                     (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin") &&
                     startPoint && (
@@ -1131,9 +1132,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       );
                     })}
 
-                  {/* Render Key Event Pin Points: If one is open, only render that one; otherwise render all badges */}
+                  {/* Render Key Event Pin Points: Otomatis disembunyikan saat seluruh 86 nomor legenda di-unhide (showAllLocations) */}
                   {!isEditorOpen &&
                     !isCalibratorOpen &&
+                    !showAllLocations &&
                     activeActivityId !== "d1-arrival" &&
                     (activeOpenPinId
                       ? KEY_EVENT_PINPOINTS.filter((p) => p.id === activeOpenPinId)

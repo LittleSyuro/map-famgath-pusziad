@@ -231,12 +231,12 @@ export const DAY2_HIGHLIGHT_SPOTS: HighlightSpot[] = [
   },
   {
     id: "spot-bridge",
-    name: "Invisible Bridge (Jembatan Kaca)",
-    legendNumber: "15",
+    name: "Tangga Spot Foto Bersama (Samping Kolam)",
+    legendNumber: "14",
     image: "/resort_media/spots/foto_bersama_jembatan.jpg",
-    coords: { x: 54.0, y: 47.0 },
-    category: "Spot Foto Bersama",
-    description: "Titik akhir jalan santai dan spot foto bersama seluruh peserta di atas jembatan kaca berlatar panorama Gunung Salak.",
+    coords: { x: 54.1, y: 43.5 },
+    category: "Titik Akhir & Spot Foto Bersama",
+    description: "Titik akhir rute jalan santai di area tangga samping kolam renang untuk sesi foto bersama seluruh rombongan.",
   },
   {
     id: "spot-pinus",
@@ -448,17 +448,16 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
   },
   {
     id: "pin-bridge",
-    name: "Invisible Bridge (Foto Bersama)",
+    name: "Tangga Spot Foto Bersama (Samping Kolam)",
     category: "Titik Akhir Jalan Santai",
-    legendNumber: "15",
+    legendNumber: "14",
     image: "/resort_media/spots/foto_bersama_jembatan.jpg",
     galleryImages: [
-      "/resort_media/spots/foto_bersama_jembatan.jpg",
-      "/legend/15_Invisible_Bridge.png"
+      "/resort_media/spots/foto_bersama_jembatan.jpg"
     ],
     coords: { x: 54.1, y: 43.5 },
-    description: "Titik akhir rute jalan santai untuk sesi foto bersama seluruh keluarga besar rombongan di Invisible Bridge.",
-    badge: "Spot Foto Bersama (No. 15)",
+    description: "Titik akhir rute jalan santai untuk sesi foto bersama seluruh keluarga besar rombongan di tangga samping kolam renang.",
+    badge: "Spot Foto Bersama (No. 14)",
     color: "#06b6d4",
   },
   {
@@ -769,18 +768,17 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     startMinutes: 465, // 07:45
     endMinutes: 525, // 08:45
     title: "Jalan Santai & Foto Bersama",
-    locationName: "Invisible Bridge (No. 15)",
-    locationNumber: "15",
-    description: "Kegiatan jalan santai mengelilingi kawasan resort yang berakhir dengan sesi foto bersama seluruh rombongan di Invisible Bridge (Jembatan No. 15).",
+    locationName: "Tangga Samping Kolam (No. 14)",
+    locationNumber: "14",
+    description: "Kegiatan jalan santai mengelilingi kawasan resort yang berakhir dengan sesi foto bersama seluruh rombongan di tangga samping kolam renang (No. 14).",
     badge: "Jalan Santai",
     color: "#14b8a6",
-    destLegendNumber: "15",
+    destLegendNumber: "14",
     destImage: "/resort_media/spots/foto_bersama_jembatan.jpg",
     destCoordinates: { x: 54.1, y: 43.5 },
     highlightSpots: DAY2_HIGHLIGHT_SPOTS,
     galleryImages: [
       "/resort_media/spots/foto_bersama_jembatan.jpg",
-      "/legend/15_Invisible_Bridge.png",
       "/legend/03_Hutan_Pinus.png",
       "/legend/51_Rumah_Kelinci.png",
       "/resort_media/gerbera/gerbera_2.png"

@@ -169,22 +169,22 @@ export const LOCATIONS: LocationItem[] = [
   {
     "id": "14",
     "number": "14",
-    "name": "Spot Foto",
-    "image": "/legend/14_Spot_Foto.png",
-    "category": "Area Outbound & Infinity Pool",
-    "description": "Fasilitas Spot Foto di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 68,
-    "mapY": 30
+    "name": "Tangga Spot Foto Bersama (Samping Kolam)",
+    "image": "/resort_media/spots/foto_bersama_jembatan.jpg",
+    "category": "Titik Akhir & Spot Foto Bersama",
+    "description": "Area tangga samping kolam renang / waterboom, spot foto bersama seluruh keluarga besar rombongan Famgath Pusziad.",
+    "mapX": 54.1,
+    "mapY": 43.5
   },
   {
     "id": "15",
     "number": "15",
-    "name": "Invisible Bridge (Spot Foto Bersama)",
-    "image": "/resort_media/spots/foto_bersama_jembatan.jpg",
-    "category": "Spot Foto & Titik Akhir Jalan Santai",
-    "description": "Jembatan kaca transparan ikonik Invisible Bridge, titik akhir rute jalan santai untuk lokasi foto bersama seluruh keluarga besar rombongan.",
-    "mapX": 54.1,
-    "mapY": 43.5
+    "name": "Invisible Bridge",
+    "image": "/legend/15_Invisible_Bridge.png",
+    "category": "Area Outbound & Infinity Pool",
+    "description": "Fasilitas Invisible Bridge (Jembatan Kaca) di The Highland Park Resort - Hotel Bogor.",
+    "mapX": 54.0,
+    "mapY": 47.0
   },
   {
     "id": "16",

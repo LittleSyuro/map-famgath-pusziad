@@ -35,6 +35,7 @@ yarn-error.log*
 /legend_rounded/
 public/debug_crops/
 public/debug_iso/
+public/debug_inspect/
 public/map_clean_3d.jpg
 public/map_only_clean.jpg
 public/maps-3d-model.png

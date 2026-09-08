@@ -34,6 +34,7 @@ import {
   Play,
   Trees,
   Coffee,
+  Camera,
 } from "lucide-react";
 
 interface ArrivalPopupCardProps {
@@ -156,11 +157,18 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const offsetX = vip?.popupOffsetX || 0;
   const offsetY = vip?.popupOffsetY || 0;
 
-  const legendNum = activeRoom?.legendNumber || keyPinpoint?.legendNumber || roomData?.legendNumber || spotData?.legendNumber || vip?.roomLegendNumber || "";
-  const placeName = activeRoom?.name || keyPinpoint?.name || roomData?.name || spotData?.name || vip?.mapLocationName || "";
+  const pinLegendNum = keyPinpoint?.legendNumber || roomData?.legendNumber || spotData?.legendNumber || vip?.roomLegendNumber || "";
+  const pinPlaceName = keyPinpoint?.name || roomData?.name || spotData?.name || vip?.mapLocationName || "";
+  const pinTitleText = `No. ${pinLegendNum} ${pinPlaceName}`;
+  const pinSubtitleText = keyPinpoint?.category || roomData?.role || spotData?.category || vip?.title || "";
+  const pinIsPJU = !!(keyPinpoint?.isPJU || roomData?.isPJU || vip?.isPJU || pinPlaceName.toLowerCase().includes("alpine"));
+
+  // Modal dialog specific data (dynamic room switcher when accommodation is active)
+  const legendNum = activeRoom?.legendNumber || pinLegendNum;
+  const placeName = activeRoom?.name || pinPlaceName;
   const titleText = `No. ${legendNum} ${placeName}`;
 
-  const subtitleText = activeRoom?.role || keyPinpoint?.category || roomData?.role || spotData?.category || vip?.title || "";
+  const subtitleText = activeRoom?.role || pinSubtitleText;
   const descriptionText = activeRoom?.description || keyPinpoint?.description || spotData?.description || roomData?.description || agendaItem?.description || vip?.title || "";
 
   const menuList = keyPinpoint?.menuCategories || agendaItem?.menuCategories;
@@ -172,14 +180,14 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const facilitiesList = activeRoom?.facilities || keyPinpoint?.facilities || roomData?.facilities;
   const hasFacilities = !!(facilitiesList && facilitiesList.length > 0);
 
-  const isPJU = activeRoom ? activeRoom.isPJU : !!(keyPinpoint?.isPJU || roomData?.isPJU || vip?.isPJU || placeName.toLowerCase().includes("alpine"));
+  const isPJU = activeRoom ? activeRoom.isPJU : pinIsPJU;
   const activeFocusCoords = activeRoom ? activeRoom.coords : { x: pinX, y: pinY };
 
   return (
     <>
-      {/* On-Map Badge Pin (Always anchored accurately at coordinates) */}
+      {/* On-Map Badge Pin (Circular Iconography by default, expands on hover) */}
       <div
-        className="absolute pointer-events-auto z-40 select-none cursor-pointer"
+        className="absolute pointer-events-auto z-40 select-none cursor-pointer group hover:z-50"
         style={{
           left: `calc(${pinX}% + ${offsetX}px)`,
           top: `calc(${pinY}% + ${offsetY}px)`,
@@ -195,24 +203,24 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
         }}
       >
         {(() => {
-          const combinedName = `${titleText} ${placeName} ${subtitleText}`.toLowerCase();
+          const combinedName = `${pinTitleText} ${pinPlaceName} ${pinSubtitleText}`.toLowerCase();
           const isResto = combinedName.includes("resto") || combinedName.includes("anthurium");
           const isMasjid = combinedName.includes("masjid") || combinedName.includes("mushola");
           const isBallroom = combinedName.includes("ballroom") || combinedName.includes("aster");
           const isHelipad = combinedName.includes("helipad") || combinedName.includes("gerbera");
-          const isSpot = !!spotData || combinedName.includes("bridge") || combinedName.includes("noah") || combinedName.includes("pinus");
+          const isSpot = !!spotData || combinedName.includes("bridge") || combinedName.includes("noah") || combinedName.includes("pinus") || combinedName.includes("tangga") || combinedName.includes("foto");
 
           return (
             <motion.div
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
-              title={`Klik untuk membuka detail ${titleText}`}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold transition-all ${
+              title={`Klik untuk membuka detail ${pinTitleText}`}
+              className={`relative flex items-center h-10 px-2.5 rounded-full shadow-2xl backdrop-blur-md border text-xs font-bold transition-all duration-300 ease-out group-hover:px-3.5 group-hover:rounded-2xl ${
                 isOpen
                   ? "ring-4 ring-lime-400 shadow-glow-lime scale-105"
                   : ""
               } ${
-                isPJU
+                pinIsPJU
                   ? "bg-gradient-to-r from-amber-400 via-lime-400 to-yellow-300 text-slate-950 border-white ring-2 ring-amber-400/60 font-black shadow-glow-gold"
                   : isResto
                   ? "bg-[#0b1f0c]/95 text-emerald-200 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-950/60"
@@ -227,34 +235,46 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   : "bg-[#062419]/95 text-emerald-300 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-950/60"
               }`}
             >
-              {isPJU ? (
-                <Building className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-              ) : isResto ? (
-                <Utensils className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              ) : isMasjid ? (
-                <Compass className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-              ) : isBallroom ? (
-                <Building className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-              ) : isHelipad ? (
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              ) : isSpot ? (
-                <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin-slow shrink-0" />
-              ) : (
-                <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              {/* Category Icon */}
+              <div className="flex items-center justify-center shrink-0">
+                {pinIsPJU ? (
+                  <Building className="w-4 h-4 text-slate-950" />
+                ) : isResto ? (
+                  <Utensils className="w-4 h-4 text-emerald-400" />
+                ) : isMasjid ? (
+                  <Compass className="w-4 h-4 text-indigo-400" />
+                ) : isBallroom ? (
+                  <Building className="w-4 h-4 text-purple-400" />
+                ) : isHelipad ? (
+                  <MapPin className="w-4 h-4 text-amber-400" />
+                ) : isSpot ? (
+                  <Camera className="w-4 h-4 text-cyan-400 animate-pulse" />
+                ) : (
+                  <Building className="w-4 h-4 text-emerald-400" />
+                )}
+              </div>
+
+              {/* Tiny Badge Tag for Number (Visible when collapsed) */}
+              {pinLegendNum && (
+                <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono font-black shadow-md border group-hover:opacity-0 group-hover:scale-50 transition-all pointer-events-none bg-slate-950 text-white border-white/40">
+                  {pinLegendNum}
+                </span>
               )}
 
-              <div className="flex items-center gap-1.5 whitespace-nowrap">
-                <span className="font-mono font-black opacity-90">
-                  No. {legendNum}
+              {/* Expandable Label Text on Hover */}
+              <div className="max-w-0 opacity-0 group-hover:max-w-[280px] group-hover:opacity-100 transition-all duration-300 ease-out overflow-hidden flex items-center gap-1.5 whitespace-nowrap ml-0 group-hover:ml-2">
+                <span className="font-mono font-black opacity-90 text-[11px]">
+                  No. {pinLegendNum}
                 </span>
-                <span className="font-extrabold max-w-[150px] truncate">
-                  {placeName}
+                <span className="font-extrabold text-xs truncate">
+                  {pinPlaceName}
                 </span>
               </div>
 
+              {/* Subtle Indicator Ping Dot */}
               <span
-                className={`w-2 h-2 rounded-full animate-ping ${
-                  isPJU
+                className={`w-2 h-2 rounded-full shrink-0 ml-0.5 group-hover:ml-1.5 ${
+                  pinIsPJU
                     ? "bg-slate-950"
                     : isResto
                     ? "bg-emerald-400"
