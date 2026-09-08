@@ -65,8 +65,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [showF11Toast, setShowF11Toast] = useState<boolean>(false);
   const f11TimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Active Agenda State
-  const [activeActivityId, setActiveActivityId] = useState<string>("d1-checkin");
+  // Active Agenda State - Starts from Agenda 1 (Kedatangan PJU Pusziad)
+  const [activeActivityId, setActiveActivityId] = useState<string>("d1-arrival");
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
 
