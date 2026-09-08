@@ -221,9 +221,35 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     }
   }, []);
 
+  // Determine if a specific key pinpoint is currently expanded/open
+  const activeOpenPinId = useMemo(() => {
+    // If selected legend popup is open, no key pinpoint is open
+    if (selectedLegendLocation) return null;
+
+    // Check if explicitly open in state
+    for (const pin of KEY_EVENT_PINPOINTS) {
+      if (openKeyPinpointIds[pin.id]) return pin.id;
+    }
+
+    // If user explicitly closed all popups
+    if (openKeyPinpointIds["__closed__"]) return null;
+
+    // Default open for current active agenda destination
+    if (activeActivityId === "d1-checkin") return "pin-alpine";
+    if (activeActivityId === "d1-ishoma") return "pin-resto";
+    if (activeActivityId === "d1-malam-keakraban") return "pin-ballroom";
+    if (activeActivityId === "d2-senam") return "pin-helipad";
+    if (activeActivityId === "d2-sarapan") return "pin-resto";
+    if (activeActivityId === "d2-outbound") return "pin-helipad";
+    if (activeActivityId === "d2-jalan-sehat") return "pin-bridge";
+
+    return null;
+  }, [openKeyPinpointIds, selectedLegendLocation, activeActivityId]);
+
   // Handle Select Legend from Search or Map Marker
   const handleSelectLegend = useCallback(
     (loc: LocationItem) => {
+      setOpenKeyPinpointIds({ __closed__: true });
       setSelectedLegendLocation(loc);
       if (loc.mapX !== undefined && loc.mapY !== undefined) {
         focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.85);
@@ -1069,14 +1095,13 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     })}
 
                   {/* Interactive 86 Resort Location Markers (Clickable places across map) */}
-                  {/* Interactive 86 Resort Location Markers (Clickable places across map) */}
-                  {!isEditorOpen && showAllLocations && (
+                  {!isEditorOpen && showAllLocations && !activeOpenPinId && !selectedLegendLocation && (
                     <div className="absolute inset-0 pointer-events-none z-15">
                       {mappedLocations.map((loc) => (
                         <div key={`loc-pin-${loc.id}`} className="pointer-events-auto">
                           <LocationMarker
                             location={loc}
-                            isSelected={selectedLegendLocation?.id === loc.id}
+                            isSelected={false}
                             isHighlighted={true}
                             onClick={handleSelectLegend}
                           />
@@ -1089,7 +1114,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                   {!isEditorOpen && selectedLegendLocation && (
                     <LegendMapPopup
                       location={selectedLegendLocation}
-                      onClose={() => setSelectedLegendLocation(null)}
+                      onClose={() => {
+                        setSelectedLegendLocation(null);
+                        setOpenKeyPinpointIds({});
+                      }}
                       onFocusOnMap={(loc) => {
                         if (loc.mapX !== undefined && loc.mapY !== undefined) {
                           focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.85);
@@ -1158,11 +1186,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       );
                     })}
 
-                  {/* Render All Key Event Pin Points (Resto, Masjid, Ballroom, Kamar PJU & Rombongan, Helipad, Spot Wisata) from Agenda 2 onwards */}
+                  {/* Render Key Event Pin Points: If one is open, only render that one; otherwise render all badges */}
                   {!isEditorOpen &&
                     !isCalibratorOpen &&
                     activeActivityId !== "d1-arrival" &&
-                    KEY_EVENT_PINPOINTS.map((pin) => {
+                    (activeOpenPinId
+                      ? KEY_EVENT_PINPOINTS.filter((p) => p.id === activeOpenPinId)
+                      : !selectedLegendLocation
+                      ? KEY_EVENT_PINPOINTS
+                      : []
+                    ).map((pin) => {
                       const pinActualCoords = customPinCoords[pin.id] || pin.coords;
                       const isDestinationOfCurrentAgenda =
                         (activeActivityId === "d1-checkin" && pin.id === "pin-alpine") ||
@@ -1173,10 +1206,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                         (activeActivityId === "d2-outbound" && pin.id === "pin-helipad") ||
                         (activeActivityId === "d2-jalan-sehat" && pin.id === "pin-bridge");
 
-                      const isOpen =
-                        openKeyPinpointIds[pin.id] !== undefined
-                          ? !!openKeyPinpointIds[pin.id]
-                          : isDestinationOfCurrentAgenda;
+                      const isOpen = activeOpenPinId ? pin.id === activeOpenPinId : false;
 
                       return (
                         <ArrivalPopupCard
@@ -1185,17 +1215,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                           agendaItem={isDestinationOfCurrentAgenda ? currentAgendaItem : undefined}
                           isOpen={isOpen}
                           onClose={() =>
-                            setOpenKeyPinpointIds((prev) => ({
-                              ...prev,
-                              [pin.id]: false,
-                            }))
+                            setOpenKeyPinpointIds({ __closed__: true })
                           }
-                          onOpen={() =>
-                            setOpenKeyPinpointIds((prev) => ({
-                              ...prev,
-                              [pin.id]: true,
-                            }))
-                          }
+                          onOpen={() => {
+                            setSelectedLegendLocation(null);
+                            setOpenKeyPinpointIds({ [pin.id]: true });
+                          }}
                           onFocusPinPoint={() =>
                             focusOnCoordinate(pinActualCoords, 1.75)
                           }
