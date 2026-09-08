@@ -28,6 +28,7 @@ import { LocationMarker } from "./LocationMarker";
 import { LocationModal } from "./LocationModal";
 import { LegendSearchModal } from "./LegendSearchModal";
 import { LegendMapPopup } from "./LegendMapPopup";
+import { PinPointCalibrator } from "./PinPointCalibrator";
 import { PathEditorOverlay, ROUTE_ACTIVITIES } from "./PathEditorOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -51,6 +52,7 @@ import {
   Eye,
   EyeOff,
   Search,
+  Crosshair,
 } from "lucide-react";
 
 interface ArrivalMapProps {
@@ -89,6 +91,57 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
   const [openSpotPopupIds, setOpenSpotPopupIds] = useState<Record<string, boolean>>({});
   const [openKeyPinpointIds, setOpenKeyPinpointIds] = useState<Record<string, boolean>>({});
+
+  // Pin Point Visual Calibrator State
+  const [isCalibratorOpen, setIsCalibratorOpen] = useState<boolean>(false);
+  const [selectedCalibratePinId, setSelectedCalibratePinId] = useState<string>("pin-alpine");
+  const [draggedPinId, setDraggedPinId] = useState<string | null>(null);
+
+  const [customPinCoords, setCustomPinCoords] = useState<Record<string, Waypoint>>(() => {
+    const initial: Record<string, Waypoint> = {};
+    KEY_EVENT_PINPOINTS.forEach((p) => {
+      initial[p.id] = p.coords;
+    });
+    return initial;
+  });
+
+  // Load custom pin coordinates from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("famgath_pin_coords");
+      if (saved) {
+        setCustomPinCoords((prev) => ({ ...prev, ...JSON.parse(saved) }));
+      }
+    } catch (e) {
+      console.error("Error loading pin coords:", e);
+    }
+  }, []);
+
+  const handleUpdatePinCoord = useCallback((id: string, coords: Waypoint) => {
+    setCustomPinCoords((prev) => ({ ...prev, [id]: coords }));
+  }, []);
+
+  const handleSavePinCoords = useCallback(async () => {
+    localStorage.setItem("famgath_pin_coords", JSON.stringify(customPinCoords));
+    try {
+      await fetch("/api/save-pinpoints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyPinpoints: customPinCoords }),
+      });
+    } catch (e) {
+      console.error("Error saving pinpoints to API:", e);
+    }
+  }, [customPinCoords]);
+
+  const handleResetPinCoords = useCallback(() => {
+    localStorage.removeItem("famgath_pin_coords");
+    const initial: Record<string, Waypoint> = {};
+    KEY_EVENT_PINPOINTS.forEach((p) => {
+      initial[p.id] = p.coords;
+    });
+    setCustomPinCoords(initial);
+  }, []);
 
   // Keyboard shortcut for search (Ctrl+K or /)
   useEffect(() => {
@@ -381,6 +434,17 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   };
 
   const handleMapPointerMove = (e: React.PointerEvent) => {
+    if (draggedPinId && mapCanvasRef.current) {
+      const rect = mapCanvasRef.current.getBoundingClientRect();
+      const xPct = Math.max(1, Math.min(99, ((e.clientX - rect.left) / rect.width) * 100));
+      const yPct = Math.max(1, Math.min(99, ((e.clientY - rect.top) / rect.height) * 100));
+      handleUpdatePinCoord(draggedPinId, {
+        x: Number(xPct.toFixed(1)),
+        y: Number(yPct.toFixed(1)),
+      });
+      return;
+    }
+
     if (!isEditorOpen || draggedNodeIndex === null || !mapCanvasRef.current) return;
 
     const rect = mapCanvasRef.current.getBoundingClientRect();
@@ -397,13 +461,27 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   };
 
   const handleMapPointerUp = () => {
+    if (draggedPinId) {
+      setDraggedPinId(null);
+    }
     if (draggedNodeIndex !== null) {
       setDraggedNodeIndex(null);
     }
   };
 
-  // Click on Map to Add Waypoint Node
+  // Click on Map to Add Waypoint Node or Move Selected Calibrate Pin
   const handleMapCanvasClick = (e: React.MouseEvent) => {
+    if (isCalibratorOpen && selectedCalibratePinId && mapCanvasRef.current) {
+      const rect = mapCanvasRef.current.getBoundingClientRect();
+      const xPct = Math.max(1, Math.min(99, ((e.clientX - rect.left) / rect.width) * 100));
+      const yPct = Math.max(1, Math.min(99, ((e.clientY - rect.top) / rect.height) * 100));
+      handleUpdatePinCoord(selectedCalibratePinId, {
+        x: Number(xPct.toFixed(1)),
+        y: Number(yPct.toFixed(1)),
+      });
+      return;
+    }
+
     if (!isEditorOpen || draggedNodeIndex !== null || !mapCanvasRef.current) return;
 
     const rect = mapCanvasRef.current.getBoundingClientRect();
@@ -669,8 +747,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                   {/* Edit Nodes Mode Button */}
                   <button
                     type="button"
-                    onClick={() => setIsEditorOpen(!isEditorOpen)}
-                    title={isEditorOpen ? "Tutup Editor Nodes" : "🛠️ Edit Titik / Nodes Rute"}
+                    onClick={() => {
+                      setIsEditorOpen(!isEditorOpen);
+                      if (!isEditorOpen) setIsCalibratorOpen(false);
+                    }}
+                    title={isEditorOpen ? "Tutup Editor Nodes Rute" : "🛠️ Edit Titik / Nodes Rute"}
                     className={`p-2.5 rounded-xl transition-all cursor-pointer ${
                       isEditorOpen
                         ? "text-lime-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
@@ -678,6 +759,27 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     }`}
                   >
                     <Edit3 className="w-5 h-5" />
+                  </button>
+
+                  {/* Pin Point Visual Calibrator Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCalibratorOpen(!isCalibratorOpen);
+                      if (!isCalibratorOpen) setIsEditorOpen(false);
+                    }}
+                    title={
+                      isCalibratorOpen
+                        ? "Tutup Mode Kalibrasi Pin Point"
+                        : "📍 Mode Kalibrasi / Geser Posisi Pin Point"
+                    }
+                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                      isCalibratorOpen
+                        ? "text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-300 ring-2 ring-amber-300 shadow-md font-black"
+                        : "text-amber-300 hover:text-white hover:bg-lime-800/40"
+                    }`}
+                  >
+                    <Crosshair className="w-5 h-5" />
                   </button>
 
                   {/* Toggle Schedule Sidebar */}
@@ -1015,10 +1117,53 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       </div>
                     )}
 
+                  {/* Visual Draggable Pin Handles during Calibration Mode */}
+                  {isCalibratorOpen &&
+                    KEY_EVENT_PINPOINTS.map((pin) => {
+                      const coords = customPinCoords[pin.id] || pin.coords;
+                      const isSelected = pin.id === selectedCalibratePinId;
+
+                      return (
+                        <div
+                          key={`calib-handle-${pin.id}`}
+                          onPointerDown={(e) => {
+                            e.stopPropagation();
+                            setSelectedCalibratePinId(pin.id);
+                            setDraggedPinId(pin.id);
+                          }}
+                          className={`absolute z-50 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-move select-none transition-transform ${
+                            isSelected ? "scale-125 z-[60]" : "hover:scale-110"
+                          }`}
+                          style={{
+                            left: `${coords.x}%`,
+                            top: `${coords.y}%`,
+                          }}
+                          title={`No. ${pin.legendNumber} ${pin.name} (${coords.x}%, ${coords.y}%) - Drag untuk menggeser`}
+                        >
+                          <div
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-xs shadow-2xl border-2 transition-all ${
+                              isSelected
+                                ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 border-white ring-4 ring-amber-400 shadow-glow-gold animate-pulse"
+                                : "bg-[#0b1803]/95 text-amber-200 border-amber-400/80 shadow-lg"
+                            }`}
+                          >
+                            <Crosshair className="w-3.5 h-3.5 text-slate-950" />
+                            <span>No. {pin.legendNumber} {pin.name}</span>
+                          </div>
+
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded-md bg-[#061202]/95 border border-amber-400/50 text-[10px] font-mono font-bold text-amber-300 shadow-lg whitespace-nowrap pointer-events-none">
+                            X: {coords.x.toFixed(1)}% | Y: {coords.y.toFixed(1)}%
+                          </div>
+                        </div>
+                      );
+                    })}
+
                   {/* Render All Key Event Pin Points (Resto, Masjid, Ballroom, Kamar PJU & Rombongan, Helipad, Spot Wisata) from Agenda 2 onwards */}
                   {!isEditorOpen &&
+                    !isCalibratorOpen &&
                     activeActivityId !== "d1-arrival" &&
                     KEY_EVENT_PINPOINTS.map((pin) => {
+                      const pinActualCoords = customPinCoords[pin.id] || pin.coords;
                       const isDestinationOfCurrentAgenda =
                         (activeActivityId === "d1-checkin" && pin.id === "pin-alpine") ||
                         (activeActivityId === "d1-ishoma" && pin.id === "pin-resto") ||
@@ -1036,7 +1181,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       return (
                         <ArrivalPopupCard
                           key={`keypin-${pin.id}-${activeActivityId}`}
-                          keyPinpoint={pin}
+                          keyPinpoint={{ ...pin, coords: pinActualCoords }}
                           agendaItem={isDestinationOfCurrentAgenda ? currentAgendaItem : undefined}
                           isOpen={isOpen}
                           onClose={() =>
@@ -1052,7 +1197,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                             }))
                           }
                           onFocusPinPoint={() =>
-                            focusOnCoordinate(pin.coords, 1.75)
+                            focusOnCoordinate(pinActualCoords, 1.75)
                           }
                         />
                       );
@@ -1133,6 +1278,25 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
         onSelectLocation={handleSelectLegend}
+      />
+
+      {/* Visual Pin Point Calibrator */}
+      <PinPointCalibrator
+        isCalibrating={isCalibratorOpen}
+        onToggleCalibrating={() => setIsCalibratorOpen(!isCalibratorOpen)}
+        pinpoints={KEY_EVENT_PINPOINTS}
+        customPinCoords={customPinCoords}
+        selectedPinId={selectedCalibratePinId}
+        onSelectPin={(id) => {
+          setSelectedCalibratePinId(id);
+          const coords = customPinCoords[id] || KEY_EVENT_PINPOINTS.find((p) => p.id === id)?.coords;
+          if (coords) {
+            focusOnCoordinate(coords, 1.85);
+          }
+        }}
+        onUpdatePinCoord={handleUpdatePinCoord}
+        onSavePermanent={handleSavePinCoords}
+        onResetDefaults={handleResetPinCoords}
       />
     </div>
   );
