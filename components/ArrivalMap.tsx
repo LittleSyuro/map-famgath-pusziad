@@ -70,7 +70,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const animFrameRef = useRef<number | null>(null);
 
   // Direct Route Animation Progress: 0 (Start) to 1 (Destination)
-  const [animProgress, setAnimProgress] = useState<number>(1);
+  const [animProgress, setAnimProgress] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showPaths, setShowPaths] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -99,7 +99,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   // Active room & spot popups
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
   const [openSpotPopupIds, setOpenSpotPopupIds] = useState<Record<string, boolean>>({});
-  const [openKeyPinpointIds, setOpenKeyPinpointIds] = useState<Record<string, boolean>>({});
+  const [openKeyPinpointIds, setOpenKeyPinpointIds] = useState<Record<string, boolean>>({ __closed__: true });
 
   // Pin Point Visual Calibrator State
   const [isCalibratorOpen, setIsCalibratorOpen] = useState<boolean>(false);
@@ -308,15 +308,55 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return waypoints[0] || WELCOME_GATE_COORDS;
   }, [customRoutes, activeActivityId, currentAgendaItem]);
 
+  // Helper mapping agenda activity ID to key event pinpoint ID
+  const getPinIdForAgenda = useCallback((agendaId: string): string => {
+    switch (agendaId) {
+      case "d1-arrival":
+        return "pin-helipad";
+      case "d1-checkin":
+        return "pin-alpine";
+      case "d1-worship":
+        return "pin-masjid";
+      case "d1-dinner":
+      case "d1-ishoma":
+      case "d2-breakfast":
+      case "d2-sarapan":
+      case "d2-lunch":
+        return "pin-resto";
+      case "d1-games":
+      case "d1-malam-keakraban":
+      case "d1-acara-malam":
+      case "d2-grandprize":
+        return "pin-ballroom";
+      case "d2-skj":
+      case "d2-senam":
+      case "d2-games":
+      case "d2-outbound":
+        return "pin-helipad";
+      case "d2-jalan-sehat":
+      case "d2-closing":
+        return "pin-bridge";
+      default:
+        return "pin-alpine";
+    }
+  }, []);
+
   // Play Continuous Smooth Animation along waypoints (from 0 to 1)
-  const startRouteAnimation = useCallback(() => {
+  const startRouteAnimation = useCallback((targetAgendaId?: string) => {
+    const agendaId = targetAgendaId || activeActivityId;
+    const agendaItem =
+      ALL_RUNDOWN_ITEMS.find((item) => item.id === agendaId) ||
+      currentAgendaItem;
+
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
     }
 
-    if (currentAgendaItem.disablePawn) {
+    if (agendaItem.disablePawn) {
       setIsAnimating(false);
       setAnimProgress(1);
+      const pinId = getPinIdForAgenda(agendaId);
+      setOpenKeyPinpointIds({ [pinId]: true });
       setOpenPopupIds({ [VIP_ARRIVALS[0].id]: true });
       return;
     }
@@ -326,6 +366,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     setOpenPopupIds({});
     setOpenRoomPopupIds({});
     setOpenSpotPopupIds({});
+    setOpenKeyPinpointIds({ __closed__: true });
 
     const startTime = performance.now();
     const duration = 2800; // Continuous smooth movement
@@ -340,52 +381,24 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       } else {
         setIsAnimating(false);
         setAnimProgress(1);
-        // Automatically open destination location photo card on arrival (except Kedatangan PJU)
-        if (activeActivityId !== "d1-arrival") {
-          setOpenPopupIds({ [VIP_ARRIVALS[0].id]: true });
-        }
+        // Automatically open destination location photo card on arrival
+        const pinId = getPinIdForAgenda(agendaId);
+        setOpenKeyPinpointIds({ [pinId]: true });
+        setOpenPopupIds({ [VIP_ARRIVALS[0].id]: true });
       }
     };
 
     animFrameRef.current = requestAnimationFrame(animate);
-  }, [currentAgendaItem, activeActivityId]);
+  }, [activeActivityId, currentAgendaItem, getPinIdForAgenda]);
 
-  // When active activity changes, start animation immediately
+  // Clean up animation on unmount (do not auto-play on initial load)
   useEffect(() => {
-    startRouteAnimation();
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [activeActivityId, startRouteAnimation]);
+  }, []);
 
-// Helper mapping agenda activity ID to key event pinpoint ID
-const getPinIdForAgenda = (agendaId: string): string => {
-  switch (agendaId) {
-    case "d1-arrival":
-      return "pin-helipad";
-    case "d1-checkin":
-      return "pin-alpine";
-    case "d1-worship":
-      return "pin-masjid";
-    case "d1-dinner":
-    case "d1-ishoma":
-    case "d2-sarapan":
-      return "pin-resto";
-    case "d1-malam-keakraban":
-    case "d1-acara-malam":
-      return "pin-ballroom";
-    case "d2-senam":
-    case "d2-outbound":
-      return "pin-helipad";
-    case "d2-jalan-sehat":
-    case "d2-closing":
-      return "pin-bridge";
-    default:
-      return "pin-alpine";
-  }
-};
-
-  // Handle Select Agenda: Smooth Prezi fly & zoom to destination and automatically pop up destination card
+  // Handle Select Agenda: Immediately zoom to agenda location, start animation, and open popup upon arrival
   const handleSelectAgenda = useCallback(
     (agendaId: string) => {
       setActiveActivityId(agendaId);
@@ -393,24 +406,54 @@ const getPinIdForAgenda = (agendaId: string): string => {
       setSelectedLegendLocation(null);
 
       const pinId = getPinIdForAgenda(agendaId);
-      setOpenKeyPinpointIds({ [pinId]: true });
-
       const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId);
+
       if (item) {
-        const targetPinCoords = customPinCoords[pinId] || KEY_EVENT_PINPOINTS.find((p) => p.id === pinId)?.coords;
+        const targetPinCoords =
+          customPinCoords[pinId] ||
+          KEY_EVENT_PINPOINTS.find((p) => p.id === pinId)?.coords;
+        const waypoints =
+          customRoutes[agendaId] ||
+          item.defaultWaypoints ||
+          [];
+        const start = waypoints[0];
         const dest =
           targetPinCoords ||
-          customRoutes[agendaId]?.[customRoutes[agendaId].length - 1] ||
-          item.destCoordinates ||
-          item.defaultWaypoints?.[item.defaultWaypoints.length - 1];
-        if (dest) {
-          const zoom = agendaId === "d2-jalan-sehat" ? 2.35 : agendaId === "d1-checkin" ? 2.3 : 2.15;
-          focusOnCoordinate(dest, zoom);
+          waypoints[waypoints.length - 1] ||
+          item.destCoordinates;
+
+        const zoom =
+          agendaId === "d2-jalan-sehat"
+            ? 2.35
+            : agendaId === "d1-checkin"
+            ? 2.3
+            : 2.15;
+
+        const focusPoint =
+          start && (agendaId === "d1-arrival" || agendaId === "d1-checkin")
+            ? {
+                x: (start.x + (dest?.x || start.x)) / 2,
+                y: (start.y + (dest?.y || start.y)) / 2,
+              }
+            : dest || start;
+
+        if (focusPoint) {
+          focusOnCoordinate(focusPoint, zoom);
         }
       }
+
+      // Keep popup closed while walking animation runs
+      setOpenKeyPinpointIds({ __closed__: true });
+
+      // Trigger animation
+      startRouteAnimation(agendaId);
     },
-    [customRoutes, customPinCoords, focusOnCoordinate]
+    [customRoutes, customPinCoords, focusOnCoordinate, getPinIdForAgenda, startRouteAnimation]
   );
+
+  const handleReplayAnimation = useCallback(() => {
+    handleSelectAgenda(activeActivityId);
+  }, [handleSelectAgenda, activeActivityId]);
 
   // Next / Prev agenda helpers for Prezi Autoplay
   const goToNextAgenda = useCallback(() => {
@@ -702,7 +745,7 @@ const getPinIdForAgenda = (agendaId: string): string => {
           activeAgendaId={activeActivityId}
           isAnimating={isAnimating}
           onSelectAgenda={handleSelectAgenda}
-          onReplayAnimation={startRouteAnimation}
+          onReplayAnimation={handleReplayAnimation}
           onToggleEditor={() => setIsEditorOpen(!isEditorOpen)}
           isEditorOpen={isEditorOpen}
           onHide={() => setShowSidebar(false)}
