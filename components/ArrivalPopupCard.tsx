@@ -45,7 +45,6 @@ interface ArrivalPopupCardProps {
   roomData?: AccommodationRoom;
   spotData?: HighlightSpot;
   keyPinpoint?: KeyEventPinpoint;
-  autoCollapseMs?: number;
   onFocusPinPoint?: (coords?: Waypoint) => void;
 }
 
@@ -63,7 +62,6 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   roomData,
   spotData,
   keyPinpoint,
-  autoCollapseMs = 6000,
   onFocusPinPoint,
 }) => {
   const [activeTab, setActiveTab] = useState<"foto" | "menu" | "games" | "fasilitas">("foto");
@@ -134,16 +132,6 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
   const currentImage = imageList[activeImageIndex] || imageList[0] || (activeRoom ? activeRoom.image : keyPinpoint?.image) || vip?.roomImage || "";
 
-  // Auto-collapse timer (disabled when user is inspecting menu, games, or full frame)
-  useEffect(() => {
-    if (!isOpen || isFullFrame || activeTab !== "foto") return;
-
-    const timer = setTimeout(() => {
-      onClose();
-    }, autoCollapseMs);
-
-    return () => clearTimeout(timer);
-  }, [isOpen, isFullFrame, activeTab, autoCollapseMs, onClose]);
 
   // Keyboard navigation for Full Frame Slideshow
   useEffect(() => {
