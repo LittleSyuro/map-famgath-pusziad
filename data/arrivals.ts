@@ -411,7 +411,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     title: "PJU Games & Ibu-ibu PJU",
     locationName: "Grand Ballroom",
     locationNumber: "7",
-    description: "Perlombaan seru dan penuh keakraban untuk PJU Games dan Ibu-ibu PJU di Grand Ballroom.",
+    description: "Perlombaan seru dan penuh keakraban.",
     badge: "PJU & Ibu-ibu Games",
     color: "#a855f7",
     destLegendNumber: "7",

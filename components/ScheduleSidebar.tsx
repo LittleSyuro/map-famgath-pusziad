@@ -223,8 +223,8 @@ export const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
 
                 {/* Active Indicator */}
                 {isItemActive && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-black text-slate-950 bg-lime-300 px-2.5 py-0.5 rounded-full animate-pulse border border-lime-500 shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5 text-lime-800" />
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-slate-950 bg-lime-300 px-2.5 py-0.5 rounded-full border border-lime-500 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-lime-800 animate-ping" />
                     <span>Aktif</span>
                   </span>
                 )}
