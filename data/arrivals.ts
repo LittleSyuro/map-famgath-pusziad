@@ -667,35 +667,22 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "17.00",
     startMinutes: 780, // 13:00
     endMinutes: 1020, // 17:00
-    title: "Acara Ballroom",
-    locationName: "Grand Ballroom",
-    locationNumber: "7",
-    description: "Puncak acara ramah tamah, sambutan, pembagian grand prize, dan hiburan kebersamaan.",
-    badge: "Acara Ballroom",
+    title: "Waktu Keluarga",
+    locationName: "Kawasan The Highland Park",
+    description: "Acara bebas bersama keluarga atau kerabat, dapat menikmati suasana dan juga berbagai fasilitas di The Highland Park",
+    badge: "Waktu Keluarga",
     color: "#f59e0b",
-    destLegendNumber: "7",
-    destImage: "/legend/07_Grand_Ballroom.png",
-    destCoordinates: { x: 78.5, y: 24.5 },
-    defaultWaypoints: [
-      { x: 58.5, y: 22.5 },
-      { x: 63.8, y: 23.2 },
-      { x: 67.0, y: 24.2 },
-      { x: 71.5, y: 27.5 },
-      { x: 78.5, y: 24.5 },
+    destImage: "/legend/01_Lobby_Utama.png",
+    destCoordinates: { x: 50.0, y: 50.0 },
+    galleryImages: [
+      "/legend/01_Lobby_Utama.png",
+      "/legend/15_Invisible_Bridge.png",
+      "/legend/51_Rumah_Kelinci.png",
+      "/legend/03_Hutan_Pinus.png"
     ],
-    subActivities: [
-      {
-        title: "Susunan Acara Ballroom",
-        category: "Ballroom Session",
-        items: [
-          "Pembukaan & Doa Bersama",
-          "Sambutan PJU Pusziad",
-          "Grand Prize Sesi 1",
-          "Sesi Acara Khusus & Hiburan",
-          "Grand Prize Utama",
-          "Foto Bersama & Penutupan"
-        ],
-      },
+    defaultWaypoints: [
+      { x: 48.5, y: 43.5 },
+      { x: 50.0, y: 50.0 },
     ],
   },
 ];
@@ -703,6 +690,72 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
 // Combine all activities for easy route lookups
 export const ALL_RUNDOWN_ITEMS: RundownItem[] = [
   ...RUNDOWN_SCHEDULE_DAY_1,
+  ...RUNDOWN_SCHEDULE_DAY_2,
+];
+
+// Alias for simulation timeline
+export const RUNDOWN_SCHEDULE: RundownItem[] = RUNDOWN_SCHEDULE_DAY_1;
+
+export interface VIPArrival {
+  id: string;
+  name: string;
+  title: string;              // "PJU"
+  isPJU?: boolean;
+  photo: string;
+  internalNumber: string;     // "6"
+  mapLocationName: string;    // "Alpine House"
+  roomLegendNumber: string;   // "25"
+  roomImage: string;          // "/legend/25_Alpine_House.png"
+  roomX: number;
+  roomY: number;
+  popupOffsetX?: number;
+  popupOffsetY?: number;
+  color: string;
+  gateArrivalMinutes: number;
+  gateArrivalTimeStr: string;
+  walkStartMinutes: number;
+  walkStartTimeStr: string;
+  roomArrivalMinutes: number;
+  roomArrivalTimeStr: string;
+  pathWaypoints: Waypoint[];
+}
+
+export const WELCOME_GATE_COORDS: Waypoint = HELIPAD_COORDS;
+
+export const TIMELINE_START_MINUTES = 960;  // 16:00
+export const TIMELINE_END_MINUTES = 1080;   // 18:00
+
+// Single Character: "Si Bapak" (PJU)
+export const VIP_ARRIVALS: VIPArrival[] = [
+  {
+    id: "pju",
+    name: "Pejabat Utama (PJU)",
+    title: "PJU",
+    isPJU: true,
+    photo: "/avatars/budi_hariswanto.jpg",
+    internalNumber: "6",
+    mapLocationName: "Alpine House",
+    roomLegendNumber: "25",
+    roomImage: "/legend/25_Alpine_House.png",
+    roomX: 58.5,
+    roomY: 22.5,
+    popupOffsetX: 0,
+    popupOffsetY: 0,
+    color: "#eab308",
+    gateArrivalMinutes: 975,
+    gateArrivalTimeStr: "16:15",
+    walkStartMinutes: 1020,
+    walkStartTimeStr: "17:00",
+    roomArrivalMinutes: 1055,
+    roomArrivalTimeStr: "17:35",
+    pathWaypoints: [
+      SPAWN_BEHIND_HELIPAD,
+      HELIPAD_COORDS,
+      { x: 74.5, y: 31.0 },
+      { x: 71.5, y: 27.5 },
+      { x: 67.0, y: 24.5 },
+      { x: 62.0, y: 23.0 },
+      { x: 58.5, y: 22.5 },
   ...RUNDOWN_SCHEDULE_DAY_2,
 ];
 
