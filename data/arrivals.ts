@@ -151,7 +151,7 @@ export const ACCOMMODATION_ROOMS: AccommodationRoom[] = [
 // Menu Makan Malam & Santap Bersama di Resto Anthurium Lt. 2
 export const ANTHURIUM_MENU: MenuItem[] = [
   {
-    category: "Prasmanan Utama (Main Course)",
+    category: "Buffet Utama (Main Course)",
     items: [
       "Nasi Liwet Kastrol Khas Bogor & Nasi Putih Wangi",
       "Ayam Goreng Lengkuas Gurih Renyah",
@@ -194,7 +194,7 @@ export const ANTHURIUM_GALLERY = [
   {
     title: "Resto Anthurium Lt. 2 (Utama)",
     image: "/resort_media/anthurium/DSCF3443.jpg",
-    caption: "Foto HD suasana santap prasmanan dan tata meja di Resto Anthurium Lantai 2."
+    caption: "Foto HD suasana santap buffet dan tata meja di Resto Anthurium Lantai 2."
   },
   {
     title: "Sky Lounge & View Restaurant",
@@ -374,7 +374,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     title: "Makan Malam",
     locationName: "Resto Anthurium Lt. 2",
     locationNumber: "36a",
-    description: "Santap makan malam bersama seluruh rombongan di Resto Anthurium Lantai 2 dengan sajian prasmanan istimewa.",
+    description: "Santap makan malam bersama seluruh rombongan di Resto Anthurium Lantai 2 dengan sajian buffet istimewa.",
     badge: "Makan Malam",
     color: "#10b981",
     destLegendNumber: "36a",
@@ -474,7 +474,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     title: "Sarapan Pagi",
     locationName: "Resto Anthurium Lt. 2",
     locationNumber: "36a",
-    description: "Sarapan pagi prasmanan untuk seluruh peserta di Resto Anthurium Lantai 2 sebelum memulai kegiatan outdoor.",
+    description: "Sarapan pagi Buffet untuk seluruh peserta di Resto Anthurium Lantai 2 sebelum memulai kegiatan outdoor.",
     badge: "Sarapan Pagi",
     color: "#06b6d4",
     destLegendNumber: "36a",
@@ -611,7 +611,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     title: "Makan Siang",
     locationName: "Resto Anthurium Lt. 2",
     locationNumber: "36a",
-    description: "Makan siang prasmanan bersama di Resto Anthurium Lantai 2 setelah rangkaian acara utama selesai.",
+    description: "Makan siang buffet bersama di Resto Anthurium Lantai 2 setelah rangkaian acara utama selesai.",
     badge: "Makan Siang",
     color: "#10b981",
     destLegendNumber: "36a",
