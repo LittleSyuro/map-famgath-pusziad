@@ -73,8 +73,8 @@ export const LOCATIONS: LocationItem[] = [
     "image": "/legend/04_Masjid.png",
     "category": "Area Depan & Fasilitas Utama",
     "description": "Fasilitas Masjid di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 13.5,
-    "mapY": 79.5
+    "mapX": 80.0,
+    "mapY": 33.2
   },
   {
     "id": "5",
@@ -103,8 +103,8 @@ export const LOCATIONS: LocationItem[] = [
     "image": "/legend/07_Grand_Ballroom.png",
     "category": "Area Danau & Ballroom",
     "description": "Fasilitas Grand Ballroom di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 62.5,
-    "mapY": 43
+    "mapX": 87.7,
+    "mapY": 29.5
   },
   {
     "id": "8",
@@ -153,8 +153,8 @@ export const LOCATIONS: LocationItem[] = [
     "image": "/legend/12_Lapangan_Helipad.png",
     "category": "Area Berkuda & Equestrian",
     "description": "Fasilitas Lapangan Helipad di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 80.5,
-    "mapY": 17
+    "mapX": 82.0,
+    "mapY": 16.9
   },
   {
     "id": "13",
@@ -183,8 +183,8 @@ export const LOCATIONS: LocationItem[] = [
     "image": "/legend/15_Invisible_Bridge.png",
     "category": "Area Outbound & Infinity Pool",
     "description": "Fasilitas Invisible Bridge di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 54,
-    "mapY": 47
+    "mapX": 54.1,
+    "mapY": 43.5
   },
   {
     "id": "16",
@@ -404,8 +404,8 @@ export const LOCATIONS: LocationItem[] = [
     "image": "/resort_media/anthurium/DSCF3443.jpg",
     "category": "Area Lobby & Hiburan Indoor",
     "description": "Fasilitas Resto Anthurium Lantai 2 di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 66,
-    "mapY": 42.5
+    "mapX": 60.8,
+    "mapY": 50.0
   },
   {
     "id": "36b",

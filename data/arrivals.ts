@@ -390,7 +390,7 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/mountain_lounge/Foto/SKY LOUNGE VIEW.jpg",
       "/resort_media/anthurium/Mountain Lounge.mp4"
     ],
-    coords: { x: 48.5, y: 43.5 },
+    coords: { x: 60.8, y: 50.0 },
     description: "Restoran utama santap buffet makan malam dan sarapan pagi bersama seluruh rombongan.",
     badge: "Restoran Anthurium",
     color: "#10b981",
@@ -407,7 +407,7 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/masjid/masjid_2.jpg",
       "/resort_media/masjid/masjid_3.jpg"
     ],
-    coords: { x: 73.5, y: 38.0 },
+    coords: { x: 80.0, y: 33.2 },
     description: "Tempat ibadah Sholat Maghrib, Isya, Subuh, dan istirahat mandiri peserta Famgath.",
     badge: "Masjid Resort",
     color: "#6366f1",
@@ -425,7 +425,7 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/games/ibu_pju_games.jpg",
       "/resort_media/grand_ballroom/grand_ballroom_47.mp4"
     ],
-    coords: { x: 78.5, y: 24.5 },
+    coords: { x: 87.7, y: 29.5 },
     description: "Gedung pertemuan megah untuk turnamen PJU Games, hiburan, dan pengundian Grand Prize.",
     badge: "Grand Ballroom",
     color: "#a855f7",
@@ -441,7 +441,7 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/helipad/helipad_2.jpg",
       "/resort_media/helipad/helipad_3.jpg"
     ],
-    coords: { x: 80.5, y: 35.5 },
+    coords: { x: 82.0, y: 16.9 },
     description: "Area terbuka berumput hijau untuk penyambutan kedatangan, senam SKJ pagi, dan family games.",
     badge: "Lapangan Helipad",
     color: "#f59e0b",
@@ -452,7 +452,7 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     category: "Spot Foto & Panorama",
     legendNumber: "15",
     image: "/legend/15_Invisible_Bridge.png",
-    coords: { x: 54.0, y: 47.0 },
+    coords: { x: 54.1, y: 43.5 },
     description: "Jembatan kaca transparan ikonik di atas lembah dengan pemandangan Gunung Salak.",
     badge: "Invisible Bridge",
     color: "#06b6d4",
@@ -566,7 +566,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     color: "#6366f1",
     destLegendNumber: "4",
     destImage: "/resort_media/masjid/masjid_1.jpg",
-    destCoordinates: { x: 73.5, y: 38.0 },
+    destCoordinates: { x: 80.0, y: 33.2 },
     galleryImages: [
       "/resort_media/masjid/masjid_1.jpg",
       "/resort_media/masjid/masjid_2.jpg",
@@ -597,7 +597,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     color: "#10b981",
     destLegendNumber: "36a",
     destImage: "/resort_media/anthurium/DSCF3443.jpg",
-    destCoordinates: { x: 48.5, y: 43.5 },
+    destCoordinates: { x: 60.8, y: 50.0 },
     menuCategories: ANTHURIUM_MENU,
     galleryImages: [
       "/resort_media/anthurium/DSCF3443.jpg",
@@ -634,7 +634,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     color: "#a855f7",
     destLegendNumber: "7",
     destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-    destCoordinates: { x: 78.5, y: 24.5 },
+    destCoordinates: { x: 87.7, y: 29.5 },
     defaultWaypoints: [
       { x: 63.2, y: 42.6 },
       { x: 68.7, y: 37.9 },
@@ -697,7 +697,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     color: "#06b6d4",
     destLegendNumber: "36a",
     destImage: "/resort_media/anthurium/DSCF3443.jpg",
-    destCoordinates: { x: 48.5, y: 43.5 },
+    destCoordinates: { x: 60.8, y: 50.0 },
     menuCategories: ANTHURIUM_MENU,
     galleryImages: [
       "/resort_media/anthurium/DSCF3443.jpg",
@@ -730,7 +730,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     color: "#eab308",
     destLegendNumber: "64",
     destImage: "/resort_media/helipad/helipad_1.jpg",
-    destCoordinates: { x: 78.5, y: 24.5 },
+    destCoordinates: { x: 82.0, y: 16.9 },
     galleryImages: [
       "/resort_media/helipad/helipad_1.jpg",
       "/resort_media/helipad/helipad_2.jpg",
@@ -772,7 +772,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     color: "#14b8a6",
     destLegendNumber: "15",
     destImage: "/legend/15_Invisible_Bridge.png",
-    destCoordinates: { x: 54.0, y: 47.0 },
+    destCoordinates: { x: 54.1, y: 43.5 },
     highlightSpots: DAY2_HIGHLIGHT_SPOTS,
     galleryImages: [
       "/legend/15_Invisible_Bridge.png",
@@ -804,7 +804,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     color: "#f97316",
     destLegendNumber: "64",
     destImage: "/resort_media/helipad/helipad_2.jpg",
-    destCoordinates: { x: 78.5, y: 24.5 },
+    destCoordinates: { x: 82.0, y: 16.9 },
     subActivities: DAY2_GAMES_ACTIVITIES,
     galleryImages: [
       "/resort_media/helipad/helipad_2.jpg",
@@ -838,7 +838,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     color: "#a855f7",
     destLegendNumber: "7",
     destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-    destCoordinates: { x: 78.5, y: 24.5 },
+    destCoordinates: { x: 87.7, y: 29.5 },
     galleryImages: [
       "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
       "/resort_media/grand_ballroom/grand_ballroom_2.jpg",
@@ -865,7 +865,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     color: "#10b981",
     destLegendNumber: "36a",
     destImage: "/resort_media/anthurium/DSCF3443.jpg",
-    destCoordinates: { x: 48.5, y: 43.5 },
+    destCoordinates: { x: 60.8, y: 50.0 },
     menuCategories: ANTHURIUM_MENU,
     galleryImages: [
       "/resort_media/anthurium/DSCF3443.jpg",
