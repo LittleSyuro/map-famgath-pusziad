@@ -80,59 +80,6 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
 
   const currentImage = imageList[activeImageIndex] || imageList[0] || vip.roomImage;
 
-  // Real-time Edge Detection: prevent card from overflowing bottom, top, left, or right edges
-  const checkEdgeCollision = useCallback(() => {
-    if (!isOpen || !cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const margin = 16;
-    let shiftY = 0;
-    let shiftX = 0;
-
-    // Detect bottom edge collision (e.g. when card hangs below a centered pin)
-    if (rect.bottom > window.innerHeight - margin) {
-      shiftY = window.innerHeight - margin - rect.bottom;
-    }
-    // Detect top edge collision
-    if (rect.top + shiftY < margin + 65) {
-      shiftY = margin + 65 - rect.top;
-    }
-    // Detect right edge collision
-    if (rect.right > window.innerWidth - margin) {
-      shiftX = window.innerWidth - margin - rect.right;
-    }
-    // Detect left edge collision
-    if (rect.left + shiftX < margin) {
-      shiftX = margin - rect.left;
-    }
-
-    setEdgeShift((prev) => {
-      if (Math.abs(prev.x - shiftX) > 1 || Math.abs(prev.y - shiftY) > 1) {
-        return { x: shiftX, y: shiftY };
-      }
-      return prev;
-    });
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setEdgeShift({ x: 0, y: 0 });
-      return;
-    }
-    // Initial check & continuous check on resize and animation frames
-    checkEdgeCollision();
-    const timer = setTimeout(checkEdgeCollision, 50);
-    const timer2 = setTimeout(checkEdgeCollision, 200);
-    window.addEventListener("resize", checkEdgeCollision);
-    const interval = setInterval(checkEdgeCollision, 300);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-      clearInterval(interval);
-      window.removeEventListener("resize", checkEdgeCollision);
-    };
-  }, [isOpen, checkEdgeCollision]);
-
   // Auto-collapse timer (disabled when user is inspecting menu, games, or full frame)
   useEffect(() => {
     if (!isOpen || isFullFrame || activeTab !== "foto") return;
@@ -184,38 +131,36 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
         style={{
           left: `calc(${vip.roomX}% + ${offsetX}px)`,
           top: `calc(${vip.roomY}% + ${offsetY}px)`,
-          transform: isTopHalf ? "translate(-50%, 25px)" : "translate(-50%, -100%)",
+          transform: isTopHalf ? "translate(-50%, 20px)" : "translate(-50%, -100%)",
         }}
       >
         <AnimatePresence>
           {isOpen ? (
             <motion.div
-              ref={cardRef}
               key="full-popup"
-              initial={{ scale: 0.3, opacity: 0, y: isTopHalf ? -20 : 20 }}
+              initial={{ scale: 0.3, opacity: 0, y: isTopHalf ? -15 : 15 }}
               animate={{
                 scale: 1,
                 opacity: 1,
-                x: edgeShift.x,
-                y: (isTopHalf ? 0 : -15) + edgeShift.y,
+                y: isTopHalf ? 0 : -10,
               }}
-              exit={{ scale: 0.4, opacity: 0, y: isTopHalf ? -15 : 15 }}
+              exit={{ scale: 0.4, opacity: 0, y: isTopHalf ? -10 : 10 }}
               transition={{
                 type: "spring",
-                stiffness: 420,
-                damping: 28,
+                stiffness: 380,
+                damping: 26,
               }}
-              className="relative w-[340px] sm:w-[380px] max-h-[85vh] rounded-3xl overflow-visible shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/80 ring-2 ring-lime-400/30 shadow-glow-lime"
+              className="relative w-[320px] sm:w-[360px] max-h-[82vh] rounded-3xl overflow-visible shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/80 ring-2 ring-lime-400/30 shadow-glow-lime"
             >
-              {/* Top Pointer Triangle (only when not shifted significantly) */}
-              {isTopHalf && Math.abs(edgeShift.y) < 20 && (
+              {/* Top Pointer Triangle */}
+              {isTopHalf && (
                 <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-t border-l z-20 bg-[#142807] border-lime-400/80" />
               )}
 
               {/* Inner container */}
-              <div className="rounded-3xl overflow-hidden flex flex-col max-h-[85vh]">
+              <div className="rounded-3xl overflow-hidden flex flex-col max-h-[82vh]">
                 {/* Photo Area / Video / Carousel */}
-                <div className="relative w-full h-44 sm:h-48 bg-[#0b1a03] overflow-hidden group shrink-0">
+                <div className="relative w-full h-40 sm:h-44 bg-[#0b1a03] overflow-hidden group shrink-0">
                   {isVideo(currentImage) ? (
                     <div className="relative w-full h-full bg-black flex items-center justify-center">
                       <video

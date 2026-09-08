@@ -123,15 +123,19 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
   }, []);
 
-  // Smooth Focus & Zoom to a specific coordinate on map (Medium View / Zoom In)
-  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.75) => {
+  // Smooth Focus & Zoom to a specific coordinate on map with smart framing
+  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.55) => {
     if (transformRef.current && containerRef.current) {
       const { setTransform } = transformRef.current;
       const containerRect = containerRef.current.getBoundingClientRect();
       const targetX = (coord.x / 100) * containerRect.width;
       const targetY = (coord.y / 100) * containerRect.height;
+      
+      // Smart camera framing: when card expands below pin (coord.y < 45), position pin higher so card has ample bottom space
+      const verticalFrameOffset = coord.y < 45 ? containerRect.height * 0.15 : -containerRect.height * 0.10;
+
       const posX = containerRect.width / 2 - targetX * zoomFactor;
-      const posY = containerRect.height / 2 - targetY * zoomFactor;
+      const posY = containerRect.height / 2 - targetY * zoomFactor - verticalFrameOffset;
       setTransform(posX, posY, zoomFactor, 700, "easeOutQuad");
     }
   }, []);
