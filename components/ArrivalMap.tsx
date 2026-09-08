@@ -204,20 +204,24 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
   }, []);
 
-  // Smooth Focus & Zoom to a specific coordinate on map with smart framing
-  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.55) => {
+  // Smooth Focus & Zoom to a specific coordinate on map with smart centering of the popup card
+  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 1.85) => {
     if (transformRef.current && containerRef.current) {
       const { setTransform } = transformRef.current;
       const containerRect = containerRef.current.getBoundingClientRect();
       const targetX = (coord.x / 100) * containerRect.width;
       const targetY = (coord.y / 100) * containerRect.height;
       
-      // Smart camera framing: when card expands below pin (coord.y < 45), position pin higher so card has ample bottom space
-      const verticalFrameOffset = coord.y < 45 ? containerRect.height * 0.15 : -containerRect.height * 0.10;
+      // Smart camera framing:
+      // When card expands below pin (coord.y < 45), card center is ~140px below pin.
+      // When card expands above pin (coord.y >= 45), card center is ~140px above pin.
+      // We offset the vertical positioning so the entire expanded card is centered in the viewport!
+      const isTopHalf = coord.y < 45;
+      const cardCenterOffset = isTopHalf ? 140 : -140;
 
       const posX = containerRect.width / 2 - targetX * zoomFactor;
-      const posY = containerRect.height / 2 - targetY * zoomFactor - verticalFrameOffset;
-      setTransform(posX, posY, zoomFactor, 700, "easeOutQuad");
+      const posY = (containerRect.height / 2 - cardCenterOffset) - targetY * zoomFactor;
+      setTransform(posX, posY, zoomFactor, 750, "easeOutQuad");
     }
   }, []);
 
@@ -1220,9 +1224,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                           onOpen={() => {
                             setSelectedLegendLocation(null);
                             setOpenKeyPinpointIds({ [pin.id]: true });
+                            focusOnCoordinate(pinActualCoords, 1.85);
                           }}
                           onFocusPinPoint={() =>
-                            focusOnCoordinate(pinActualCoords, 1.75)
+                            focusOnCoordinate(pinActualCoords, 1.85)
                           }
                         />
                       );
