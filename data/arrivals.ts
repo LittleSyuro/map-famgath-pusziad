@@ -148,43 +148,48 @@ export const ACCOMMODATION_ROOMS: AccommodationRoom[] = [
   },
 ];
 
-// Menu Makan Malam & Santap Bersama di Resto Anthurium Lt. 2
+// Menu Resmi Santap Bersama & Coffee Break di Resto Anthurium Lt. 2 (Highland Park Resort)
 export const ANTHURIUM_MENU: MenuItem[] = [
   {
-    category: "Buffet Utama (Main Course)",
+    category: "LUNCH (PAKET B)",
     items: [
-      "Nasi Liwet Kastrol Khas Bogor & Nasi Putih Wangi",
-      "Ayam Goreng Lengkuas Gurih Renyah",
-      "Ikan Gurame Bakar Madu Spesial",
-      "Daging Sapi Lada Hitam Empuk",
-      "Tahu & Tempe Bacem Tradisional",
-      "Tumis Buncis Daging Cincang",
-      "Sambal Terasi Dadak & Lalapan Kebun Segar"
+      "Steamed Rice",
+      "Cream Potato Soup",
+      "Capcay",
+      "Gepuk Chicken",
+      "Sweet and Sour Snapper",
+      "Mixed Fruits",
+      "Pudding"
     ],
   },
   {
-    category: "Sup & Hidangan Pembuka",
+    category: "CB 1 (MORNING)",
     items: [
-      "Sup Iga Sapi Kuah Rempah Bening Segar",
-      "Asinan Sayur & Buah Segar Khas Bogor",
-      "Kerupuk Udang & Emping Melinjo"
+      "Chicken Nugget",
+      "Panettone",
+      "Velvet Roll",
+      "Assorted Chips",
+      "Coffee & Tea"
     ],
   },
   {
-    category: "Dessert & Buah Penutup",
+    category: "CB 2 (AFTERNOON)",
     items: [
-      "Aneka Puding Buah Karamel Segar",
-      "Es Doger / Cendol Durian Bogor",
-      "Slice Tropical Fruits (Semangka, Melon, Nanas)"
+      "Marble Green Tea Cake",
+      "Black Forest Roll",
+      "Sausage Orly",
+      "Assorted Chips",
+      "Coffee & Tea"
     ],
   },
   {
-    category: "Aneka Minuman (Beverages)",
+    category: "CB 3 (EVENING)",
     items: [
-      "Wedang Jahe Serai Hangat Tradisional",
-      "Kopi Hitam & Kopi Susu Fresh Brew",
-      "Teh Manis Melati Hangat & Dingin",
-      "Infused Water & Air Mineral"
+      "Pisang Rebus",
+      "Jagung Rebus",
+      "Kacang Rebus",
+      "Assorted Chips",
+      "Coffee & Tea"
     ],
   },
 ];
