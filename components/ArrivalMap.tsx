@@ -26,6 +26,8 @@ import { ScheduleSidebar } from "./ScheduleSidebar";
 import { ArrivalPopupCard } from "./ArrivalPopupCard";
 import { LocationMarker } from "./LocationMarker";
 import { LocationModal } from "./LocationModal";
+import { LegendSearchModal } from "./LegendSearchModal";
+import { LegendMapPopup } from "./LegendMapPopup";
 import { PathEditorOverlay, ROUTE_ACTIVITIES } from "./PathEditorOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -48,6 +50,7 @@ import {
   UserCheck,
   Eye,
   EyeOff,
+  Search,
 } from "lucide-react";
 
 interface ArrivalMapProps {
@@ -76,6 +79,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
   // Clickable Resort Places State (Default: Hidden Angka Legenda)
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+  const [selectedLegendLocation, setSelectedLegendLocation] = useState<LocationItem | null>(null);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [showAllLocations, setShowAllLocations] = useState<boolean>(false);
   const [showLegendHint, setShowLegendHint] = useState<boolean>(true);
@@ -84,6 +89,25 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
   const [openSpotPopupIds, setOpenSpotPopupIds] = useState<Record<string, boolean>>({});
   const [openKeyPinpointIds, setOpenKeyPinpointIds] = useState<Record<string, boolean>>({});
+
+  // Keyboard shortcut for search (Ctrl+K or /)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsSearchModalOpen((prev) => !prev);
+      } else if (
+        e.key === "/" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        setIsSearchModalOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const [customRoutes, setCustomRoutes] = useState<Record<string, Waypoint[]>>(() => {
     const initial: Record<string, Waypoint[]> = {};
@@ -143,6 +167,17 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       setTransform(posX, posY, zoomFactor, 700, "easeOutQuad");
     }
   }, []);
+
+  // Handle Select Legend from Search or Map Marker
+  const handleSelectLegend = useCallback(
+    (loc: LocationItem) => {
+      setSelectedLegendLocation(loc);
+      if (loc.mapX !== undefined && loc.mapY !== undefined) {
+        focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.85);
+      }
+    },
+    [focusOnCoordinate]
+  );
 
   // Find active agenda item
   const currentAgendaItem = useMemo(() => {
@@ -530,8 +565,23 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         >
           {({ zoomIn, zoomOut, resetTransform }) => (
             <>
-              {/* Floating Quick Toggle Pill: Angka Legenda (Hide / Show) with Popup Hint */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-35 no-print flex flex-col items-center pointer-events-auto">
+              {/* Floating Quick Toggle & Search Bar */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-35 no-print flex flex-col sm:flex-row items-center gap-2 pointer-events-auto">
+                {/* Search Legenda Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsSearchModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-2xl backdrop-blur-md transition-all duration-200 cursor-pointer border-2 select-none hover:scale-105 active:scale-95 bg-[#0b1a03]/95 text-butter-200 border-lime-400/80 hover:border-lime-200 shadow-glow-lime ring-2 ring-lime-400/30"
+                  title="Cari Legenda & Fasilitas Resort (Tekan Ctrl+K atau /)"
+                >
+                  <Search className="w-4 h-4 text-lime-400" />
+                  <span>Cari Legenda (86 Lokasi)</span>
+                  <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded-md bg-[#142807] border border-lime-500/40 text-[10px] font-mono text-lime-300">
+                    Ctrl+K
+                  </kbd>
+                </button>
+
+                {/* Toggle Angka Legenda Button */}
                 <button
                   type="button"
                   onClick={() => {
@@ -564,7 +614,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
                 {/* Popup Hint ketika Legenda sedang disembunyikan */}
                 {!showAllLocations && showLegendHint && (
-                  <div className="mt-2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[#0b1a03]/95 text-lime-200 border-2 border-lime-400/80 shadow-2xl backdrop-blur-md text-[11px] font-black animate-bounce select-none">
+                  <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[#0b1a03]/95 text-lime-200 border-2 border-lime-400/80 shadow-2xl backdrop-blur-md text-[11px] font-black animate-bounce select-none">
                     <span>👆 Tekan tombol ini untuk menampilkan legenda</span>
                     <button
                       type="button"
@@ -584,6 +634,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               {/* Floating Map Toolbar */}
               <div className="absolute top-4 right-4 z-40 flex flex-col gap-1.5 no-print">
                 <div className="flex flex-col bg-[#0b1a03]/95 backdrop-blur-md rounded-2xl shadow-xl border-2 border-lime-400/40 p-1.5 gap-1">
+                  {/* Search Button in Toolbar */}
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchModalOpen(true)}
+                    title="🔍 Cari Legenda (Ctrl+K)"
+                    className="p-2.5 rounded-xl text-butter-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                  >
+                    <Search className="w-5 h-5" />
+                  </button>
+
                   {/* Toggle All Location Pins (Angka Legenda) Button */}
                   <button
                     type="button"
@@ -907,19 +967,34 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     })}
 
                   {/* Interactive 86 Resort Location Markers (Clickable places across map) */}
+                  {/* Interactive 86 Resort Location Markers (Clickable places across map) */}
                   {!isEditorOpen && showAllLocations && (
                     <div className="absolute inset-0 pointer-events-none z-15">
                       {mappedLocations.map((loc) => (
                         <div key={`loc-pin-${loc.id}`} className="pointer-events-auto">
                           <LocationMarker
                             location={loc}
-                            isSelected={selectedLocation?.id === loc.id}
+                            isSelected={selectedLegendLocation?.id === loc.id}
                             isHighlighted={true}
-                            onClick={handleSelectLocation}
+                            onClick={handleSelectLegend}
                           />
                         </div>
                       ))}
                     </div>
+                  )}
+
+                  {/* Render Selected Searched Legend Popup Card */}
+                  {!isEditorOpen && selectedLegendLocation && (
+                    <LegendMapPopup
+                      location={selectedLegendLocation}
+                      onClose={() => setSelectedLegendLocation(null)}
+                      onFocusOnMap={(loc) => {
+                        if (loc.mapX !== undefined && loc.mapY !== undefined) {
+                          focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.85);
+                        }
+                      }}
+                      onSelectNextLocation={handleSelectLegend}
+                    />
                   )}
 
                   {/* Starting Point Marker on Map (Only when PJU arrival/check-in is active) */}
@@ -1052,6 +1127,13 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Search Legend Modal */}
+      <LegendSearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onSelectLocation={handleSelectLegend}
+      />
     </div>
   );
 };
