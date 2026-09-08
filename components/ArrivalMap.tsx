@@ -72,10 +72,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
 
-  // Clickable Resort Places State
+  // Clickable Resort Places State (Default: Hidden Angka Legenda)
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
-  const [showAllLocations, setShowAllLocations] = useState<boolean>(true);
+  const [showAllLocations, setShowAllLocations] = useState<boolean>(false);
+  const [showLegendHint, setShowLegendHint] = useState<boolean>(true);
 
   // Active room & spot popups
   const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
@@ -526,15 +527,18 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         >
           {({ zoomIn, zoomOut, resetTransform }) => (
             <>
-              {/* Floating Quick Toggle Pill: Angka Legenda (Hide / Show) */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-35 no-print">
+              {/* Floating Quick Toggle Pill: Angka Legenda (Hide / Show) with Popup Hint */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-35 no-print flex flex-col items-center pointer-events-auto">
                 <button
                   type="button"
-                  onClick={() => setShowAllLocations(!showAllLocations)}
+                  onClick={() => {
+                    setShowAllLocations(!showAllLocations);
+                    setShowLegendHint(false);
+                  }}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-2xl backdrop-blur-md transition-all duration-200 cursor-pointer border-2 select-none hover:scale-105 active:scale-95 ${
                     showAllLocations
                       ? "bg-[#0e1d03]/95 text-lime-300 border-lime-400/80 shadow-glow-lime ring-2 ring-lime-400/30"
-                      : "bg-[#1f1304]/95 text-amber-300 border-amber-400/80 shadow-glow-butter ring-2 ring-amber-400/30"
+                      : "bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-slate-950 border-white shadow-glow-butter ring-2 ring-amber-300 font-black"
                   }`}
                   title={
                     showAllLocations
@@ -549,11 +553,29 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     </>
                   ) : (
                     <>
-                      <EyeOff className="w-4 h-4 text-amber-400" />
-                      <span className="tracking-wide">Show Angka Legenda</span>
+                      <EyeOff className="w-4 h-4 text-slate-950" />
+                      <span className="tracking-wide">Tampilkan Angka Legenda</span>
                     </>
                   )}
                 </button>
+
+                {/* Popup Hint ketika Legenda sedang disembunyikan */}
+                {!showAllLocations && showLegendHint && (
+                  <div className="mt-2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[#0b1a03]/95 text-lime-200 border-2 border-lime-400/80 shadow-2xl backdrop-blur-md text-[11px] font-black animate-bounce select-none">
+                    <span>👆 Tekan tombol ini untuk menampilkan legenda</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowLegendHint(false);
+                      }}
+                      title="Tutup petunjuk"
+                      className="ml-1 p-0.5 rounded-full hover:bg-lime-800 text-lime-300 hover:text-white cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Floating Map Toolbar */}
@@ -932,6 +954,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                         isOpen={!!openPopupIds[vip.id]}
                         onClose={() => handleClosePopup(vip.id)}
                         onOpen={() => handleOpenPopup(vip.id)}
+                        onFocusPinPoint={() =>
+                          focusOnCoordinate({ x: vip.roomX, y: vip.roomY }, 1.75)
+                        }
                       />
                     ))}
 
@@ -978,6 +1003,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                               ...prev,
                               [room.id]: true,
                             }))
+                          }
+                          onFocusPinPoint={() =>
+                            focusOnCoordinate(room.coords, 1.75)
                           }
                         />
                       );
@@ -1027,6 +1055,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                               ...prev,
                               [spot.id]: true,
                             }))
+                          }
+                          onFocusPinPoint={() =>
+                            focusOnCoordinate(spot.coords, 1.75)
                           }
                         />
                       );

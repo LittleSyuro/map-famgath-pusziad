@@ -34,6 +34,7 @@ interface ArrivalPopupCardProps {
   roomData?: AccommodationRoom;
   spotData?: HighlightSpot;
   autoCollapseMs?: number;
+  onFocusPinPoint?: () => void;
 }
 
 const isVideo = (url?: string) => {
@@ -50,6 +51,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   roomData,
   spotData,
   autoCollapseMs = 6000,
+  onFocusPinPoint,
 }) => {
   const [activeTab, setActiveTab] = useState<"foto" | "menu" | "games" | "fasilitas">("foto");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -467,11 +469,28 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     </div>
                   )}
                 </div>
+
+                {/* Selalu Munculkan Tombol Menampilkan Pin Point */}
+                <div className="p-2.5 bg-[#0e1d03] border-t border-lime-500/30 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onFocusPinPoint) {
+                        onFocusPinPoint();
+                      }
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs shadow-lg transition-all hover:scale-[1.02] cursor-pointer border border-lime-200 select-none"
+                  >
+                    <Compass className="w-4 h-4 text-slate-950" />
+                    <span>Fokuskan Titik di Peta (Pin Point)</span>
+                  </button>
+                </div>
               </div>
 
               {/* Bottom Pointer Triangle */}
               {!isTopHalf && (
-                <div className="w-4 h-4 mx-auto -mt-2 rotate-45 border-b border-r bg-slate-950 border-emerald-400/70" />
+                <div className="w-4 h-4 mx-auto -mt-2 rotate-45 border-b border-r bg-[#142807] border-lime-400/80" />
               )}
             </motion.div>
           ) : (
