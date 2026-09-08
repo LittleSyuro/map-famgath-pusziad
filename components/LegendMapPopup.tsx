@@ -80,155 +80,150 @@ export const LegendMapPopup: React.FC<LegendMapPopupProps> = ({
 
   return (
     <>
-      {/* On-Map Floating Popup Card anchored at coordinate */}
-      <div
-        className="absolute pointer-events-auto z-50 select-none"
-        style={{
-          left: `${location.mapX}%`,
-          top: `${location.mapY}%`,
-          transform: isTopHalf ? "translate(-50%, 20px)" : "translate(-50%, -100%)",
-        }}
-      >
-        <motion.div
-          key={`legend-popup-${location.id}`}
-          initial={{ scale: 0.4, opacity: 0, y: isTopHalf ? -15 : 15 }}
-          animate={{ scale: 1, opacity: 1, y: isTopHalf ? 0 : -10 }}
-          exit={{ scale: 0.4, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 28 }}
-          className="relative w-[320px] sm:w-[360px] rounded-3xl overflow-visible shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/90 ring-4 ring-lime-400/30 shadow-glow-lime"
+      {/* Centered Screen Modal Dialog (Always perfectly centered in screen) */}
+      {mounted && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-sm animate-in fade-in duration-200 select-none"
+          onClick={onClose}
         >
-          {/* Top Pointer Triangle */}
-          {isTopHalf && (
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-t border-l z-20 bg-[#142807] border-lime-400/90" />
-          )}
-
-          <div className="rounded-3xl overflow-hidden flex flex-col">
-            {/* Media Area (Photo or Video) */}
-            <div
-              className="relative w-full h-44 bg-[#0b1a03] overflow-hidden group cursor-pointer"
-              onClick={() => setIsFullScreen(true)}
-              title="Klik untuk memperbesar (Full Screen)"
-            >
-              {isVideo(location.image) ? (
-                <div className="relative w-full h-full bg-black flex items-center justify-center">
-                  <video
+          <motion.div
+            key={`legend-popup-${location.id}`}
+            initial={{ scale: 0.9, opacity: 0, y: 15 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 15 }}
+            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+            className="relative w-full max-w-[380px] sm:max-w-[420px] max-h-[88vh] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl border-2 bg-[#142807]/98 border-lime-400/90 ring-4 ring-lime-400/25 shadow-glow-lime flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="rounded-3xl overflow-hidden flex flex-col">
+              {/* Media Area (Photo or Video) */}
+              <div
+                className="relative w-full h-44 sm:h-48 bg-[#0b1a03] overflow-hidden group cursor-pointer shrink-0"
+                onClick={() => setIsFullScreen(true)}
+                title="Klik untuk memperbesar (Full Screen)"
+              >
+                {isVideo(location.image) ? (
+                  <div className="relative w-full h-full bg-black flex items-center justify-center">
+                    <video
+                      src={location.image}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-lg bg-[#0b1a03]/90 text-butter-200 text-[10px] font-bold border border-lime-500/40 flex items-center gap-1 z-10">
+                      <Video className="w-3 h-3 text-lime-400" />
+                      <span>Video Media</span>
+                    </div>
+                  </div>
+                ) : (
+                  <Image
                     src={location.image}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
+                    alt={location.name}
+                    fill
+                    unoptimized
+                    sizes="450px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-lg bg-[#0b1a03]/90 text-butter-200 text-[10px] font-bold border border-lime-500/40 flex items-center gap-1 z-10">
-                    <Video className="w-3 h-3 text-lime-400" />
-                    <span>Video Media</span>
+                )}
+
+                {/* Hover Full Screen Overlay Prompt */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-black">
+                  <div className="px-3 py-1.5 rounded-full bg-[#0b1a03]/90 border border-lime-400/60 shadow-lg flex items-center gap-1.5">
+                    <Maximize2 className="w-3.5 h-3.5 text-lime-400" />
+                    <span>Klik untuk Full Screen</span>
                   </div>
                 </div>
-              ) : (
-                <Image
-                  src={location.image}
-                  alt={location.name}
-                  fill
-                  unoptimized
-                  sizes="400px"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              )}
 
-              {/* Hover Full Screen Overlay Prompt */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-black">
-                <div className="px-3 py-1.5 rounded-full bg-[#0b1a03]/90 border border-lime-400/60 shadow-lg flex items-center gap-1.5">
-                  <Maximize2 className="w-3.5 h-3.5 text-lime-400" />
-                  <span>Klik untuk Full Screen</span>
+                {/* Gradient Scrim */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#142807] via-transparent to-black/40 pointer-events-none" />
+
+                {/* Top Controls */}
+                <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
+                  <span className="px-3 py-1 rounded-full bg-butter-pill text-slate-950 font-black font-mono text-xs shadow-lg border border-white flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-slate-950" />
+                    <span>No. {label}</span>
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Full Screen Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsFullScreen(true);
+                      }}
+                      className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-slate-950 text-lime-300 backdrop-blur-md border border-lime-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                      title="Perbesar Galeri (Full Screen)"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Close Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onClose();
+                      }}
+                      className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                      title="Tutup Popup"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Gradient Scrim */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#142807] via-transparent to-black/40 pointer-events-none" />
+              {/* Description & Details */}
+              <div className="p-4 space-y-2.5 bg-[#142807]">
+                <div>
+                  <h4 className="text-base font-extrabold text-white tracking-tight leading-snug">
+                    No. {label} {location.name}
+                  </h4>
+                  <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-lg bg-lime-900/60 text-lime-200 border border-lime-400/40 text-[11px] font-bold">
+                    <Tag className="w-3 h-3 text-butter-300" />
+                    {location.category}
+                  </span>
+                </div>
 
-              {/* Top Controls */}
-              <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                <span className="px-3 py-1 rounded-full bg-butter-pill text-slate-950 font-black font-mono text-xs shadow-lg border border-white flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5 text-slate-950" />
-                  <span>No. {label}</span>
-                </span>
+                <p className="text-xs text-lime-100/90 leading-relaxed max-h-28 overflow-y-auto custom-scrollbar bg-[#0d1d03]/90 p-2.5 rounded-xl border border-lime-500/25">
+                  {location.description ||
+                    `Fasilitas ${location.name} bernomor ${label} yang terletak di ${location.category}, The Highland Park Resort.`}
+                </p>
 
-                <div className="flex items-center gap-1.5">
-                  {/* Full Screen Button */}
+                {/* Action Buttons Row */}
+                <div className="pt-1 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsFullScreen(true);
-                    }}
-                    className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-lime-500 hover:text-slate-950 text-lime-300 backdrop-blur-md border border-lime-400/40 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
-                    title="Perbesar Galeri (Full Screen)"
+                    onClick={() => setIsFullScreen(true)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#0b1a03] hover:bg-lime-800 text-lime-200 border border-lime-500/40 text-xs font-bold transition-all cursor-pointer shadow-md"
                   >
-                    <Maximize2 className="w-3.5 h-3.5" />
+                    <Eye className="w-3.5 h-3.5 text-lime-400" />
+                    <span>Lihat Full Screen</span>
                   </button>
 
-                  {/* Close Button */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
+                      onFocusOnMap(location);
                       onClose();
                     }}
-                    className="w-8 h-8 rounded-full bg-[#0b1a03]/90 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
-                    title="Tutup Popup"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs shadow-md transition-all hover:scale-[1.02] cursor-pointer border border-lime-200"
                   >
-                    <X className="w-4 h-4" />
+                    <Compass className="w-3.5 h-3.5 text-slate-950" />
+                    <span>Fokus Titik</span>
                   </button>
                 </div>
               </div>
             </div>
-
-            {/* Description & Details */}
-            <div className="p-4 space-y-2.5 bg-[#142807]">
-              <div>
-                <h4 className="text-base font-extrabold text-white tracking-tight leading-snug">
-                  No. {label} {location.name}
-                </h4>
-                <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-lg bg-lime-900/60 text-lime-200 border border-lime-400/40 text-[11px] font-bold">
-                  <Tag className="w-3 h-3 text-butter-300" />
-                  {location.category}
-                </span>
-              </div>
-
-              <p className="text-xs text-lime-100/90 leading-relaxed max-h-24 overflow-y-auto custom-scrollbar bg-[#0d1d03]/90 p-2.5 rounded-xl border border-lime-500/25">
-                {location.description ||
-                  `Fasilitas ${location.name} bernomor ${label} yang terletak di ${location.category}, The Highland Park Resort.`}
-              </p>
-
-              {/* Action Buttons Row */}
-              <div className="pt-1 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsFullScreen(true)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#0b1a03] hover:bg-lime-800 text-lime-200 border border-lime-500/40 text-xs font-bold transition-all cursor-pointer shadow-md"
-                >
-                  <Eye className="w-3.5 h-3.5 text-lime-400" />
-                  <span>Lihat Full Screen</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onFocusOnMap(location)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-lime-400 via-lime-500 to-lime-600 hover:from-lime-300 hover:to-lime-400 text-slate-950 font-black text-xs shadow-md transition-all hover:scale-[1.02] cursor-pointer border border-lime-200"
-                >
-                  <Compass className="w-3.5 h-3.5 text-slate-950" />
-                  <span>Fokus Titik</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Pointer Triangle */}
-          {!isTopHalf && (
-            <div className="w-4 h-4 mx-auto -mt-2 rotate-45 border-b border-r bg-[#142807] border-lime-400/90" />
-          )}
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
 
       {/* Full Screen Lightbox Modal */}
       {mounted && isFullScreen && createPortal(
