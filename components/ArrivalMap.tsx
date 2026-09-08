@@ -472,6 +472,17 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     setAutoplayProgress(0);
   }, [activeActivityId, handleSelectAgenda]);
 
+  // Toggle Autoplay Simulation: Starts animation immediately on play
+  const toggleAutoplay = useCallback(() => {
+    setIsAutoplay((prev) => {
+      const nextVal = !prev;
+      if (nextVal) {
+        handleSelectAgenda(activeActivityId);
+      }
+      return nextVal;
+    });
+  }, [handleSelectAgenda, activeActivityId]);
+
   // Advance to next agenda strictly when active spot's full photo slideshow/task is complete
   const handleCardSlideCycleComplete = useCallback(() => {
     if (isAutoplay) {
@@ -487,7 +498,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
       if (e.key === " " || e.key.toLowerCase() === "p") {
         e.preventDefault();
-        setIsAutoplay((prev) => !prev);
+        toggleAutoplay();
       } else if (e.key === "ArrowRight" || e.key === "PageDown") {
         e.preventDefault();
         goToNextAgenda();
@@ -499,7 +510,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goToNextAgenda, goToPrevAgenda, isSearchModalOpen, isLocationModalOpen, isEditorOpen, isCalibratorOpen]);
+  }, [toggleAutoplay, goToNextAgenda, goToPrevAgenda, isSearchModalOpen, isLocationModalOpen, isEditorOpen, isCalibratorOpen]);
 
   // Handle Select Location directly from Map pin
   const handleSelectLocation = useCallback(
@@ -774,7 +785,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             {/* Play / Pause Autoplay Button */}
             <button
               type="button"
-              onClick={() => setIsAutoplay((prev) => !prev)}
+              onClick={toggleAutoplay}
               className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black transition-all shadow-lg overflow-hidden border cursor-pointer ${
                 isAutoplay
                   ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white shadow-glow-gold"
@@ -1314,16 +1325,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     !selectedLegendLocation &&
                     KEY_EVENT_PINPOINTS.map((pin) => {
                       const pinActualCoords = customPinCoords[pin.id] || pin.coords;
-                      const isDestinationOfCurrentAgenda =
-                        (activeActivityId === "d1-arrival" && pin.id === "pin-helipad") ||
-                        (activeActivityId === "d1-checkin" && pin.id === "pin-alpine") ||
-                        (activeActivityId === "d1-worship" && pin.id === "pin-masjid") ||
-                        ((activeActivityId === "d1-ishoma" || activeActivityId === "d1-dinner") && pin.id === "pin-resto") ||
-                        (activeActivityId === "d1-malam-keakraban" && pin.id === "pin-ballroom") ||
-                        (activeActivityId === "d2-senam" && pin.id === "pin-helipad") ||
-                        (activeActivityId === "d2-sarapan" && pin.id === "pin-resto") ||
-                        (activeActivityId === "d2-outbound" && pin.id === "pin-helipad") ||
-                        ((activeActivityId === "d2-jalan-sehat" || activeActivityId === "d2-closing") && pin.id === "pin-bridge");
+                      const isDestinationOfCurrentAgenda = pin.id === getPinIdForAgenda(activeActivityId);
 
                       const isOpen = activeOpenPinId ? pin.id === activeOpenPinId : false;
 
