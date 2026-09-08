@@ -155,7 +155,11 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
         style={{
           left: `calc(${pinX}% + ${offsetX}px)`,
           top: `calc(${pinY}% + ${offsetY}px)`,
-          transform: isTopHalf ? "translate(-50%, 20px)" : "translate(-50%, -100%)",
+          transform: isOpen
+            ? isTopHalf
+              ? "translate(-50%, 15px)"
+              : "translate(-50%, -102%)"
+            : "translate(-50%, -50%)",
         }}
       >
         <AnimatePresence>
@@ -617,25 +621,6 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                         }`}
                       />
                     </div>
-
-                    {/* Pin Arrow Pointing down to node */}
-                    <div
-                      className={`w-2.5 h-2.5 rotate-45 -mt-1 border-r border-b ${
-                        isPJU
-                          ? "bg-amber-400 border-amber-300"
-                          : isResto
-                          ? "bg-[#0b1f0c] border-emerald-400"
-                          : isMasjid
-                          ? "bg-[#0d1527] border-indigo-400"
-                          : isBallroom
-                          ? "bg-[#1c0d29] border-purple-400"
-                          : isHelipad
-                          ? "bg-[#241706] border-amber-400"
-                          : isSpot
-                          ? "bg-[#06181f] border-cyan-400"
-                          : "bg-[#062419] border-emerald-400"
-                      }`}
-                    />
                   </>
                 );
               })()}
