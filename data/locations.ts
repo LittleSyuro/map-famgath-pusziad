@@ -179,10 +179,10 @@ export const LOCATIONS: LocationItem[] = [
   {
     "id": "15",
     "number": "15",
-    "name": "Invisible Bridge",
-    "image": "/legend/15_Invisible_Bridge.png",
-    "category": "Area Outbound & Infinity Pool",
-    "description": "Fasilitas Invisible Bridge di The Highland Park Resort - Hotel Bogor.",
+    "name": "Invisible Bridge (Spot Foto Bersama)",
+    "image": "/resort_media/spots/foto_bersama_jembatan.jpg",
+    "category": "Spot Foto & Titik Akhir Jalan Santai",
+    "description": "Jembatan kaca transparan ikonik Invisible Bridge, titik akhir rute jalan santai untuk lokasi foto bersama seluruh keluarga besar rombongan.",
     "mapX": 54.1,
     "mapY": 43.5
   },
