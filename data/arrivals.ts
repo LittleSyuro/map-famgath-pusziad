@@ -312,7 +312,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     title: "Menempati Kamar",
     locationName: "Alpine House (Kamar Utama PJU)",
     locationNumber: "25",
-    description: "PJU berjalan halus dari Helipad menuju Alpine House. Selanjutnya 3 kamar penginapan (Alpine House, Mongolian Superior Camp, The Cave) aktif tampil.",
+    description: "PJU berjalan menuju Alpine House. Ada 2 jenis tipe kamar lain yang juga digunakan yaitu Mongolian Superior Camp dan The Cave.",
     badge: "Check-in 3 Kamar",
     color: "#eab308",
     destLegendNumber: "25",
