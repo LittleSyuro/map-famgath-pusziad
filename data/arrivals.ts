@@ -285,7 +285,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     title: "Kedatangan PJU Pusziad",
     locationName: "Lapangan Helipad (Simbol H)",
     locationNumber: "12",
-    description: "Penyambutan dan kedatangan Pejabat Utama Pusziad di area Lapangan Helipad (Simbol H).",
+    description: "Penyambutan dan kedatangan PJU Pusziad di area Dekat Lapangan Helipad (Simbol H).",
     badge: "Kedatangan PJU",
     color: "#eab308",
     destLegendNumber: "12",
