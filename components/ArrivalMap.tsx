@@ -17,6 +17,7 @@ import {
   RUNDOWN_SCHEDULE_DAY_2,
   KEY_EVENT_PINPOINTS,
   KeyEventPinpoint,
+  WALKING_ROUTES_DAY2,
 } from "@/data/arrivals";
 import { LOCATIONS, LocationItem } from "@/data/locations";
 import { Pawn } from "./Pawn";
@@ -72,6 +73,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [animProgress, setAnimProgress] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showPaths, setShowPaths] = useState<boolean>(false);
+  const [selectedMapWalkingRoute, setSelectedMapWalkingRoute] = useState<"pju" | "anggota">("pju");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [avatarMode, setAvatarMode] = useState<"circle" | "squad">("squad");
   const [showF11Toast, setShowF11Toast] = useState<boolean>(false);
@@ -1108,17 +1110,46 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     <Layers className="w-4 h-4" />
                   </button>
 
-                  {/* Toggle Walking Paths */}
-                  <button
-                    type="button"
-                    onClick={() => setShowPaths(!showPaths)}
-                    title={showPaths ? "Sembunyikan Garis Rute" : "Tampilkan Garis Rute"}
-                    className={`p-2 rounded-xl transition-all cursor-pointer ${
-                      showPaths ? "text-slate-950 bg-amber-400 font-bold" : "text-slate-400 hover:text-white hover:bg-lime-800/40"
-                    }`}
-                  >
-                    <Route className="w-4 h-4" />
-                  </button>
+                  {/* Toggle Walking Paths — only relevant during "Jalan Santai";
+                      no route data to preview on any other agenda step. */}
+                  {currentAgendaItem.id === "d2-jalan-santai" && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPaths(!showPaths)}
+                      title={showPaths ? "Sembunyikan Garis Rute" : "Tampilkan Garis Rute"}
+                      className={`p-2 rounded-xl transition-all cursor-pointer ${
+                        showPaths ? "text-slate-950 bg-amber-400 font-bold" : "text-slate-400 hover:text-white hover:bg-lime-800/40"
+                      }`}
+                    >
+                      <Route className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Rute PJU / Anggota switcher — which route's line gets drawn */}
+                  {currentAgendaItem.id === "d2-jalan-santai" && showPaths && (
+                    <div className="flex items-center bg-black/60 p-0.5 rounded-full border border-white/15 ml-0.5">
+                      {WALKING_ROUTES_DAY2.map((route) => (
+                        <button
+                          key={route.id}
+                          type="button"
+                          onClick={() => setSelectedMapWalkingRoute(route.id)}
+                          title={route.title}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide transition-all cursor-pointer ${
+                            selectedMapWalkingRoute === route.id
+                              ? "text-white shadow-md"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                          style={
+                            selectedMapWalkingRoute === route.id
+                              ? { backgroundColor: route.color }
+                              : undefined
+                          }
+                        >
+                          {route.id === "pju" ? "PJU" : "Anggota"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Toggle Manual Route Editor */}
                   <button
@@ -1193,8 +1224,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     className="object-contain pointer-events-none drop-shadow-2xl"
                   />
 
-                  {/* SVG Waypoint Paths */}
-                  {(showPaths || isEditorOpen) && (
+                  {/* SVG Waypoint Paths — editable route preview, shown for
+                      whichever agenda is being edited in the manual editor */}
+                  {isEditorOpen && (
                     <svg
                       className="absolute inset-0 w-full h-full pointer-events-none z-20"
                       viewBox="0 0 100 100"
@@ -1240,6 +1272,105 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       })}
                     </svg>
                   )}
+
+                  {/* SVG Rute Jalan Santai (PJU / Anggota) — only shown while
+                      viewing the "Jalan Santai" agenda; no other step has a
+                      walking-route line to preview. Animated flowing dashes +
+                      node markers along the selected route. */}
+                  {!isEditorOpen && showPaths && currentAgendaItem.id === "d2-jalan-santai" && (() => {
+                    const route =
+                      WALKING_ROUTES_DAY2.find((r) => r.id === selectedMapWalkingRoute) ||
+                      WALKING_ROUTES_DAY2[0];
+                    const points = route.waypoints.map((p) => `${p.x},${p.y}`).join(" ");
+                    return (
+                      <svg
+                        className="absolute inset-0 w-full h-full pointer-events-none z-20"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                      >
+                        <g key={route.id}>
+                          {/* Faint static base line, full route always visible */}
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke={route.color}
+                            strokeWidth="2.0"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.25"
+                          />
+                          {/* "Draw-on" reveal: the line paints itself from the
+                              Start node to the Finish node, then loops. */}
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke={route.color}
+                            strokeWidth="0.9"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.95"
+                            pathLength={100}
+                            strokeDasharray="100"
+                            className="drop-shadow-md"
+                          >
+                            <animate
+                              attributeName="stroke-dashoffset"
+                              from="100"
+                              to="0"
+                              dur={`${Math.max(2.5, route.waypoints.length * 0.35)}s`}
+                              repeatCount="indefinite"
+                            />
+                          </polyline>
+                          {/* Flowing marching-ants overlay for extra motion */}
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke={route.color}
+                            strokeWidth="0.5"
+                            strokeDasharray="1.2 1.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.7"
+                          >
+                            <animate
+                              attributeName="stroke-dashoffset"
+                              from="0"
+                              to="-2.4"
+                              dur="0.9s"
+                              repeatCount="indefinite"
+                            />
+                          </polyline>
+                          {/* Nodes pop in, staggered start-to-finish in step with the draw-on line */}
+                          {route.waypoints.map((pt, pIdx) => {
+                            const drawDur = Math.max(2.5, route.waypoints.length * 0.35);
+                            const delay = (pIdx / Math.max(1, route.waypoints.length - 1)) * drawDur;
+                            const isEnd = pIdx === 0 || pIdx === route.waypoints.length - 1;
+                            return (
+                              <circle
+                                key={pIdx}
+                                cx={pt.x}
+                                cy={pt.y}
+                                r={isEnd ? "0.7" : "0.34"}
+                                fill={route.color}
+                                stroke="#ffffff"
+                                strokeWidth="0.18"
+                                opacity="0"
+                              >
+                                <animate
+                                  attributeName="opacity"
+                                  values="0;1;1"
+                                  keyTimes="0;0.02;1"
+                                  begin={`${delay}s`}
+                                  dur={`${drawDur}s`}
+                                  repeatCount="indefinite"
+                                />
+                              </circle>
+                            );
+                          })}
+                        </g>
+                      </svg>
+                    );
+                  })()}
 
                   {/* Interactive Draggable Waypoint Nodes in Editor Mode */}
                   {isEditorOpen &&
