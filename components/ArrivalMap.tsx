@@ -37,7 +37,6 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Route,
   Edit3,
   PanelLeftClose,
   PanelLeftOpen,
@@ -60,6 +59,10 @@ interface ArrivalMapProps {
 
 type PresentationPhase = "overview" | "pinpoint_focus" | "popup_open";
 
+// Composite customRoutes/localStorage key for a Jalan Santai sub-route, kept
+// separate from "d2-jalan-santai" itself (the agenda's own single walk path).
+const walkingRouteEditorKey = (routeId: "pju" | "anggota") => `d2-jalan-santai::${routeId}`;
+
 export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
@@ -72,8 +75,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   // Route animation progress: 0 (Start) to 1 (Destination)
   const [animProgress, setAnimProgress] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const [showPaths, setShowPaths] = useState<boolean>(false);
   const [selectedMapWalkingRoute, setSelectedMapWalkingRoute] = useState<"pju" | "anggota">("pju");
+  // Space-driven mini-sequence on the "Jalan Santai" step: 0 = showing Anggota
+  // route (zoomed out), 1 = showing PJU route (zoomed out); one more Space
+  // press after that opens the normal agenda popup/slide.
+  const [jalanSantaiPreviewStep, setJalanSantaiPreviewStep] = useState<0 | 1>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [avatarMode, setAvatarMode] = useState<"circle" | "squad">("squad");
   const [showF11Toast, setShowF11Toast] = useState<boolean>(false);
@@ -178,6 +184,13 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     ROUTE_ACTIVITIES.forEach((act) => {
       initial[act.id] = act.defaultWaypoints;
     });
+    // "Jalan Santai" has two independently-editable sub-routes (Anggota/PJU),
+    // separate from the agenda's own single defaultWaypoints (used for the
+    // pawn's walk). Seed them under their own composite keys so the manual
+    // editor and the on-map preview line share the exact same source.
+    WALKING_ROUTES_DAY2.forEach((route) => {
+      initial[walkingRouteEditorKey(route.id)] = route.waypoints;
+    });
     return initial;
   });
 
@@ -196,15 +209,29 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
           loaded[act.id] = act.defaultWaypoints;
         }
       });
+      WALKING_ROUTES_DAY2.forEach((route) => {
+        const key = walkingRouteEditorKey(route.id);
+        const saved = localStorage.getItem(`famgath_route_${key}`);
+        loaded[key] = saved ? JSON.parse(saved) : route.waypoints;
+      });
       setCustomRoutes((prev) => ({ ...prev, ...loaded }));
     } catch (e) {
       console.error("Error loading routes from localStorage", e);
     }
   }, []);
 
+  // While editing "Jalan Santai", the manual editor and the preview line
+  // both target whichever sub-route (Anggota/PJU) is currently selected —
+  // not the agenda's own single walk-in path — so an edit always shows up
+  // exactly where it was made.
+  const editorRouteKey =
+    activeActivityId === "d2-jalan-santai"
+      ? walkingRouteEditorKey(selectedMapWalkingRoute)
+      : activeActivityId;
+
   const activeWaypoints = useMemo(() => {
-    return customRoutes[activeActivityId] || ROUTE_ACTIVITIES[0].defaultWaypoints;
-  }, [customRoutes, activeActivityId]);
+    return customRoutes[editorRouteKey] || ROUTE_ACTIVITIES[0].defaultWaypoints;
+  }, [customRoutes, editorRouteKey]);
 
   const mappedLocations = useMemo(() => {
     return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
@@ -432,7 +459,15 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             }
           : dest || start;
 
-      if (focusPoint) {
+      if (agendaId === "d2-jalan-santai") {
+        // The Anggota/PJU route lines span nearly the whole resort, so a
+        // normal tight pinpoint zoom would only show a fragment of them.
+        // Zoom back out to the full map instead, and start the route
+        // preview on Anggota (Space cycles it to PJU, then opens the popup).
+        resetToOverviewMap();
+        setSelectedMapWalkingRoute("anggota");
+        setJalanSantaiPreviewStep(0);
+      } else if (focusPoint) {
         focusOnCoordinate(focusPoint, zoom);
       }
 
@@ -498,6 +533,20 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       if (isAnimating) {
         return;
       }
+
+      // Jalan Santai gets a little detour here: first Space cycles the
+      // zoomed-out route preview from Anggota to PJU, and only the Space
+      // after that opens the normal agenda popup/slide.
+      if (activeActivityId === "d2-jalan-santai") {
+        if (jalanSantaiPreviewStep === 0) {
+          setSelectedMapWalkingRoute("pju");
+          setJalanSantaiPreviewStep(1);
+        } else {
+          openAgendaPopup();
+        }
+        return;
+      }
+
       if (activeActivityId === "d1-checkin-pju" && !showPJUWalkVideo) {
         setShowPJUWalkVideo(true);
       } else {
@@ -517,6 +566,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     activeActivityId,
     currentAgendaIndex,
     isAnimating,
+    jalanSantaiPreviewStep,
     openAgendaPopup,
     returnToOverviewMap,
     focusOnAgendaPinpoint,
@@ -632,12 +682,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const handleUpdateWaypoints = (newWaypoints: Waypoint[]) => {
     setCustomRoutes((prev) => ({
       ...prev,
-      [activeActivityId]: newWaypoints,
+      [editorRouteKey]: newWaypoints,
     }));
 
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(`famgath_route_${activeActivityId}`, JSON.stringify(newWaypoints));
+        localStorage.setItem(`famgath_route_${editorRouteKey}`, JSON.stringify(newWaypoints));
       } catch (e) {
         console.error("Error auto-saving route to localStorage", e);
       }
@@ -1110,23 +1160,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     <Layers className="w-4 h-4" />
                   </button>
 
-                  {/* Toggle Walking Paths — only relevant during "Jalan Santai";
-                      no route data to preview on any other agenda step. */}
+                  {/* Rute PJU / Anggota switcher — which route's line gets drawn.
+                      The line itself now shows automatically for "Jalan Santai"
+                      (no manual "Tampilkan Garis Rute" toggle needed anymore). */}
                   {currentAgendaItem.id === "d2-jalan-santai" && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPaths(!showPaths)}
-                      title={showPaths ? "Sembunyikan Garis Rute" : "Tampilkan Garis Rute"}
-                      className={`p-2 rounded-xl transition-all cursor-pointer ${
-                        showPaths ? "text-slate-950 bg-amber-400 font-bold" : "text-slate-400 hover:text-white hover:bg-lime-800/40"
-                      }`}
-                    >
-                      <Route className="w-4 h-4" />
-                    </button>
-                  )}
-
-                  {/* Rute PJU / Anggota switcher — which route's line gets drawn */}
-                  {currentAgendaItem.id === "d2-jalan-santai" && showPaths && (
                     <div className="flex items-center bg-black/60 p-0.5 rounded-full border border-white/15 ml-0.5">
                       {WALKING_ROUTES_DAY2.map((route) => (
                         <button
@@ -1277,11 +1314,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       viewing the "Jalan Santai" agenda; no other step has a
                       walking-route line to preview. Animated flowing dashes +
                       node markers along the selected route. */}
-                  {!isEditorOpen && showPaths && currentAgendaItem.id === "d2-jalan-santai" && (() => {
+                  {!isEditorOpen && currentAgendaItem.id === "d2-jalan-santai" && (() => {
                     const route =
                       WALKING_ROUTES_DAY2.find((r) => r.id === selectedMapWalkingRoute) ||
                       WALKING_ROUTES_DAY2[0];
-                    const points = route.waypoints.map((p) => `${p.x},${p.y}`).join(" ");
+                    // Prefer whatever's been edited/saved for this sub-route
+                    // over the static default, so the line always matches
+                    // what the manual editor last saved.
+                    const routeWaypoints =
+                      customRoutes[walkingRouteEditorKey(route.id)] || route.waypoints;
+                    const points = routeWaypoints.map((p) => `${p.x},${p.y}`).join(" ");
                     return (
                       <svg
                         className="absolute inset-0 w-full h-full pointer-events-none z-20"
@@ -1317,7 +1359,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                               attributeName="stroke-dashoffset"
                               from="100"
                               to="0"
-                              dur={`${Math.max(2.5, route.waypoints.length * 0.35)}s`}
+                              dur={`${Math.max(2.5, routeWaypoints.length * 0.35)}s`}
                               repeatCount="indefinite"
                             />
                           </polyline>
@@ -1341,10 +1383,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                             />
                           </polyline>
                           {/* Nodes pop in, staggered start-to-finish in step with the draw-on line */}
-                          {route.waypoints.map((pt, pIdx) => {
-                            const drawDur = Math.max(2.5, route.waypoints.length * 0.35);
-                            const delay = (pIdx / Math.max(1, route.waypoints.length - 1)) * drawDur;
-                            const isEnd = pIdx === 0 || pIdx === route.waypoints.length - 1;
+                          {routeWaypoints.map((pt, pIdx) => {
+                            const drawDur = Math.max(2.5, routeWaypoints.length * 0.35);
+                            const delay = (pIdx / Math.max(1, routeWaypoints.length - 1)) * drawDur;
+                            const isEnd = pIdx === 0 || pIdx === routeWaypoints.length - 1;
                             return (
                               <circle
                                 key={pIdx}

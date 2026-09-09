@@ -20,17 +20,31 @@ export async function POST(req: NextRequest) {
       Object.assign(routesToUpdate, allRoutes);
     }
 
-    // Update defaultWaypoints for each activity in the file content
-    for (const [id, pts] of Object.entries(routesToUpdate)) {
+    // Update defaultWaypoints (or, for Jalan Santai's Anggota/PJU sub-routes,
+    // WalkingRouteOption.waypoints) for each activity in the file content
+    for (const [rawId, pts] of Object.entries(routesToUpdate)) {
       if (!Array.isArray(pts) || pts.length === 0) continue;
 
       const formattedPoints = pts
         .map((p) => `      { x: ${Number(p.x).toFixed(1)}, y: ${Number(p.y).toFixed(1)} },`)
         .join("\n");
 
-      // Regex matching the specific item object by id and replacing its defaultWaypoints array
+      // "d2-jalan-santai::pju" / "d2-jalan-santai::anggota" target the
+      // WalkingRouteOption entries in WALKING_ROUTES_DAY2 (field: waypoints)
+      // instead of a RundownItem's defaultWaypoints.
+      const subRouteMatch = rawId.match(/^d2-jalan-santai::(pju|anggota)$/);
+      const id = subRouteMatch ? subRouteMatch[1] : rawId;
+      const fieldName = subRouteMatch ? "waypoints" : "defaultWaypoints";
+
+      // Regex matching the specific item object by id and replacing its waypoints array.
+      // The trailing comma after the id is required so this only matches an
+      // actual object literal (id: "pju",) — "pju"/"anggota" are also a TS
+      // union type elsewhere (id: "pju" | "anggota";), which has no comma
+      // there and must NOT match, or the lazy [\s\S]*? would span from that
+      // type declaration all the way to the real waypoints array and wipe
+      // out everything in between.
       const itemRegex = new RegExp(
-        `(id:\\s*["']${id}["'][\\s\\S]*?defaultWaypoints:\\s*\\[)([\\s\\S]*?)(\\])`,
+        `(id:\\s*["']${id}["']\\s*,[\\s\\S]*?${fieldName}:\\s*\\[)([\\s\\S]*?)(\\])`,
         "m"
       );
 
