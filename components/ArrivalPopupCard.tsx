@@ -34,7 +34,27 @@ import {
   Coffee,
   Camera,
   Crown,
+  Plane,
+  BedDouble,
+  Mountain,
+  Tent,
+  Landmark,
+  PartyPopper,
 } from "lucide-react";
+
+// Distinct icon per map pin, instead of the same generic building icon
+// for every single stop — matched by KeyEventPinpoint.id.
+const PIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "pin-helipad": Plane,
+  "pin-alpine": BedDouble,
+  "pin-cave": Mountain,
+  "pin-mongolian": Tent,
+  "pin-masjid": Landmark,
+  "pin-resto": Utensils,
+  "pin-ballroom": PartyPopper,
+  "pin-bridge": Camera,
+  "pin-kopihip": Coffee,
+};
 
 interface ArrivalPopupCardProps {
   vip?: VIPArrival;
@@ -69,6 +89,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isFullFrame, setIsFullFrame] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMarkerHovered, setIsMarkerHovered] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -165,13 +186,38 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const facilitiesList = activeRoom?.facilities || keyPinpoint?.facilities || [];
   const hasFacilities = facilitiesList.length > 0;
   const hasTabs = Boolean(hasMenu || isGames || hasWalkingRoutes || hasFacilities);
-  const descriptionText = activeRoom?.description || keyPinpoint?.description || agendaItem?.description || spotData?.description || "";
+  // These agenda items reuse a map pin (for waypoint routing only) whose own description
+  // doesn't belong on the agenda card: "d2-prep-jalan-santai"/"d2-freetime" were inheriting
+  // pin-helipad's "Selamat Datang..." arrival blurb, and "d2-jalan-santai" was inheriting
+  // pin-bridge's "Titik akhir jalan santai..." — that's just the mid-route photo stopover
+  // (Tangga Kolam), not a description of the walk itself; the per-route tabs below already
+  // carry the real route descriptions, and the walk's distance/duration now lives on the
+  // "Titik Start & Finish Jalan Santai" card instead. Suppress just for these three; every
+  // other card keeps showing its pin's description as before.
+  const suppressPinDescription =
+    agendaItem?.id === "d2-prep-jalan-santai" ||
+    agendaItem?.id === "d2-freetime" ||
+    agendaItem?.id === "d2-jalan-santai";
+  // pin-resto's description covers both Day 1 Dinner and Day 2 Breakfast ("...makan malam
+  // dan sarapan pagi..."), so the Day 2 Breakfast card was showing a stray dinner mention.
+  const descriptionOverrides: Record<string, string> = {
+    "d2-breakfast": "Area Resto Lantai 2 untuk santap sarapan pagi bersama.",
+  };
+  const descriptionText =
+    activeRoom?.description ||
+    agendaItem?.description ||
+    (agendaItem?.id ? descriptionOverrides[agendaItem.id] : undefined) ||
+    (suppressPinDescription ? "" : keyPinpoint?.description) ||
+    spotData?.description ||
+    "";
 
   const activeWalkingRoute = WALKING_ROUTES_DAY2.find((r) => r.id === activeWalkingRouteTab) || WALKING_ROUTES_DAY2[0];
+  const PinIcon = (keyPinpoint?.id && PIN_ICONS[keyPinpoint.id]) || Building;
 
   return (
     <>
-      {/* On-Map Marker Pin */}
+      {/* On-Map Marker Pin — icon-only by default so many markers don't pile up into
+          overlapping text pills; the name shows as a small tooltip on hover, or while open. */}
       <div
         className="absolute pointer-events-auto z-40 select-none cursor-pointer group hover:z-50"
         style={{
@@ -187,24 +233,37 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
             onOpen();
           }
         }}
+        onMouseEnter={() => setIsMarkerHovered(true)}
+        onMouseLeave={() => setIsMarkerHovered(false)}
       >
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           title={`Buka detail ${placeName}`}
-          className={`relative flex items-center h-9 px-3 rounded-full shadow-2xl backdrop-blur-md border text-xs font-bold transition-all duration-200 ease-out ${
+          aria-label={`Buka detail ${placeName}`}
+          className={`relative flex items-center justify-center w-9 h-9 rounded-full shadow-2xl backdrop-blur-md border transition-all duration-200 ease-out ${
             isOpen ? "ring-4 ring-lime-400 scale-105" : ""
           } ${
             isPJU
-              ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white ring-2 ring-amber-400/70 font-black shadow-glow-gold"
+              ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white ring-2 ring-amber-400/70 shadow-glow-gold"
               : "bg-[#0b1f0c]/95 text-emerald-200 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg"
           }`}
         >
-          <div className="flex items-center gap-1.5 whitespace-nowrap">
-            <Building className={`w-3.5 h-3.5 ${isPJU ? "text-slate-950" : "text-lime-400"}`} />
-            <span className="font-extrabold">{placeName}</span>
-          </div>
+          <PinIcon className={`w-4 h-4 ${isPJU ? "text-slate-950" : "text-lime-400"}`} />
         </motion.div>
+
+        {/* Name label: only appears on hover / while open, instead of always-on */}
+        {(isMarkerHovered || isOpen) && (
+          <div
+            className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-bold shadow-2xl backdrop-blur-md border pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
+              isPJU
+                ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white font-black shadow-glow-gold"
+                : "bg-[#0b1f0c]/95 text-emerald-200 border-emerald-400/80 shadow-lg"
+            }`}
+          >
+            {placeName}
+          </div>
+        )}
       </div>
 
       {/* Presentation Modal Card */}

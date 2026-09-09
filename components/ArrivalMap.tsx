@@ -50,8 +50,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
-  Play,
-  Trees,
   Layers,
 } from "lucide-react";
 
@@ -264,6 +262,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         return "pin-helipad";
       case "d2-jalan-santai":
         return "pin-bridge";
+      case "d2-kopi-hip":
+        return "pin-kopihip";
       case "d2-ballroom-grandprize":
       case "d2-lunch":
         return "pin-ballroom";
@@ -340,7 +340,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       cancelAnimationFrame(animFrameRef.current);
     }
 
-    if (agendaId !== "d1-checkin-pju") {
+    // The PJU pawn is only ever rendered during these two steps (see the
+    // activeActivityId check further below) — walk it smoothly for both,
+    // instead of only "d1-checkin-pju". Every other agenda has no visible
+    // pawn, so snapping progress to 1 there is harmless.
+    const hasAnimatedPawn = agendaId === "d1-arrival" || agendaId === "d1-checkin-pju";
+    if (!hasAnimatedPawn) {
       setIsAnimating(false);
       setAnimProgress(1);
       return;
@@ -364,6 +369,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       } else {
         setIsAnimating(false);
         setAnimProgress(1);
+        // Auto-start the "PJU Berjalan" video the instant the walk-in
+        // animation finishes, so it always plays right after the avatar
+        // arrives — never cutting the walk short from an early Space press.
+        if (agendaId === "d1-checkin-pju") {
+          setShowPJUWalkVideo(true);
+        }
       }
     };
 
@@ -382,11 +393,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       setActiveActivityId(agendaId);
       setPresentationPhase("pinpoint_focus");
 
-      if (agendaId === "d1-checkin-pju") {
-        setShowPJUWalkVideo(true);
-      } else {
-        setShowPJUWalkVideo(false);
-      }
+      // Don't show the "PJU Berjalan" video yet — it used to pop up here
+      // immediately, before the avatar had even started walking on the map.
+      // It's now triggered by startRouteAnimation once the walk-in
+      // animation actually finishes (see its completion branch below).
+      setShowPJUWalkVideo(false);
 
       const pinId = getPinIdForAgenda(agendaId);
       const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId) || ALL_RUNDOWN_ITEMS[0];
@@ -466,6 +477,13 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     // ➔ Close popup, return smoothly to Overview Map, and advance to next agenda
     if (Boolean(activeOpenPinId) || Boolean(selectedLegendLocation) || presentationPhase === "popup_open") {
       returnToOverviewMap();
+      // activeVIPs recomputes its pathWaypoints the instant activeActivityId
+      // changes below, but animProgress (still 1 from the step we're leaving)
+      // wouldn't reset until the next startRouteAnimation call — leaving the
+      // pawn flashed at the END of the new route for a frame, before later
+      // snapping back to its start once the walk animation actually begins.
+      // Reset progress here too so it just stays put at the route's start.
+      setAnimProgress(0);
       const nextIdx = (currentAgendaIndex + 1) % ALL_RUNDOWN_ITEMS.length;
       setActiveActivityId(ALL_RUNDOWN_ITEMS[nextIdx].id);
       return;
@@ -473,6 +491,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
     // 4. Pinpoint Focus (Zoomed in on pin, but popup not yet opened)
     if (presentationPhase === "pinpoint_focus") {
+      // Avatar still walking on the map — ignore extra presses and let it
+      // finish; the video auto-starts right after (see startRouteAnimation).
+      if (isAnimating) {
+        return;
+      }
       if (activeActivityId === "d1-checkin-pju" && !showPJUWalkVideo) {
         setShowPJUWalkVideo(true);
       } else {
@@ -491,6 +514,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     presentationPhase,
     activeActivityId,
     currentAgendaIndex,
+    isAnimating,
     openAgendaPopup,
     returnToOverviewMap,
     focusOnAgendaPinpoint,
@@ -743,7 +767,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[150] flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#0e1d03] via-[#091502] to-[#040a01] text-white select-none overflow-hidden"
+            className="fixed inset-0 z-[150] flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#0e1d03] via-[#091502] to-[#040a01] text-white select-none overflow-hidden cursor-pointer"
+            role="button"
+            tabIndex={0}
+            aria-label="Mulai Presentasi (Tekan Spasi)"
+            onClick={() => setShowIntroSlide(false)}
           >
             {/* Background Decorative Panorama */}
             <div className="absolute inset-0 opacity-25 pointer-events-none">
@@ -760,35 +788,26 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             {/* Subtle Gradient Glow */}
             <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-500/10 blur-[120px] pointer-events-none" />
 
-            {/* Slide Pembuka Content Box */}
-            <div className="relative z-10 max-w-3xl w-full flex flex-col items-center text-center space-y-6 p-8 sm:p-12 rounded-[36px] bg-[#0c1a03]/90 border-2 border-lime-400/60 shadow-[0_0_80px_rgba(163,230,53,0.2)] backdrop-blur-2xl">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-xs sm:text-sm font-black tracking-widest uppercase shadow-sm">
-                <Trees className="w-4 h-4 text-amber-400" />
-                <span>PUSZIAD & THE HIGHLAND PARK RESORT</span>
-              </div>
-
+            {/* Slide Pembuka Content — no boxed card, text sits directly on the
+                background so it can run bigger/more prominent. */}
+            <div className="relative z-10 max-w-4xl w-full flex flex-col items-center text-center space-y-6 px-6">
               <div className="space-y-3">
-                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight uppercase font-fun drop-shadow-md">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight uppercase font-fun drop-shadow-[0_4px_24px_rgba(0,0,0,0.7)]">
                   RUNDOWN FAMILY GATHERING PUSZIAD 2026
                 </h1>
-                <h2 className="text-lg sm:text-2xl font-extrabold text-lime-300 tracking-wide uppercase">
+                <h2 className="text-xl sm:text-3xl font-extrabold text-lime-300 tracking-wide uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
                   THE HIGHLAND RESORT BOGOR
                 </h2>
-                <div className="text-sm sm:text-base font-bold text-slate-300 pt-1">
+                <div className="text-base sm:text-lg font-bold text-slate-300 pt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
                   9 - 10 OKTOBER 2026
                 </div>
               </div>
 
-              {/* Start Button */}
-              <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowIntroSlide(false)}
-                  className="flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 hover:brightness-110 text-slate-950 font-black text-sm sm:text-base tracking-wide shadow-glow-gold transition-all cursor-pointer hover:scale-105"
-                >
-                  <Play className="w-5 h-5 fill-current" />
-                  <span>Mulai Presentasi (Tekan Spasi)</span>
-                </button>
+              {/* Start "button" is intentionally invisible — no text, no icon.
+                  The whole slide is clickable (see onClick above) and Space
+                  still works; sr-only label keeps it announced for a11y. */}
+              <div className="pt-4">
+                <span className="sr-only">Mulai Presentasi (Tekan Spasi)</span>
               </div>
             </div>
           </motion.div>
@@ -862,18 +881,18 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             </button>
 
             {/* Current Step Pill with Day & Title */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-xs font-bold text-lime-300">
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-xs font-bold text-lime-300 shrink-0">
               <span className="text-[10px] font-mono text-amber-300 uppercase">
                 {currentAgendaIndex + 1}/{ALL_RUNDOWN_ITEMS.length}
               </span>
-              <span className="max-w-[170px] truncate text-white">{currentAgendaItem.title}</span>
+              <span className="max-w-[110px] lg:max-w-[170px] truncate text-white">{currentAgendaItem.title}</span>
             </div>
 
             {/* Dynamic Spacebar Action Button */}
             <button
               type="button"
               onClick={handleSpacebarAction}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black transition-all shadow-lg border cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs font-black transition-all shadow-lg border cursor-pointer min-w-0 ${
                 presentationPhase === "overview"
                   ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white shadow-glow-gold hover:scale-[1.02]"
                   : presentationPhase === "pinpoint_focus"
@@ -882,12 +901,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               }`}
               title="Tekan Tombol Spasi pada keyboard untuk lanjut"
             >
-              <span className="px-1.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] font-bold">
+              <span className="shrink-0 px-1.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] font-bold">
                 SPASI
               </span>
-              <span>
+              <span className="truncate max-w-[120px] sm:max-w-[220px] lg:max-w-[360px]">
                 {presentationPhase === "overview"
-                  ? `Tuju: ${currentAgendaItem.title}`
+                  ? `Next: ${currentAgendaItem.title}`
                   : presentationPhase === "pinpoint_focus"
                   ? "Buka Detail Info"
                   : "Kembali ke Peta Utama"}
@@ -1239,7 +1258,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
                       return (
                         <ArrivalPopupCard
-                          key={`keypin-${pin.id}-${activeActivityId}`}
+                          key={`keypin-${pin.id}`}
                           keyPinpoint={{ ...pin, coords: pinActualCoords }}
                           agendaItem={isDestinationOfCurrentAgenda ? currentAgendaItem : undefined}
                           isOpen={isOpen}
@@ -1484,11 +1503,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               </div>
 
               {/* Footer Action Bar */}
-              <div className="px-5 py-3.5 bg-[#0a1703] border-t border-lime-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="text-xs text-slate-300">
-                  <span>Tekan <strong className="text-amber-300 font-mono">Spasi</strong> atau tombol di samping untuk langsung ke detail villa.</span>
-                </div>
-
+              <div className="px-5 py-3.5 bg-[#0a1703] border-t border-lime-500/30 flex items-center justify-end gap-3">
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   <button
                     type="button"

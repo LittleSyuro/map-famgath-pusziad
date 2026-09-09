@@ -246,7 +246,7 @@ export const WALKING_ROUTES_DAY2: WalkingRouteOption[] = [
     targetGroup: "Pejabat Utama (PJU) & Ibu",
     estimatedTime: "± 3 - 5 Menit",
     estimatedDistance: "± 150 Meter",
-    description: "Jalur santai teduh menyusuri area hijau asri resort. Setelah jalan santai, agenda dilanjutkan dengan santap Coffee Morning di Kopi HIP khusus PJU.",
+    description: "Untuk rute PJU, akan mengunjungi area kebun dan sayuran lalu menuju spot area tangga untuk foto bersama anggota.",
     specialNote: "☕ Setelah Jalan Santai: Ada Coffee Morning di Kopi HIP (Khusus PJU)",
     highlights: [
       "Start: Area Lapangan Helipad",
@@ -268,7 +268,7 @@ export const WALKING_ROUTES_DAY2: WalkingRouteOption[] = [
     targetGroup: "Seluruh Anggota & Rombongan Keluarga",
     estimatedTime: "± 8 - 12 Menit",
     estimatedDistance: "± 350 Meter",
-    description: "Jalur wisata aktif mengelilingi kawasan resort: Hutan Pinus, Wahana Edukasi Noah, Lapangan Gerbera, dan berakhir di titik foto bersama samping kolam.",
+    description: "Sebelum mencapai titik finish, peserta atau anggota mengisi spot-spot area tangga untuk foto bersama (akan diarahkan oleh tim EO, sambil menunggu kedatangan PJU).",
     highlights: [
       "Start: Area Lapangan Helipad",
       "Hutan Pinus Resort (Spot Foto Sejuk)",
@@ -308,7 +308,7 @@ export const DAY2_HIGHLIGHT_SPOTS: HighlightSpot[] = [
   {
     id: "spot-noah",
     name: "Wahana Edukasi Noah & Satwa",
-    image: "/legend/51_Rumah_Kelinci.png",
+    image: "/legend/51_Mini_Zoo.png",
     coords: { x: 31.0, y: 64.0 },
     category: "Spot Foto Jalan Santai",
     description: "Wahana edukasi ramah keluarga di rute jalan santai anggota.",
@@ -482,6 +482,22 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     description: "Titik akhir jalan santai untuk sesi foto bersama seluruh rombongan keluarga besar Pusziad.",
     badge: "Spot Foto Bersama",
     color: "#06b6d4",
+  },
+  {
+    id: "pin-kopihip",
+    name: "Kopi Hip",
+    category: "Coffee Break PJU",
+    isPJU: true,
+    image: "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
+    galleryImages: [
+      "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
+      "/resort_media/kopi_hip/Foto/DSCF0426.jpg",
+      "/resort_media/kopi_hip/Foto/DSCF0432.jpg"
+    ],
+    coords: { x: 75.5, y: 29.5 },
+    description: "Setelah sampai di finish line, PJU menuju Kopi Hip untuk coffee break.",
+    badge: "Coffee Break PJU",
+    color: "#ca8a04",
   },
 ];
 
@@ -701,8 +717,9 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "07.45",
     startMinutes: 420, // 07:00
     endMinutes: 465, // 07:45
-    title: "Persiapan Jalan Santai",
+    title: "Titik Start & Finish Jalan Santai",
     locationName: "Area Helipad (Titik Awal)",
+    description: "Keterangan Jalan Santai: Jarak +- 2.5 KM dengan estimasi durasi 45 menit - 1 jam.",
     badge: "Persiapan",
     color: "#eab308",
     destImage: "/resort_media/helipad/helipad_1.jpg",
@@ -726,6 +743,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endMinutes: 525, // 08:45
     title: "Jalan Santai (Rute PJU & Anggota)",
     locationName: "Kawasan Resort ➔ Tangga Kolam",
+    description: "Area untuk spot foto",
     badge: "Jalan Santai",
     color: "#14b8a6",
     destImage: "/resort_media/spots/foto_bersama_jembatan.jpg",
@@ -735,13 +753,38 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     galleryImages: [
       "/resort_media/spots/foto_bersama_jembatan.jpg",
       "/legend/03_Hutan_Pinus.png",
-      "/legend/51_Rumah_Kelinci.png"
+      "/legend/51_Mini_Zoo.png"
     ],
     defaultWaypoints: [
       { x: 80.5, y: 35.5 },
       { x: 86.0, y: 22.0 },
       { x: 70.0, y: 32.0 },
       { x: 54.1, y: 43.5 },
+    ],
+  },
+  {
+    id: "d2-kopi-hip",
+    day: 2,
+    startTime: "08.45",
+    endTime: "09.00",
+    startMinutes: 525, // 08:45
+    endMinutes: 540, // 09:00
+    title: "Kopi Hip (Coffee Break PJU)",
+    locationName: "Kopi Hip",
+    description: "Setelah sampai di finish line, PJU menuju Kopi Hip untuk coffee break.",
+    badge: "Coffee Break PJU",
+    color: "#ca8a04",
+    destImage: "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
+    destCoordinates: { x: 75.5, y: 29.5 },
+    galleryImages: [
+      "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
+      "/resort_media/kopi_hip/Foto/DSCF0426.jpg",
+      "/resort_media/kopi_hip/Foto/DSCF0432.jpg"
+    ],
+    defaultWaypoints: [
+      { x: 54.1, y: 43.5 },
+      { x: 70.0, y: 36.0 },
+      { x: 75.5, y: 29.5 },
     ],
   },
   {
@@ -762,8 +805,8 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
       "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
     ],
     defaultWaypoints: [
-      { x: 54.1, y: 43.5 },
-      { x: 70.0, y: 36.0 },
+      { x: 75.5, y: 29.5 },
+      { x: 82.0, y: 29.5 },
       { x: 87.7, y: 29.5 },
     ],
   },
@@ -798,12 +841,12 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     locationName: "Kawasan The Highland Park",
     badge: "Free Time",
     color: "#f59e0b",
-    destImage: "/legend/01_Lobby_Utama.png",
+    destImage: "/legend/01_Welcome_Gate.png",
     destCoordinates: { x: 50.0, y: 50.0 },
     galleryImages: [
-      "/legend/01_Lobby_Utama.png",
+      "/legend/01_Welcome_Gate.png",
       "/legend/15_Invisible_Bridge.png",
-      "/legend/51_Rumah_Kelinci.png",
+      "/legend/51_Mini_Zoo.png",
       "/legend/03_Hutan_Pinus.png"
     ],
     defaultWaypoints: [
