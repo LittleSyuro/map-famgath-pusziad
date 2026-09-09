@@ -37,7 +37,6 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Edit3,
   PanelLeftClose,
   PanelLeftOpen,
   Calendar,
@@ -970,19 +969,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               </span>
             </button>
 
-            {/* Direct Back to Overview Map Button */}
-            {presentationPhase !== "overview" && (
-              <button
-                type="button"
-                onClick={returnToOverviewMap}
-                title="Kembali ke Peta Utama (Esc / Home)"
-                className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs text-lime-200 font-bold transition-colors cursor-pointer flex items-center gap-1 border border-white/10"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Peta Utama</span>
-              </button>
-            )}
-
             {/* Next Step Button */}
             <button
               type="button"
@@ -1026,21 +1012,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
               <span>🗺️ Galeri Lokasi</span>
-            </button>
-
-            {/* Tombol Buat Rute Manual */}
-            <button
-              type="button"
-              onClick={() => setIsEditorOpen(!isEditorOpen)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black shadow-xl backdrop-blur-md transition-all cursor-pointer hover:scale-105 border ${
-                isEditorOpen
-                  ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 border-white shadow-glow-gold"
-                  : "bg-[#081402]/95 hover:bg-[#122807] text-lime-200 border-lime-400/60"
-              }`}
-              title="Buka / Tutup Editor Rute Manual (Klik di peta untuk tambah titik)"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-              <span>✏️ Buat Rute Manual</span>
             </button>
           </div>
         )}
@@ -1163,48 +1134,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     className="p-2 rounded-xl text-amber-300 hover:text-slate-950 hover:bg-amber-400 transition-colors cursor-pointer"
                   >
                     <Layers className="w-4 h-4" />
-                  </button>
-
-                  {/* Rute PJU / Anggota switcher — which route's line gets drawn.
-                      The line itself now shows automatically for "Jalan Santai"
-                      (no manual "Tampilkan Garis Rute" toggle needed anymore). */}
-                  {currentAgendaItem.id === "d2-jalan-santai" && (
-                    <div className="flex items-center bg-black/60 p-0.5 rounded-full border border-white/15 ml-0.5">
-                      {WALKING_ROUTES_DAY2.map((route) => (
-                        <button
-                          key={route.id}
-                          type="button"
-                          onClick={() => setSelectedMapWalkingRoute(route.id)}
-                          title={route.title}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide transition-all cursor-pointer ${
-                            selectedMapWalkingRoute === route.id
-                              ? "text-white shadow-md"
-                              : "text-slate-400 hover:text-white"
-                          }`}
-                          style={
-                            selectedMapWalkingRoute === route.id
-                              ? { backgroundColor: route.color }
-                              : undefined
-                          }
-                        >
-                          {route.id === "pju" ? "PJU" : "Anggota"}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Toggle Manual Route Editor */}
-                  <button
-                    type="button"
-                    onClick={() => setIsEditorOpen(!isEditorOpen)}
-                    title={isEditorOpen ? "Tutup Editor Rute" : "Buka Editor Rute Manual (Edit Titik di Peta)"}
-                    className={`p-2 rounded-xl transition-all cursor-pointer ${
-                      isEditorOpen
-                        ? "text-slate-950 bg-amber-400 font-bold shadow-glow-gold"
-                        : "text-slate-400 hover:text-white hover:bg-lime-800/40"
-                    }`}
-                  >
-                    <Edit3 className="w-4 h-4" />
                   </button>
 
                   {/* Avatar Model Switcher */}

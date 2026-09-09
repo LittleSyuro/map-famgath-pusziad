@@ -734,63 +734,52 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     </div>
                   )}
 
-                  {/* Rute Jalan Sehat */}
+                  {/* Rute Jalan Sehat — both routes shown stacked (PJU on top,
+                      Anggota below) instead of behind a tab switch, so
+                      neither description stays hidden. */}
                   {activeTab === "rute" && hasWalkingRoutes && (
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2 p-1 rounded-xl bg-black/50 border border-lime-500/20 text-xs font-bold">
-                        <button
-                          type="button"
-                          onClick={() => setActiveWalkingRouteTab("pju")}
-                          className={`flex-1 py-1.5 rounded-lg transition-all text-center flex items-center justify-center gap-1.5 ${
-                            activeWalkingRouteTab === "pju"
-                              ? "bg-amber-400 text-slate-950 font-black shadow-md"
-                              : "text-lime-200/80 hover:text-white"
-                          }`}
+                      {WALKING_ROUTES_DAY2.map((route) => (
+                        <div
+                          key={route.id}
+                          className="p-3.5 rounded-2xl bg-black/40 border space-y-2.5"
+                          style={{ borderColor: `${route.color}66` }}
                         >
-                          <Route className="w-3.5 h-3.5" />
-                          <span>Rute PJU</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveWalkingRouteTab("anggota")}
-                          className={`flex-1 py-1.5 rounded-lg transition-all text-center flex items-center justify-center gap-1.5 ${
-                            activeWalkingRouteTab === "anggota"
-                              ? "bg-lime-400 text-slate-950 font-black shadow-md"
-                              : "text-lime-200/80 hover:text-white"
-                          }`}
-                        >
-                          <Route className="w-3.5 h-3.5" />
-                          <span>Rute Anggota</span>
-                        </button>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-white">{activeWalkingRoute.title}</span>
-                          <div className="flex items-center gap-2 text-[11px] font-bold text-lime-300">
-                            <span>⏱️ {activeWalkingRoute.estimatedTime}</span>
-                            <span>📏 {activeWalkingRoute.estimatedDistance}</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-lime-100/90 leading-relaxed">
-                          {activeWalkingRoute.description}
-                        </p>
-
-                        {activeWalkingRoute.specialNote && (
-                          <div className="p-2 rounded-xl bg-amber-400/15 border border-amber-400/40 text-amber-200 text-xs font-black">
-                            {activeWalkingRoute.specialNote}
-                          </div>
-                        )}
-
-                        <div className="space-y-1.5 pt-1">
-                          {activeWalkingRoute.highlights.map((hl, hIdx) => (
-                            <div key={hIdx} className="flex items-center gap-2 text-xs text-slate-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-lime-400 shrink-0" />
-                              <span>{hl}</span>
+                          <div className="flex items-center justify-between flex-wrap gap-1.5">
+                            <span
+                              className={`text-xs font-black px-2 py-0.5 rounded-full flex items-center gap-1.5 ${
+                                route.id === "pju" ? "text-slate-950" : "text-white"
+                              }`}
+                              style={{ backgroundColor: route.color }}
+                            >
+                              <Route className="w-3.5 h-3.5" />
+                              {route.title}
+                            </span>
+                            <div className="flex items-center gap-2 text-[11px] font-bold text-lime-300">
+                              <span>⏱️ {route.estimatedTime}</span>
+                              <span>📏 {route.estimatedDistance}</span>
                             </div>
-                          ))}
+                          </div>
+                          <p className="text-xs text-lime-100/90 leading-relaxed">
+                            {route.description}
+                          </p>
+
+                          {route.specialNote && (
+                            <div className="p-2 rounded-xl bg-amber-400/15 border border-amber-400/40 text-amber-200 text-xs font-black">
+                              {route.specialNote}
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5 pt-1">
+                            {route.highlights.map((hl, hIdx) => (
+                              <div key={hIdx} className="flex items-center gap-2 text-xs text-slate-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-lime-400 shrink-0" />
+                                <span>{hl}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   )}
                 </div>
