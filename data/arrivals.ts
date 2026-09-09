@@ -5,7 +5,7 @@ export interface Waypoint {
 
 export interface RundownSubActivity {
   title: string;
-  category?: string; // "PJU Games" | "Ibu-ibu PJU" | "Ballroom Session"
+  category?: string;
   items?: string[];
   description?: string;
   icon?: string;
@@ -15,16 +15,18 @@ export interface RundownSubActivity {
 export interface MenuItem {
   category: string;
   items: string[];
+  note?: string;
 }
 
 export interface HighlightSpot {
   id: string;
   name: string;
-  legendNumber: string;
+  legendNumber?: string;
   image: string;
   coords: Waypoint;
   description: string;
   category: string;
+  distanceNote?: string;
 }
 
 export interface AccommodationRoom {
@@ -32,8 +34,9 @@ export interface AccommodationRoom {
   name: string;
   role: string;
   isPJU?: boolean;
-  internalNumber: string;
-  legendNumber: string;
+  totalUnits: string; // "6 buah", "16 buah", "2 buah"
+  internalNumber?: string;
+  legendNumber?: string;
   image: string;
   detailImages?: string[];
   coords: Waypoint;
@@ -41,17 +44,30 @@ export interface AccommodationRoom {
   facilities: string[];
 }
 
+export interface WalkingRouteOption {
+  id: "pju" | "anggota";
+  title: string;
+  targetGroup: string;
+  estimatedTime: string;
+  estimatedDistance: string;
+  description: string;
+  highlights: string[];
+  specialNote?: string;
+  waypoints: Waypoint[];
+  color: string;
+}
+
 export interface RundownItem {
   id: string;
   day: 1 | 2;
   startTime: string; // "16.00"
   endTime: string;   // "17.00"
-  startMinutes: number; // 960
-  endMinutes: number;   // 1020
+  startMinutes: number;
+  endMinutes: number;
   title: string;
   locationName?: string;
   locationNumber?: string;
-  description: string;
+  description?: string;
   badge: string;
   color?: string;
   destCoordinates?: Waypoint;
@@ -62,229 +78,255 @@ export interface RundownItem {
   menuCategories?: MenuItem[];
   galleryImages?: string[];
   highlightSpots?: HighlightSpot[];
-  rooms?: AccommodationRoom[];
-  disablePawn?: boolean; // When true, no pawn walking, directly open location/spot modal
+  roomSingle?: AccommodationRoom;
+  pjuGames?: { title: string; area: string; icon: string; items: string[]; description?: string };
+  ibuGames?: { title: string; area: string; icon: string; items: string[]; description?: string };
+  walkingRoutes?: WalkingRouteOption[];
+  disablePawn?: boolean;
+  distanceEstimate?: string;
+  timeEstimate?: string;
 }
 
-// 3 Plotting Kamar Penginapan Tamu & Rombongan
-export const ACCOMMODATION_ROOMS: AccommodationRoom[] = [
-  {
-    id: "room-pju",
-    name: "Alpine House",
-    role: "Kamar Utama (PJU)",
-    isPJU: true,
-    internalNumber: "6",
-    legendNumber: "25",
-    image: "/resort_media/alpine/alpine_1.png",
-    detailImages: [
-      "/resort_media/alpine/alpine_1.png",
-      "/resort_media/alpine/alpine_2.png",
-      "/resort_media/alpine/alpine_3.png",
-      "/resort_media/alpine/alpine_4.png",
-      "/resort_media/alpine/alpine_5.png",
-      "/resort_media/alpine/alpine_6.png",
-      "/resort_media/alpine/alpine_7.png"
-    ],
-    coords: { x: 58.5, y: 22.5 },
-    description: "Kamar Utama A-Frame bergaya Alpine Eropa dengan panorama asri Gunung Salak untuk Pejabat Utama (PJU).",
-    facilities: [
-      "King Size Bed Luxury",
-      "Balkon Panorama Gunung",
-      "Private Bathroom & Water Heater",
-      "Smart TV & Free High Speed Wi-Fi",
-      "Mini Bar & Coffee Maker",
-      "Living Room Area"
-    ],
-  },
-  {
-    id: "room-mongolian",
-    name: "Mongolian Superior Camp",
-    role: "Kamar Rombongan 2",
-    isPJU: false,
-    internalNumber: "12",
-    legendNumber: "42",
-    image: "/resort_media/mongolian/mongolian_2.jpg",
-    detailImages: [
-      "/resort_media/mongolian/mongolian_2.jpg",
-      "/resort_media/mongolian/mongolian_3.jpg",
-      "/resort_media/mongolian/mongolian_4.jpg",
-      "/resort_media/mongolian/mongolian_5.jpg",
-      "/resort_media/mongolian/mongolian_12.mp4"
-    ],
-    coords: { x: 15.0, y: 84.0 },
-    description: "Kamar tematik tenda khas suku Mongolia berfasilitas modern dan berpendingin udara lengkap.",
-    facilities: [
-      "Twin / Double Bed",
-      "Air Conditioning (AC)",
-      "En-suite Bathroom",
-      "Water Heater & Amenities",
-      "Dekat Lapangan Hijau & Resto"
-    ],
-  },
-  {
-    id: "room-the-cave",
-    name: "The Cave",
-    role: "Kamar Rombongan 3",
-    isPJU: false,
-    internalNumber: "16",
-    legendNumber: "24",
-    image: "/resort_media/the_cave/the_cave_12.png",
-    detailImages: [
-      "/resort_media/the_cave/the_cave_12.png",
-      "/resort_media/the_cave/the_cave_14.png",
-      "/resort_media/the_cave/the_cave_16.png",
-      "/resort_media/the_cave/the_cave_21.jpg",
-      "/resort_media/the_cave/the_cave_22.mp4"
-    ],
-    coords: { x: 43.0, y: 53.5 },
-    description: "Penginapan unik bertema goa alami dengan interior batu eksotis dan kenyamanan hotel bintang.",
-    facilities: [
-      "Double Bed Comfort",
-      "Batu Alami & Unique Ambiance",
-      "Private Shower & Water Heater",
-      "Full Amenities & Tea Set",
-      "Dekat Area Rekreasi & Danau"
-    ],
-  },
-];
+// ----------------------------------------------------
+// 1. DATA AKOMODASI (6 ALPINE HOUSE, 16 THE CAVE, 2 CAMP MONGOLIAN)
+// ----------------------------------------------------
 
-// Menu Resmi Santap Bersama & Coffee Break di Resto Anthurium Lt. 2 (Highland Park Resort)
-export const ANTHURIUM_MENU: MenuItem[] = [
-  {
-    category: "LUNCH (PAKET B)",
-    items: [
-      "Steamed Rice",
-      "Cream Potato Soup",
-      "Capcay",
-      "Gepuk Chicken",
-      "Sweet and Sour Snapper",
-      "Mixed Fruits",
-      "Pudding"
-    ],
-  },
-  {
-    category: "CB 1 (MORNING)",
-    items: [
-      "Chicken Nugget",
-      "Panettone",
-      "Velvet Roll",
-      "Assorted Chips",
-      "Coffee & Tea"
-    ],
-  },
-  {
-    category: "CB 2 (AFTERNOON)",
-    items: [
-      "Marble Green Tea Cake",
-      "Black Forest Roll",
-      "Sausage Orly",
-      "Assorted Chips",
-      "Coffee & Tea"
-    ],
-  },
-  {
-    category: "CB 3 (EVENING)",
-    items: [
-      "Pisang Rebus",
-      "Jagung Rebus",
-      "Kacang Rebus",
-      "Assorted Chips",
-      "Coffee & Tea"
-    ],
-  },
-];
+export const ROOM_ALPINE_HOUSE: AccommodationRoom = {
+  id: "room-alpine-pju",
+  name: "Alpine House",
+  role: "Kamar PJU",
+  isPJU: true,
+  totalUnits: "6 buah",
+  image: "/resort_media/alpine/alpine_1.png",
+  detailImages: [
+    "/videos/pju_berjalan.mp4",
+    "/resort_media/alpine/alpine_1.png",
+    "/resort_media/alpine/alpine_2.png",
+    "/resort_media/alpine/alpine_3.png",
+    "/resort_media/alpine/alpine_4.png",
+    "/resort_media/alpine/alpine_6.png",
+    "/resort_media/alpine/alpine_7.png"
+  ],
+  coords: { x: 58.5, y: 22.5 },
+  description: "Kamar Utama bergaya Alpine Eropa dengan panorama asri Gunung Salak untuk Pejabat Utama (PJU) Pusziad.",
+  facilities: [
+    "King Size Bed Luxury",
+    "Balkon Panorama Gunung Salak",
+    "Private Bathroom & Water Heater",
+    "Smart TV & Free Wi-Fi",
+    "Mini Bar & Coffee / Tea Set",
+    "Living Room Area Santai"
+  ],
+};
 
-// Foto Galeri Resto Anthurium Lt. 2 (HD dari folder RESTO ANTHURIUM)
-export const ANTHURIUM_GALLERY = [
+export const ROOM_THE_CAVE: AccommodationRoom = {
+  id: "room-the-cave-anggota",
+  name: "The Cave",
+  role: "Kamar Anggota",
+  isPJU: false,
+  totalUnits: "16 buah",
+  image: "/resort_media/the_cave/the_cave_12.png",
+  detailImages: [
+    "/resort_media/the_cave/the_cave_12.png",
+    "/resort_media/the_cave/the_cave_14.png",
+    "/resort_media/the_cave/the_cave_16.png",
+    "/resort_media/the_cave/the_cave_21.jpg"
+  ],
+  coords: { x: 43.0, y: 53.5 },
+  description: "Penginapan tematik bertema goa alami eksotis dengan interior batu modern, dingin sejuk, dan kenyamanan resort bintang.",
+  facilities: [
+    "Double Bed Comfort",
+    "Interior Batu Alami Eksotis",
+    "Private Shower & Water Heater",
+    "Full Amenities & Tea Set",
+    "Dekat Area Rekreasi & Danau"
+  ],
+};
+
+export const ROOM_MONGOLIAN_CAMP: AccommodationRoom = {
+  id: "room-mongolian-anggota",
+  name: "Camp Mongolian Superior",
+  role: "Kamar Anggota",
+  isPJU: false,
+  totalUnits: "2 buah",
+  image: "/resort_media/mongolian/mongolian_2.jpg",
+  detailImages: [
+    "/resort_media/mongolian/mongolian_2.jpg",
+    "/resort_media/mongolian/mongolian_3.jpg",
+    "/resort_media/mongolian/mongolian_4.jpg",
+    "/resort_media/mongolian/mongolian_5.jpg"
+  ],
+  coords: { x: 57.5, y: 52.0 },
+  description: "Kamar tematik tenda khas suku Mongolia berpendingin udara (AC) lengkap, bernuansa unik dekat lapangan hijau terbuka.",
+  facilities: [
+    "Twin / Double Bed",
+    "Air Conditioning (AC)",
+    "En-suite Bathroom & Water Heater",
+    "Amenities Lengkap",
+    "Dekat Area Lapangan & Resto"
+  ],
+};
+
+// ----------------------------------------------------
+// 2. DATA MENU MAKANAN
+// ----------------------------------------------------
+
+// Hari Ke-1: Hanya Makan Malam (Dinner)
+export const DAY1_DINNER_MENU: MenuItem[] = [
   {
-    title: "Resto Anthurium Lt. 2 (Utama)",
-    image: "/resort_media/anthurium/DSCF3443.jpg",
-    caption: "Foto HD suasana santap buffet dan tata meja di Resto Anthurium Lantai 2."
-  },
-  {
-    title: "Sky Lounge & View Restaurant",
-    image: "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg",
-    caption: "Panorama perbukitan Gunung Salak dari area santap Mountain Sky Lounge."
-  },
-  {
-    title: "Sofa & Lounge Area",
-    image: "/resort_media/mountain_lounge/Foto/SOFA SKY LOUNGE.jpg",
-    caption: "Area santai keluarga yang nyaman dengan sofa modern dan suasana sejuk."
-  },
-  {
-    title: "Video Sinematik Resto Anthurium",
-    image: "/resort_media/anthurium/Mountain Lounge.mp4",
-    caption: "Video sinematik suasana Restoran Anthurium dan Mountain Lounge Lantai 2."
+    category: "MENU MAKAN MALAM (BUFFET)",
+    items: [
+      "Nasi Putih (Steamed Rice)",
+      "Cream Potato Soup Gurih",
+      "Capcay Sayuran Segar",
+      "Ayam Gepuk Spesial",
+      "Kakap Asam Manis (Sweet & Sour Snapper)",
+      "Aneka Buah Segar Potong",
+      "Puding Dessert Manis",
+      "Kopi, Teh & Air Mineral"
+    ],
+    note: "Sajian Buffet Makan Malam di Resto Anthurium Lantai 2"
   }
 ];
 
-// 4 Spot Menarik Day 2 (Jalan Sehat & Rekreasi)
-export const DAY2_HIGHLIGHT_SPOTS: HighlightSpot[] = [
+// Hari Ke-2: Menu Makan Pagi (Sarapan)
+export const DAY2_BREAKFAST_MENU: MenuItem[] = [
   {
-    id: "spot-noah",
-    name: "Wahana Edukasi Noah AR & Satwa",
-    legendNumber: "51",
-    image: "/legend/51_Rumah_Kelinci.png",
-    coords: { x: 31.0, y: 64.0 },
-    category: "Wahana Edukasi & Rekreasi",
-    description: "Spot wisata interaktif bertema bahtera satwa dan Augmented Reality (AR) ramah anak & keluarga.",
+    category: "MENU SARAPAN PAGI (BUFFET)",
+    items: [
+      "Nasi Goreng Spesial Highland",
+      "Bubur Ayam Komplit & Kerupuk",
+      "Roti Bakar & Pilihan Selai",
+      "Egg Station (Telur Dadar / Mata Sapi)",
+      "Sosis Sapi & Nugget Crispy",
+      "Aneka Buah Segar & Jus Pagi",
+      "Kopi Panas, Teh & Susu Segar"
+    ],
+    note: "Disajikan di Resto Anthurium Lt. 2 (06.00 - 07.00)"
+  }
+];
+
+// ----------------------------------------------------
+// 3. DATA GAMES MALAM HARI KE-1 (OUTDOOR VS INDOOR RESTO)
+// ----------------------------------------------------
+
+export const DAY1_GAMES_PJU = {
+  title: "Games PJU",
+  area: "Area Outdoor Resto",
+  icon: "♟️",
+  description: "Turnamen keakraban santai antar Pejabat Utama (PJU) di area outdoor Restoran Anthurium.",
+  items: [
+    "Catur",
+    "Gaple",
+    "Pantulan Rejeki"
+  ]
+};
+
+export const DAY1_GAMES_IBU_PJU = {
+  title: "Games Ibu-Ibu PJU",
+  area: "Area Indoor Resto",
+  icon: "🎁",
+  description: "Keseruan lomba berhadiah dan keceriaan interaktif untuk Ibu-Ibu PJU di area indoor Restoran Anthurium.",
+  items: [
+    "Serok Rejeki",
+    "Botol Rejeki",
+    "Kotak Sultan",
+    "Pantulan Rejeki"
+  ]
+};
+
+// ----------------------------------------------------
+// 4. DATA JALAN SANTAI HARI KE-2 (PJU & ANGGOTA)
+// ----------------------------------------------------
+
+export const WALKING_ROUTES_DAY2: WalkingRouteOption[] = [
+  {
+    id: "pju",
+    title: "Rute Jalan Santai PJU",
+    targetGroup: "Pejabat Utama (PJU) & Ibu",
+    estimatedTime: "± 3 - 5 Menit",
+    estimatedDistance: "± 150 Meter",
+    description: "Jalur santai teduh menyusuri area hijau asri resort. Setelah jalan santai, agenda dilanjutkan dengan santap Coffee Morning di Kopi HIP khusus PJU.",
+    specialNote: "☕ Setelah Jalan Santai: Ada Coffee Morning di Kopi HIP (Khusus PJU)",
+    highlights: [
+      "Start: Area Lapangan Helipad",
+      "Jalur Teduh Hutan Pinus",
+      "Finish: Tangga Samping Kolam Renang (Sesi Foto Bersama)",
+      "☕ Lanjut: Coffee Morning di Kopi HIP (Khusus PJU)"
+    ],
+    waypoints: [
+      { x: 80.5, y: 35.5 },
+      { x: 86.0, y: 22.0 },
+      { x: 70.0, y: 32.0 },
+      { x: 54.1, y: 43.5 },
+    ],
+    color: "#eab308",
   },
   {
+    id: "anggota",
+    title: "Rute Jalan Santai Anggota",
+    targetGroup: "Seluruh Anggota & Rombongan Keluarga",
+    estimatedTime: "± 8 - 12 Menit",
+    estimatedDistance: "± 350 Meter",
+    description: "Jalur wisata aktif mengelilingi kawasan resort: Hutan Pinus, Wahana Edukasi Noah, Lapangan Gerbera, dan berakhir di titik foto bersama samping kolam.",
+    highlights: [
+      "Start: Area Lapangan Helipad",
+      "Hutan Pinus Resort (Spot Foto Sejuk)",
+      "Wahana Edukasi Noah AR & Satwa",
+      "Lapangan Gerbera (Area Hijau Luas)",
+      "Finish: Tangga Samping Kolam Renang (Sesi Foto Bersama)"
+    ],
+    waypoints: [
+      { x: 80.5, y: 35.5 },
+      { x: 86.0, y: 22.0 },
+      { x: 54.0, y: 47.0 },
+      { x: 37.0, y: 68.0 },
+      { x: 31.0, y: 64.0 },
+      { x: 54.1, y: 43.5 },
+    ],
+    color: "#10b981",
+  }
+];
+
+export const DAY2_HIGHLIGHT_SPOTS: HighlightSpot[] = [
+  {
     id: "spot-bridge",
-    name: "Tangga Spot Foto Bersama (Samping Kolam)",
-    legendNumber: "14",
+    name: "Tangga Samping Kolam Renang",
     image: "/resort_media/spots/foto_bersama_jembatan.jpg",
     coords: { x: 54.1, y: 43.5 },
-    category: "Titik Akhir & Spot Foto Bersama",
-    description: "Titik akhir rute jalan santai di area tangga samping kolam renang untuk sesi foto bersama seluruh rombongan.",
+    category: "Spot Foto Bersama",
+    description: "Titik akhir jalan santai untuk sesi foto bersama seluruh rombongan keluarga besar Pusziad.",
   },
   {
     id: "spot-pinus",
     name: "Hutan Pinus Resort",
-    legendNumber: "03",
     image: "/legend/03_Hutan_Pinus.png",
     coords: { x: 86.0, y: 22.0 },
-    category: "Jalur Alam & Relaksasi",
-    description: "Jalur jalan sehat berhawa sejuk diapit deretan pohon pinus rindang yang tenang dan menyegarkan.",
+    category: "Spot Foto Jalan Santai",
+    description: "Deretan pohon pinus rindang nan sejuk untuk spot foto jalan santai.",
   },
   {
-    id: "spot-gerbera",
-    name: "Lapangan Gerbera",
-    legendNumber: "45",
-    image: "/resort_media/gerbera/gerbera_2.png",
-    coords: { x: 37.0, y: 68.0 },
-    category: "Area Olahraga & Senam SKJ",
-    description: "Lapangan rumput hijau terbuka nan luas untuk pelaksanaan Senam SKJ 92 dan kebersamaan keluarga.",
+    id: "spot-noah",
+    name: "Wahana Edukasi Noah & Satwa",
+    image: "/legend/51_Rumah_Kelinci.png",
+    coords: { x: 31.0, y: 64.0 },
+    category: "Spot Foto Jalan Santai",
+    description: "Wahana edukasi ramah keluarga di rute jalan santai anggota.",
   },
 ];
 
-export const DAY2_GAMES_ACTIVITIES: RundownSubActivity[] = [
-  {
-    title: "Lomba Kekeluargaan & Outbound Seru",
-    category: "Family Games",
-    description: "Aneka lomba kekompakan tim, keceriaan anak & keluarga di Lapangan Helipad.",
-    icon: "🎯",
-    image: "/resort_media/helipad/helipad_2.jpg",
-    items: [
-      "Lomba Estafet Kelereng & Balon",
-      "Tarik Tambang Kebersamaan",
-      "Lomba Bakiak Raksasa Beregu",
-      "Balap Karung Helm Lucu",
-      "Fun Games Anak & Doorprize Ceria"
-    ],
-  },
-];
+// ----------------------------------------------------
+// 5. DATA TITIK RESORT (PINPOINTS BERSIH)
+// ----------------------------------------------------
 
-// Helipad Coordinates (Posisi Awal Baru Sesuai Rakor)
 export const HELIPAD_COORDS: Waypoint = { x: 80.5, y: 35.5 };
 export const SPAWN_BEHIND_HELIPAD: Waypoint = { x: 82.5, y: 33.0 };
 
-// 11 Pin Point Utama Seluruh Kegiatan Famgath (Resto, Masjid, Ballroom, Kamar PJU, Kamar Rombongan, Helipad, Spot Wisata)
 export interface KeyEventPinpoint {
   id: string;
   name: string;
   category: string;
-  legendNumber: string;
+  legendNumber?: string;
   image: string;
   galleryImages?: string[];
   coords: Waypoint;
@@ -294,59 +336,70 @@ export interface KeyEventPinpoint {
   isPJU?: boolean;
   facilities?: string[];
   menuCategories?: MenuItem[];
-  subActivities?: RundownSubActivity[];
+  distanceEstimate?: string;
+  timeEstimate?: string;
 }
 
 export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
   {
+    id: "pin-helipad",
+    name: "Kedatangan PJU",
+    category: "Pimpinan PJU Pusziad",
+    isPJU: true,
+    image: "/resort_media/helipad/kedatangan_pju_gate.jpg",
+    galleryImages: [
+      "/resort_media/helipad/kedatangan_pju_gate.jpg"
+    ],
+    coords: { x: 82.0, y: 16.9 },
+    description: "Selamat Datang di Family Gathering Pusziad 2026: Mayjen TNI Budi Hariswanto & Rombongan PJU di The Highland Park Resort Bogor.",
+    badge: "Kedatangan PJU",
+    color: "#eab308",
+  },
+  {
     id: "pin-alpine",
     name: "Alpine House",
-    category: "Kamar Utama PJU",
-    legendNumber: "25",
+    category: "Kamar PJU (6 buah)",
     isPJU: true,
     image: "/resort_media/alpine/alpine_1.png",
     galleryImages: [
+      "/videos/pju_berjalan.mp4",
       "/resort_media/alpine/alpine_1.png",
       "/resort_media/alpine/alpine_2.png",
       "/resort_media/alpine/alpine_3.png",
       "/resort_media/alpine/alpine_4.png",
-      "/resort_media/alpine/alpine_5.png",
-      "/resort_media/alpine/alpine_6.png",
-      "/resort_media/alpine/alpine_7.png"
+      "/resort_media/alpine/alpine_6.png"
     ],
     coords: { x: 58.5, y: 22.5 },
-    description: "Kamar Utama A-Frame bergaya Alpine Eropa dengan panorama asri Gunung Salak untuk Pejabat Utama (PJU).",
-    badge: "Kamar Utama PJU",
+    description: "Kamar Utama PJU bergaya Alpine Eropa berpanorama Gunung Salak (Total 6 buah).",
+    badge: "Kamar PJU",
     color: "#eab308",
     facilities: [
       "King Size Bed Luxury",
-      "Balkon Panorama Gunung",
+      "Balkon Panorama Gunung Salak",
       "Private Bathroom & Water Heater",
-      "Smart TV & Free High Speed Wi-Fi",
-      "Mini Bar & Coffee Maker",
-      "Living Room Area"
+      "Smart TV & Free Wi-Fi",
+      "Mini Bar & Coffee / Tea Set",
+      "Living Room Area Santai"
     ],
   },
   {
     id: "pin-cave",
     name: "The Cave",
-    category: "Kamar Rombongan 3",
-    legendNumber: "24",
+    category: "Kamar Anggota (16 buah)",
     image: "/resort_media/the_cave/the_cave_12.png",
     galleryImages: [
       "/resort_media/the_cave/the_cave_12.png",
       "/resort_media/the_cave/the_cave_14.png",
       "/resort_media/the_cave/the_cave_16.png",
-      "/resort_media/the_cave/the_cave_21.jpg",
-      "/resort_media/the_cave/the_cave_22.mp4"
+      "/resort_media/the_cave/the_cave_21.jpg"
     ],
-    coords: { x: 43.0, y: 53.5 },
-    description: "Penginapan unik bertema goa alami dengan interior batu eksotis dan kenyamanan hotel bintang.",
-    badge: "Kamar Rombongan 3",
+    coords: { x: 64.0, y: 17.5 },
+    description: "Kamar tematik goa alami eksotis berfasilitas modern (Total 16 buah).",
+    badge: "Kamar Anggota (The Cave)",
     color: "#10b981",
     facilities: [
       "Double Bed Comfort",
-      "Batu Alami & Unique Ambiance",
+      "Interior Batu Alami Eksotis",
       "Private Shower & Water Heater",
       "Full Amenities & Tea Set",
       "Dekat Area Rekreasi & Danau"
@@ -354,146 +407,87 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
   },
   {
     id: "pin-mongolian",
-    name: "Mongolian Superior Camp",
-    category: "Kamar Rombongan 2",
-    legendNumber: "42",
+    name: "Camp Mongolian Superior",
+    category: "Kamar Anggota (2 buah)",
     image: "/resort_media/mongolian/mongolian_2.jpg",
     galleryImages: [
       "/resort_media/mongolian/mongolian_2.jpg",
       "/resort_media/mongolian/mongolian_3.jpg",
-      "/resort_media/mongolian/mongolian_4.jpg",
-      "/resort_media/mongolian/mongolian_5.jpg",
-      "/resort_media/mongolian/mongolian_12.mp4"
+      "/resort_media/mongolian/mongolian_4.jpg"
     ],
-    coords: { x: 15.0, y: 84.0 },
-    description: "Kamar tematik tenda khas suku Mongolia berfasilitas modern dan berpendingin udara lengkap.",
-    badge: "Kamar Rombongan 2",
+    coords: { x: 57.5, y: 52.0 },
+    description: "Kamar tematik tenda suku Mongolia dengan pendingin udara AC (Total 2 buah).",
+    badge: "Kamar Anggota (Camp Mongolian)",
     color: "#10b981",
     facilities: [
       "Twin / Double Bed",
       "Air Conditioning (AC)",
-      "En-suite Bathroom",
-      "Water Heater & Amenities",
-      "Dekat Lapangan Hijau & Resto"
+      "En-suite Bathroom & Water Heater",
+      "Amenities Lengkap",
+      "Dekat Area Lapangan & Resto"
     ],
+  },
+  {
+    id: "pin-masjid",
+    name: "Tempat Ibadah (Masjid Resort)",
+    category: "Fasilitas Ibadah",
+    image: "/resort_media/masjid/masjid_1.jpg",
+    galleryImages: [
+      "/resort_media/masjid/masjid_1.jpg",
+      "/resort_media/masjid/masjid_2.jpg"
+    ],
+    coords: { x: 80.0, y: 33.2 },
+    description: "Fasilitas ibadah Sholat Maghrib & Isya dan istirahat mandiri peserta Famgath.",
+    badge: "Tempat Ibadah",
+    color: "#6366f1",
   },
   {
     id: "pin-resto",
     name: "Resto Anthurium Lt. 2",
-    category: "Restoran & Sky Lounge",
-    legendNumber: "36a",
+    category: "Area Resto Lt. 2",
     image: "/resort_media/anthurium/DSCF3443.jpg",
     galleryImages: [
       "/resort_media/anthurium/DSCF3443.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg",
-      "/resort_media/mountain_lounge/Foto/SOFA SKY LOUNGE.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE VIEW.jpg",
-      "/resort_media/anthurium/Mountain Lounge.mp4"
+      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     coords: { x: 60.8, y: 50.0 },
-    description: "Restoran utama santap buffet makan malam dan sarapan pagi bersama seluruh rombongan.",
-    badge: "Restoran Anthurium",
+    description: "Area Resto Lantai 2 untuk santap makan malam dan sarapan pagi bersama.",
+    badge: "Resto Anthurium Lt. 2",
     color: "#10b981",
-    menuCategories: ANTHURIUM_MENU,
-  },
-  {
-    id: "pin-masjid",
-    name: "Masjid / Mushola Resort",
-    category: "Fasilitas Ibadah",
-    legendNumber: "04",
-    image: "/resort_media/masjid/masjid_1.jpg",
-    galleryImages: [
-      "/resort_media/masjid/masjid_1.jpg",
-      "/resort_media/masjid/masjid_2.jpg",
-      "/resort_media/masjid/masjid_3.jpg"
-    ],
-    coords: { x: 80.0, y: 33.2 },
-    description: "Tempat ibadah Sholat Maghrib, Isya, Subuh, dan istirahat mandiri peserta Famgath.",
-    badge: "Masjid Resort",
-    color: "#6366f1",
+    menuCategories: DAY1_DINNER_MENU,
   },
   {
     id: "pin-ballroom",
-    name: "Grand Ballroom & Plaza Aster",
-    category: "Aula Acara & Grand Prize",
-    legendNumber: "07",
+    name: "Grand Ballroom",
+    category: "Area Ball Room",
     image: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
     galleryImages: [
       "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg",
-      "/games/pju_games.jpg",
-      "/games/ibu_pju_games.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_47.mp4"
+      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
     ],
     coords: { x: 87.7, y: 29.5 },
-    description: "Gedung pertemuan megah untuk turnamen PJU Games, hiburan, dan pengundian Grand Prize.",
+    description: "Area gedung pertemuan utama untuk acara sambutan, pengundian Grand Prize, dan makan siang.",
     badge: "Grand Ballroom",
     color: "#a855f7",
   },
   {
-    id: "pin-helipad",
-    name: "Lapangan Helipad",
-    category: "Area Outdoor & SKJ",
-    legendNumber: "12",
-    image: "/resort_media/helipad/helipad_1.jpg",
-    galleryImages: [
-      "/resort_media/helipad/helipad_1.jpg",
-      "/resort_media/helipad/helipad_2.jpg",
-      "/resort_media/helipad/helipad_3.jpg"
-    ],
-    coords: { x: 82.0, y: 16.9 },
-    description: "Area terbuka berumput hijau untuk penyambutan kedatangan, senam SKJ pagi, dan family games.",
-    badge: "Lapangan Helipad",
-    color: "#f59e0b",
-  },
-  {
     id: "pin-bridge",
-    name: "Tangga Spot Foto Bersama (Samping Kolam)",
-    category: "Titik Akhir Jalan Santai",
-    legendNumber: "14",
+    name: "Tangga Samping Kolam Renang",
+    category: "Spot Foto Bersama",
     image: "/resort_media/spots/foto_bersama_jembatan.jpg",
     galleryImages: [
       "/resort_media/spots/foto_bersama_jembatan.jpg"
     ],
     coords: { x: 54.1, y: 43.5 },
-    description: "Titik akhir rute jalan santai untuk sesi foto bersama seluruh keluarga besar rombongan di tangga samping kolam renang.",
-    badge: "Spot Foto Bersama (No. 14)",
+    description: "Titik akhir jalan santai untuk sesi foto bersama seluruh rombongan keluarga besar Pusziad.",
+    badge: "Spot Foto Bersama",
     color: "#06b6d4",
-  },
-  {
-    id: "pin-noah",
-    name: "Wahana Noah AR & Satwa",
-    category: "Wahana Edukasi & Satwa",
-    legendNumber: "51",
-    image: "/legend/51_Rumah_Kelinci.png",
-    coords: { x: 31.0, y: 64.0 },
-    description: "Spot wisata interaktif bertema bahtera satwa dan Augmented Reality (AR) ramah keluarga.",
-    badge: "Wahana Noah",
-    color: "#06b6d4",
-  },
-  {
-    id: "pin-pinus",
-    name: "Hutan Pinus Resort",
-    category: "Jalur Alam & Relaksasi",
-    legendNumber: "03",
-    image: "/legend/03_Hutan_Pinus.png",
-    coords: { x: 86.0, y: 22.0 },
-    description: "Jalur jalan sehat berhawa sejuk diapit deretan pohon pinus rindang yang asri dan tenang.",
-    badge: "Hutan Pinus",
-    color: "#10b981",
-  },
-  {
-    id: "pin-gerbera",
-    name: "Lapangan Gerbera",
-    category: "Area Olahraga & Senam",
-    legendNumber: "45",
-    image: "/resort_media/gerbera/gerbera_2.png",
-    coords: { x: 37.0, y: 68.0 },
-    description: "Lapangan rumput hijau terbuka nan luas untuk rute jalan sehat dan kebersamaan keluarga.",
-    badge: "Lapangan Gerbera",
-    color: "#10b981",
   },
 ];
+
+// ----------------------------------------------------
+// 6. RUNDOWN RESMI HARI KE-1 (JUMAT, 9 OKTOBER 2026)
+// ----------------------------------------------------
 
 export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
   {
@@ -503,55 +497,97 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "17.00",
     startMinutes: 960,  // 16:00
     endMinutes: 1020,  // 17:00
-    title: "Kedatangan PJU Pusziad",
-    locationName: "Lapangan Helipad (Simbol H)",
-    locationNumber: "12",
-    description: "Penyambutan dan kedatangan PJU Pusziad di area Dekat Lapangan Helipad (Simbol H).",
+    title: "Kedatangan PJU",
+    locationName: "Area Helipad (Tampilkan 5 PJU)",
     badge: "Kedatangan PJU",
     color: "#eab308",
-    destLegendNumber: "12",
-    destImage: "/resort_media/helipad/helipad_1.jpg",
-    destCoordinates: HELIPAD_COORDS,
+    destImage: "/resort_media/helipad/kedatangan_pju_gate.jpg",
+    destCoordinates: { x: 82.0, y: 16.9 },
     galleryImages: [
-      "/resort_media/helipad/helipad_1.jpg",
-      "/resort_media/helipad/helipad_3.jpg",
-      "/resort_media/helipad/helipad_14.png"
+      "/resort_media/helipad/kedatangan_pju_gate.jpg"
     ],
     defaultWaypoints: [
       { x: 84.6, y: 15.9 },
-      { x: 86.4, y: 19.9 },
-      { x: 68.6, y: 34.9 },
+      { x: 82.0, y: 16.9 },
     ],
   },
   {
-    id: "d1-checkin",
+    id: "d1-checkin-pju",
     day: 1,
     startTime: "17.00",
     endTime: "18.00",
     startMinutes: 1020, // 17:00
     endMinutes: 1080, // 18:00
-    title: "Menempati Kamar",
-    locationName: "Alpine House (Kamar Utama PJU)",
-    locationNumber: "25",
-    description: "PJU berjalan menuju Alpine House. Ada 2 jenis tipe kamar lain yang juga digunakan yaitu Mongolian Superior Camp dan The Cave.",
-    badge: "Check-in 3 Kamar",
+    title: "Menempati Kamar PJU - Alpine House (6 buah)",
+    locationName: "Alpine House",
+    badge: "Kamar PJU",
     color: "#eab308",
-    destLegendNumber: "25",
     destImage: "/resort_media/alpine/alpine_1.png",
     destCoordinates: { x: 58.5, y: 22.5 },
-    rooms: ACCOMMODATION_ROOMS,
+    roomSingle: ROOM_ALPINE_HOUSE,
+    galleryImages: [
+      "/videos/pju_berjalan.mp4",
+      "/resort_media/alpine/alpine_1.png",
+      "/resort_media/alpine/alpine_2.png",
+      "/resort_media/alpine/alpine_3.png",
+      "/resort_media/alpine/alpine_4.png",
+      "/resort_media/alpine/alpine_6.png"
+    ],
     defaultWaypoints: [
-      { x: 77.0, y: 32.0 },
-      { x: 73.7, y: 30.6 },
-      { x: 71.6, y: 32.2 },
-      { x: 70.7, y: 28.7 },
-      { x: 72.7, y: 27.1 },
-      { x: 70.0, y: 22.8 },
-      { x: 70.4, y: 19.3 },
-      { x: 68.9, y: 17.1 },
-      { x: 64.4, y: 20.7 },
-      { x: 60.8, y: 23.3 },
-      { x: 57.2, y: 25.7 },
+      { x: 82.0, y: 16.9 },
+      { x: 74.5, y: 21.0 },
+      { x: 67.0, y: 22.5 },
+      { x: 58.5, y: 22.5 },
+    ],
+  },
+  {
+    id: "d1-checkin-the-cave",
+    day: 1,
+    startTime: "17.00",
+    endTime: "18.00",
+    startMinutes: 1020, // 17:00
+    endMinutes: 1080, // 18:00
+    title: "Kamar Anggota – The Cave (16 buah)",
+    locationName: "The Cave",
+    badge: "Kamar Anggota 1",
+    color: "#10b981",
+    destImage: "/resort_media/the_cave/the_cave_12.png",
+    destCoordinates: { x: 64.0, y: 17.5 },
+    roomSingle: ROOM_THE_CAVE,
+    galleryImages: [
+      "/resort_media/the_cave/the_cave_12.png",
+      "/resort_media/the_cave/the_cave_14.png",
+      "/resort_media/the_cave/the_cave_16.png",
+      "/resort_media/the_cave/the_cave_21.jpg"
+    ],
+    defaultWaypoints: [
+      { x: 58.5, y: 22.5 },
+      { x: 64.0, y: 17.5 },
+    ],
+  },
+  {
+    id: "d1-checkin-mongolian",
+    day: 1,
+    startTime: "17.00",
+    endTime: "18.00",
+    startMinutes: 1020, // 17:00
+    endMinutes: 1080, // 18:00
+    title: "Kamar Anggota - Camp Mongolian Superior (2 buah)",
+    locationName: "Camp Mongolian Superior",
+    badge: "Kamar Anggota 2",
+    color: "#10b981",
+    destImage: "/resort_media/mongolian/mongolian_2.jpg",
+    destCoordinates: { x: 57.5, y: 52.0 },
+    roomSingle: ROOM_MONGOLIAN_CAMP,
+    galleryImages: [
+      "/resort_media/mongolian/mongolian_2.jpg",
+      "/resort_media/mongolian/mongolian_3.jpg",
+      "/resort_media/mongolian/mongolian_4.jpg"
+    ],
+    defaultWaypoints: [
+      { x: 64.0, y: 17.5 },
+      { x: 60.0, y: 35.0 },
+      { x: 57.5, y: 52.0 },
     ],
   },
   {
@@ -561,28 +597,21 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "19.30",
     startMinutes: 1080, // 18:00
     endMinutes: 1170, // 19:30
-    title: "Ibadah Masing-masing",
-    locationName: "Masjid / Mushola Resort",
-    locationNumber: "4",
-    description: "Waktu ibadah sholat Maghrib & Isya dan istirahat mandiri di Masjid Resort (No. 4).",
-    badge: "Ibadah Masjid",
+    title: "Ibadah",
+    locationName: "Tempat Ibadah (Masjid Resort)",
+    badge: "Ibadah",
     color: "#6366f1",
-    destLegendNumber: "4",
     destImage: "/resort_media/masjid/masjid_1.jpg",
     destCoordinates: { x: 80.0, y: 33.2 },
     galleryImages: [
       "/resort_media/masjid/masjid_1.jpg",
-      "/resort_media/masjid/masjid_2.jpg",
-      "/resort_media/masjid/masjid_3.jpg"
+      "/resort_media/masjid/masjid_2.jpg"
     ],
     defaultWaypoints: [
-      { x: 57.4, y: 26.0 },
-      { x: 68.1, y: 16.4 },
-      { x: 70.8, y: 20.9 },
-      { x: 72.2, y: 27.3 },
-      { x: 70.9, y: 32.2 },
-      { x: 75.8, y: 32.0 },
-      { x: 78.3, y: 35.7 },
+      { x: 58.5, y: 22.5 },
+      { x: 67.0, y: 24.5 },
+      { x: 74.5, y: 31.0 },
+      { x: 80.0, y: 33.2 },
     ],
   },
   {
@@ -594,32 +623,19 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endMinutes: 1200, // 20:00
     title: "Makan Malam",
     locationName: "Resto Anthurium Lt. 2",
-    locationNumber: "36a",
-    description: "Santap makan malam bersama seluruh rombongan di Resto Anthurium Lantai 2 dengan sajian buffet istimewa.",
     badge: "Makan Malam",
     color: "#10b981",
-    destLegendNumber: "36a",
     destImage: "/resort_media/anthurium/DSCF3443.jpg",
     destCoordinates: { x: 60.8, y: 50.0 },
-    menuCategories: ANTHURIUM_MENU,
+    menuCategories: DAY1_DINNER_MENU,
     galleryImages: [
       "/resort_media/anthurium/DSCF3443.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg",
-      "/resort_media/mountain_lounge/Foto/SOFA SKY LOUNGE.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE VIEW.jpg",
-      "/resort_media/anthurium/Mountain Lounge.mp4"
+      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     defaultWaypoints: [
-      { x: 57.5, y: 26.2 },
-      { x: 62.3, y: 21.4 },
-      { x: 68.3, y: 17.6 },
-      { x: 71.0, y: 20.3 },
-      { x: 71.9, y: 26.1 },
-      { x: 70.9, y: 29.0 },
-      { x: 71.4, y: 32.4 },
-      { x: 65.7, y: 37.0 },
-      { x: 66.9, y: 39.7 },
-      { x: 63.0, y: 42.7 },
+      { x: 80.0, y: 33.2 },
+      { x: 72.0, y: 40.0 },
+      { x: 60.8, y: 50.0 },
     ],
   },
   {
@@ -629,60 +645,29 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "22.30",
     startMinutes: 1200, // 20:00
     endMinutes: 1350, // 22:30
-    title: "PJU Games & Ibu-ibu PJU",
+    title: "Games (PJU & Ibu-Ibu PJU)",
     locationName: "Grand Ballroom",
-    locationNumber: "7",
-    description: "Perlombaan seru dan penuh keakraban.",
-    badge: "PJU & Ibu-ibu Games",
+    badge: "Games",
     color: "#a855f7",
-    destLegendNumber: "7",
     destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
     destCoordinates: { x: 87.7, y: 29.5 },
-    defaultWaypoints: [
-      { x: 63.2, y: 42.6 },
-      { x: 68.7, y: 37.9 },
-      { x: 75.0, y: 33.4 },
-      { x: 73.9, y: 30.1 },
-      { x: 79.0, y: 26.2 },
-      { x: 83.5, y: 23.3 },
-    ],
+    pjuGames: DAY1_GAMES_PJU,
+    ibuGames: DAY1_GAMES_IBU_PJU,
     galleryImages: [
       "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg",
-      "/games/pju_games.jpg",
-      "/games/ibu_pju_games.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_47.mp4"
+      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
     ],
-    subActivities: [
-      {
-        title: "PJU Games (Turnamen Keakraban)",
-        category: "PJU Games",
-        description: "Turnamen asah strategi, konsentrasi, dan keakraban antar Pejabat Utama di Grand Ballroom.",
-        icon: "♟️",
-        image: "/games/pju_games.jpg",
-        items: [
-          "Catur Standar",
-          "Turnamen Gaple / Domino",
-          "Remi / Bridge Challenge"
-        ],
-      },
-      {
-        title: "Ibu-ibu PJU Games (Lomba Ketangkasan)",
-        category: "Ibu-ibu PJU",
-        description: "Lomba seru, ketangkasan, dan kekompakan dengan aneka hadiah kejutan menarik.",
-        icon: "🎁",
-        image: "/games/ibu_pju_games.jpg",
-        items: [
-          "Serok Rezeki (Mata Tertutup)",
-          "Botol Rezeki Berhadiah",
-          "Kotak Sultan Penuh Kejutan",
-          "Pantulan Rezeki Bola Pingpong",
-          "Jalur Tanpa Kepastian"
-        ],
-      },
+    defaultWaypoints: [
+      { x: 60.8, y: 50.0 },
+      { x: 74.0, y: 38.0 },
+      { x: 87.7, y: 29.5 },
     ],
   },
 ];
+
+// ----------------------------------------------------
+// 7. RUNDOWN RESMI HARI KE-2 (SABTU, 10 OKTOBER 2026)
+// ----------------------------------------------------
 
 export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
   {
@@ -693,164 +678,93 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     startMinutes: 360, // 06:00
     endMinutes: 420, // 07:00
     title: "Sarapan Pagi",
-    locationName: "Resto Anthurium Lt. 2",
-    locationNumber: "36a",
-    description: "Sarapan pagi Buffet untuk seluruh peserta di Resto Anthurium Lantai 2 sebelum memulai kegiatan outdoor.",
+    locationName: "Area Resto Lt. 2",
     badge: "Sarapan Pagi",
     color: "#06b6d4",
-    destLegendNumber: "36a",
     destImage: "/resort_media/anthurium/DSCF3443.jpg",
     destCoordinates: { x: 60.8, y: 50.0 },
-    menuCategories: ANTHURIUM_MENU,
+    menuCategories: DAY2_BREAKFAST_MENU,
     galleryImages: [
       "/resort_media/anthurium/DSCF3443.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg",
-      "/resort_media/mountain_lounge/Foto/SOFA SKY LOUNGE.jpg",
-      "/resort_media/anthurium/Mountain Lounge.mp4"
+      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     defaultWaypoints: [
-      { x: 56.7, y: 26.0 },
-      { x: 68.2, y: 16.3 },
-      { x: 70.9, y: 19.9 },
-      { x: 70.3, y: 23.3 },
-      { x: 72.5, y: 26.6 },
-      { x: 70.7, y: 32.4 },
-      { x: 63.3, y: 40.3 },
+      { x: 58.5, y: 22.5 },
+      { x: 64.0, y: 34.0 },
+      { x: 60.8, y: 50.0 },
     ],
   },
   {
-    id: "d2-skj",
+    id: "d2-prep-jalan-santai",
     day: 2,
     startTime: "07.00",
     endTime: "07.45",
     startMinutes: 420, // 07:00
     endMinutes: 465, // 07:45
-    title: "Senam Pagi (SKJ)",
-    locationName: "Lapangan Helipad",
-    locationNumber: "64",
-    description: "Senam Kesegaran Jasmani (SKJ) bersama seluruh peserta di area terbuka Lapangan Helipad berlatar belakang Gunung Salak.",
-    badge: "Senam Pagi",
+    title: "Persiapan Jalan Santai",
+    locationName: "Area Helipad (Titik Awal)",
+    badge: "Persiapan",
     color: "#eab308",
-    destLegendNumber: "64",
     destImage: "/resort_media/helipad/helipad_1.jpg",
-    destCoordinates: { x: 82.0, y: 16.9 },
+    destCoordinates: { x: 80.5, y: 35.5 },
     galleryImages: [
       "/resort_media/helipad/helipad_1.jpg",
-      "/resort_media/helipad/helipad_2.jpg",
-      "/resort_media/helipad/helipad_3.jpg",
-      "/resort_media/helipad/helipad_4.jpg",
-      "/resort_media/helipad/helipad_5.jpg",
-      "/resort_media/helipad/helipad_6.jpg",
-      "/resort_media/helipad/helipad_7.jpg",
-      "/resort_media/helipad/helipad_8.jpg",
-      "/resort_media/helipad/helipad_9.jpg",
-      "/resort_media/helipad/helipad_10.jpg",
-      "/resort_media/helipad/helipad_11.jpg",
-      "/resort_media/helipad/helipad_12.jpg",
-      "/resort_media/helipad/helipad_13.jpg",
-      "/resort_media/helipad/helipad_14.jpg",
-      "/resort_media/helipad/helipad_15.jpg",
-      "/resort_media/helipad/helipad_16.jpg"
+      "/resort_media/helipad/helipad_2.jpg"
     ],
     defaultWaypoints: [
-      { x: 48.5, y: 43.5 },
-      { x: 58.0, y: 38.0 },
-      { x: 66.0, y: 30.0 },
-      { x: 72.0, y: 26.0 },
-      { x: 78.5, y: 24.5 },
+      { x: 60.8, y: 50.0 },
+      { x: 70.0, y: 42.0 },
+      { x: 80.5, y: 35.5 },
     ],
   },
   {
-    id: "d2-jalan-sehat",
+    id: "d2-jalan-santai",
     day: 2,
     startTime: "07.45",
     endTime: "08.45",
     startMinutes: 465, // 07:45
     endMinutes: 525, // 08:45
-    title: "Jalan Santai & Foto Bersama",
-    locationName: "Tangga Samping Kolam (No. 14)",
-    locationNumber: "14",
-    description: "Kegiatan jalan santai mengelilingi kawasan resort yang berakhir dengan sesi foto bersama seluruh rombongan di tangga samping kolam renang (No. 14).",
+    title: "Jalan Santai (Rute PJU & Anggota)",
+    locationName: "Kawasan Resort ➔ Tangga Kolam",
     badge: "Jalan Santai",
     color: "#14b8a6",
-    destLegendNumber: "14",
     destImage: "/resort_media/spots/foto_bersama_jembatan.jpg",
     destCoordinates: { x: 54.1, y: 43.5 },
     highlightSpots: DAY2_HIGHLIGHT_SPOTS,
+    walkingRoutes: WALKING_ROUTES_DAY2,
     galleryImages: [
       "/resort_media/spots/foto_bersama_jembatan.jpg",
       "/legend/03_Hutan_Pinus.png",
-      "/legend/51_Rumah_Kelinci.png",
-      "/resort_media/gerbera/gerbera_2.png"
+      "/legend/51_Rumah_Kelinci.png"
     ],
     defaultWaypoints: [
-      { x: 78.5, y: 24.5 },
+      { x: 80.5, y: 35.5 },
       { x: 86.0, y: 22.0 },
-      { x: 54.0, y: 47.0 },
-      { x: 37.0, y: 68.0 },
-      { x: 31.0, y: 64.0 },
-      { x: 78.5, y: 24.5 },
+      { x: 70.0, y: 32.0 },
+      { x: 54.1, y: 43.5 },
     ],
   },
   {
-    id: "d2-games",
+    id: "d2-ballroom-grandprize",
     day: 2,
-    startTime: "08.45",
-    endTime: "10.00",
-    startMinutes: 525, // 08:45
-    endMinutes: 600, // 10:00
-    title: "Family Games & Outbound",
-    locationName: "Lapangan Helipad",
-    locationNumber: "64",
-    description: "Kegiatan aneka lomba kekeluargaan dan fun games seru untuk seluruh rombongan di Lapangan Helipad.",
-    badge: "Fun Games",
-    color: "#f97316",
-    destLegendNumber: "64",
-    destImage: "/resort_media/helipad/helipad_2.jpg",
-    destCoordinates: { x: 82.0, y: 16.9 },
-    subActivities: DAY2_GAMES_ACTIVITIES,
-    galleryImages: [
-      "/resort_media/helipad/helipad_2.jpg",
-      "/resort_media/helipad/helipad_4.jpg",
-      "/resort_media/helipad/helipad_6.jpg",
-      "/resort_media/helipad/helipad_8.jpg",
-      "/resort_media/helipad/helipad_10.jpg",
-      "/resort_media/helipad/helipad_12.jpg",
-      "/resort_media/helipad/helipad_14.jpg",
-      "/resort_media/helipad/helipad_16.jpg"
-    ],
-    defaultWaypoints: [
-      { x: 31.0, y: 64.0 },
-      { x: 54.0, y: 47.0 },
-      { x: 72.0, y: 30.0 },
-      { x: 78.5, y: 24.5 },
-    ],
-  },
-  {
-    id: "d2-grandprize",
-    day: 2,
-    startTime: "10.00",
+    startTime: "09.00",
     endTime: "12.00",
-    startMinutes: 600, // 10:00
+    startMinutes: 540, // 09:00
     endMinutes: 720, // 12:00
-    title: "Acara Hiburan & Pembagian Hadiah / Grand Prize",
-    locationName: "Grand Ballroom & Plaza Aster",
-    locationNumber: "7",
-    description: "Puncak acara kekeluargaan Famgath Pusziad: Hiburan musik, santap kudapan, dan pengundian Grand Prize utama di Grand Ballroom & Plaza Aster.",
-    badge: "Grand Prize & Hiburan",
+    title: "Acara di Ball Room (Sambutan & Grand Prize)",
+    locationName: "Area Ball Room",
+    badge: "Acara Ball Room",
     color: "#a855f7",
-    destLegendNumber: "7",
     destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
     destCoordinates: { x: 87.7, y: 29.5 },
     galleryImages: [
       "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_47.mp4"
+      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
     ],
     defaultWaypoints: [
-      { x: 80.5, y: 35.5 },
-      { x: 75.0, y: 30.0 },
-      { x: 78.5, y: 24.5 },
+      { x: 54.1, y: 43.5 },
+      { x: 70.0, y: 36.0 },
+      { x: 87.7, y: 29.5 },
     ],
   },
   {
@@ -861,40 +775,28 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     startMinutes: 720, // 12:00
     endMinutes: 780, // 13:00
     title: "Makan Siang",
-    locationName: "Resto Anthurium Lt. 2",
-    locationNumber: "36a",
-    description: "Makan siang buffet bersama di Resto Anthurium Lt. 2 sebelum persiapan check-out dan kepulangan.",
+    locationName: "Area Ball Room",
     badge: "Makan Siang",
     color: "#10b981",
-    destLegendNumber: "36a",
-    destImage: "/resort_media/anthurium/DSCF3443.jpg",
-    destCoordinates: { x: 60.8, y: 50.0 },
-    menuCategories: ANTHURIUM_MENU,
+    destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+    destCoordinates: { x: 87.7, y: 29.5 },
     galleryImages: [
-      "/resort_media/anthurium/DSCF3443.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg",
-      "/resort_media/mountain_lounge/Foto/SOFA SKY LOUNGE.jpg",
-      "/resort_media/anthurium/Mountain Lounge.mp4"
+      "/resort_media/grand_ballroom/grand_ballroom_1.jpg"
     ],
     defaultWaypoints: [
-      { x: 78.5, y: 24.5 },
-      { x: 71.5, y: 27.5 },
-      { x: 66.0, y: 32.5 },
-      { x: 58.0, y: 38.0 },
-      { x: 48.5, y: 43.5 },
+      { x: 87.7, y: 29.5 },
     ],
   },
   {
-    id: "d2-ballroom",
+    id: "d2-freetime",
     day: 2,
     startTime: "13.00",
     endTime: "17.00",
     startMinutes: 780, // 13:00
     endMinutes: 1020, // 17:00
-    title: "Waktu Keluarga",
+    title: "Free Time (Menikmati Berbagai Fasilitas)",
     locationName: "Kawasan The Highland Park",
-    description: "Acara bebas bersama keluarga atau kerabat, dapat menikmati suasana dan juga berbagai fasilitas di The Highland Park",
-    badge: "Waktu Keluarga",
+    badge: "Free Time",
     color: "#f59e0b",
     destImage: "/legend/01_Lobby_Utama.png",
     destCoordinates: { x: 50.0, y: 50.0 },
@@ -905,20 +807,22 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
       "/legend/03_Hutan_Pinus.png"
     ],
     defaultWaypoints: [
-      { x: 48.5, y: 43.5 },
+      { x: 87.7, y: 29.5 },
       { x: 50.0, y: 50.0 },
     ],
   },
 ];
 
-// Combine all activities for easy route lookups
 export const ALL_RUNDOWN_ITEMS: RundownItem[] = [
   ...RUNDOWN_SCHEDULE_DAY_1,
   ...RUNDOWN_SCHEDULE_DAY_2,
 ];
 
-// Alias for simulation timeline
 export const RUNDOWN_SCHEDULE: RundownItem[] = RUNDOWN_SCHEDULE_DAY_1;
+
+// ----------------------------------------------------
+// 8. DATA TOKOH 5 PJU (MAYJEN BUDI, PAK NURDIHIN & PJU)
+// ----------------------------------------------------
 
 export interface VIPArrival {
   id: string;
@@ -926,10 +830,9 @@ export interface VIPArrival {
   title: string;              // "PJU"
   isPJU?: boolean;
   photo: string;
-  internalNumber: string;     // "6"
-  mapLocationName: string;    // "Alpine House"
-  roomLegendNumber: string;   // "25"
-  roomImage: string;          // "/legend/25_Alpine_House.png"
+  internalNumber?: string;
+  mapLocationName: string;
+  roomImage: string;
   roomX: number;
   roomY: number;
   popupOffsetX?: number;
@@ -945,22 +848,19 @@ export interface VIPArrival {
 }
 
 export const WELCOME_GATE_COORDS: Waypoint = HELIPAD_COORDS;
+export const TIMELINE_START_MINUTES = 960;
+export const TIMELINE_END_MINUTES = 1080;
 
-export const TIMELINE_START_MINUTES = 960;  // 16:00
-export const TIMELINE_END_MINUTES = 1080;   // 18:00
-
-// Single Character: "Si Bapak" (PJU)
 export const VIP_ARRIVALS: VIPArrival[] = [
   {
     id: "pju",
-    name: "Pejabat Utama (PJU)",
+    name: "Mayjen TNI Budi Hariswanto & Rombongan PJU",
     title: "PJU",
     isPJU: true,
     photo: "/avatars/budi_hariswanto.jpg",
     internalNumber: "6",
     mapLocationName: "Alpine House",
-    roomLegendNumber: "25",
-    roomImage: "/legend/25_Alpine_House.png",
+    roomImage: "/resort_media/alpine/alpine_1.png",
     roomX: 58.5,
     roomY: 22.5,
     popupOffsetX: 0,

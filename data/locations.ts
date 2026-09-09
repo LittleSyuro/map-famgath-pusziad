@@ -508,8 +508,8 @@ export const LOCATIONS: LocationItem[] = [
     "image": "/legend/42_Mongolian_Superior_Camp.png",
     "category": "Area Golf & Mongolian Superior",
     "description": "Fasilitas Mongolian Superior Camp di The Highland Park Resort - Hotel Bogor.",
-    "mapX": 15,
-    "mapY": 84
+    "mapX": 57.5,
+    "mapY": 52
   },
   {
     "id": "43",

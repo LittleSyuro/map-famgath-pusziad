@@ -13,10 +13,8 @@ import {
   WELCOME_GATE_COORDS,
   Waypoint,
   ALL_RUNDOWN_ITEMS,
-  ACCOMMODATION_ROOMS,
-  DAY2_HIGHLIGHT_SPOTS,
-  AccommodationRoom,
-  HighlightSpot,
+  RUNDOWN_SCHEDULE_DAY_1,
+  RUNDOWN_SCHEDULE_DAY_2,
   KEY_EVENT_PINPOINTS,
   KeyEventPinpoint,
 } from "@/data/arrivals";
@@ -28,6 +26,7 @@ import { LocationMarker } from "./LocationMarker";
 import { LocationModal } from "./LocationModal";
 import { LegendSearchModal } from "./LegendSearchModal";
 import { LegendMapPopup } from "./LegendMapPopup";
+import { LocationGalleryDrawer } from "./LocationGalleryDrawer";
 import { PinPointCalibrator } from "./PinPointCalibrator";
 import { PathEditorOverlay, ROUTE_ACTIVITIES } from "./PathEditorOverlay";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,31 +36,30 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  MapPin,
   Route,
   Edit3,
   PanelLeftClose,
   PanelLeftOpen,
   Calendar,
   Sparkles,
-  Bed,
-  Compass,
   X,
   Users,
   UserCheck,
-  Eye,
-  EyeOff,
   Search,
   Crosshair,
-  Play,
-  Pause,
   ChevronLeft,
   ChevronRight,
+  Compass,
+  Play,
+  Trees,
+  Layers,
 } from "lucide-react";
 
 interface ArrivalMapProps {
   onOpenRundownModal?: () => void;
 }
+
+type PresentationPhase = "overview" | "pinpoint_focus" | "popup_open";
 
 export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +67,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const mapCanvasRef = useRef<HTMLDivElement>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  // Direct Route Animation Progress: 0 (Start) to 1 (Destination)
+  // Opening Intro Cover Slide State
+  const [showIntroSlide, setShowIntroSlide] = useState<boolean>(true);
+
+  // Route animation progress: 0 (Start) to 1 (Destination)
   const [animProgress, setAnimProgress] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showPaths, setShowPaths] = useState<boolean>(false);
@@ -78,27 +79,28 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [showF11Toast, setShowF11Toast] = useState<boolean>(false);
   const f11TimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Active Agenda State - Starts from Agenda 1 (Kedatangan PJU Pusziad)
+  // Active Agenda State
   const [activeActivityId, setActiveActivityId] = useState<string>("d1-arrival");
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
-  const [showSidebar, setShowSidebar] = useState<boolean>(true);
+  
+  // Sidebar default hidden when opening maps
+  const [showSidebar, setShowSidebar] = useState<boolean>(false);
 
-  // Prezi-Style Autoplay State
-  const [isAutoplay, setIsAutoplay] = useState<boolean>(false);
-  const [autoplayProgress, setAutoplayProgress] = useState<number>(0);
-  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const AUTOPLAY_STEP_DURATION_MS = 8000;
+  // Presentation State Machine: "overview" (Peta Utama) ➔ "pinpoint_focus" (Stay di Titik) ➔ "popup_open" (Buka Popup)
+  const [presentationPhase, setPresentationPhase] = useState<PresentationPhase>("overview");
 
-  // Clickable Resort Places State (Default: Hidden Angka Legenda)
+  // Clickable Resort Places & Master Gallery State
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
   const [selectedLegendLocation, setSelectedLegendLocation] = useState<LocationItem | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [showAllLocations, setShowAllLocations] = useState<boolean>(false);
+  const [showMasterGallery, setShowMasterGallery] = useState<boolean>(false);
+  const [showFlatMapModal, setShowFlatMapModal] = useState<boolean>(false);
+  const [showPJUWalkVideo, setShowPJUWalkVideo] = useState<boolean>(false);
 
-  // Active room & spot popups
-  const [openRoomPopupIds, setOpenRoomPopupIds] = useState<Record<string, boolean>>({});
-  const [openSpotPopupIds, setOpenSpotPopupIds] = useState<Record<string, boolean>>({});
+  // Active room & pinpoint popups
+  const [openPopupIds, setOpenPopupIds] = useState<Record<string, boolean>>({});
   const [openKeyPinpointIds, setOpenKeyPinpointIds] = useState<Record<string, boolean>>({ __closed__: true });
 
   // Pin Point Visual Calibrator State
@@ -200,21 +202,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     }
   }, []);
 
-  // Popup state: map of which VIP popups are open
-  const [openPopupIds, setOpenPopupIds] = useState<Record<string, boolean>>({});
-
-  // Active waypoints for current selected activity in editor
   const activeWaypoints = useMemo(() => {
     return customRoutes[activeActivityId] || ROUTE_ACTIVITIES[0].defaultWaypoints;
   }, [customRoutes, activeActivityId]);
 
-  // All 86 Mapped Locations with valid coordinates
   const mappedLocations = useMemo(() => {
     return LOCATIONS.filter((l) => l.mapX !== undefined && l.mapY !== undefined);
   }, []);
 
-  // Smooth Prezi Focus & Zoom to a specific coordinate on map with exact centering of popup card
-  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 2.2, duration = 850) => {
+  // Smooth Focus & Zoom to coordinate
+  const focusOnCoordinate = useCallback((coord: Waypoint, zoomFactor = 2.1, duration = 750) => {
     if (transformRef.current && containerRef.current && mapCanvasRef.current) {
       const { setTransform } = transformRef.current;
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -225,12 +222,11 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       const canvasOffsetLeft = canvasEl.offsetLeft || 0;
       const canvasOffsetTop = canvasEl.offsetTop || 0;
 
-      // Exact pixel position inside the transformed parent element
       const pointInElementX = canvasOffsetLeft + (coord.x / 100) * canvasWidth;
       const pointInElementY = canvasOffsetTop + (coord.y / 100) * canvasHeight;
       
       const isTopHalf = coord.y < 45;
-      const cardCenterOffset = isTopHalf ? 110 : -110;
+      const cardCenterOffset = isTopHalf ? 90 : -90;
 
       const posX = containerRect.width / 2 - pointInElementX * zoomFactor;
       const posY = (containerRect.height / 2 - cardCenterOffset) - pointInElementY * zoomFactor;
@@ -238,7 +234,55 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     }
   }, []);
 
-  // Determine if a specific key pinpoint is currently opened by user click
+  // Reset View to Overview Map
+  const resetToOverviewMap = useCallback((duration = 700) => {
+    if (transformRef.current) {
+      transformRef.current.resetTransform(duration, "easeInOutQuad");
+    }
+  }, []);
+
+  // Helper mapping agenda activity ID to key event pinpoint ID
+  const getPinIdForAgenda = useCallback((agendaId: string): string => {
+    switch (agendaId) {
+      case "d1-arrival":
+        return "pin-helipad";
+      case "d1-checkin-pju":
+        return "pin-alpine";
+      case "d1-checkin-the-cave":
+        return "pin-cave";
+      case "d1-checkin-mongolian":
+        return "pin-mongolian";
+      case "d1-worship":
+        return "pin-masjid";
+      case "d1-dinner":
+        return "pin-resto";
+      case "d1-games":
+        return "pin-ballroom";
+      case "d2-breakfast":
+        return "pin-resto";
+      case "d2-prep-jalan-santai":
+        return "pin-helipad";
+      case "d2-jalan-santai":
+        return "pin-bridge";
+      case "d2-ballroom-grandprize":
+      case "d2-lunch":
+        return "pin-ballroom";
+      case "d2-freetime":
+        return "pin-helipad";
+      default:
+        return "pin-alpine";
+    }
+  }, []);
+
+  const currentAgendaIndex = useMemo(() => {
+    const idx = ALL_RUNDOWN_ITEMS.findIndex((item) => item.id === activeActivityId);
+    return idx >= 0 ? idx : 0;
+  }, [activeActivityId]);
+
+  const currentAgendaItem = useMemo(() => {
+    return ALL_RUNDOWN_ITEMS[currentAgendaIndex] || ALL_RUNDOWN_ITEMS[0];
+  }, [currentAgendaIndex]);
+
   const activeOpenPinId = useMemo(() => {
     if (selectedLegendLocation) return null;
     if (openKeyPinpointIds["__closed__"]) return null;
@@ -250,7 +294,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return null;
   }, [openKeyPinpointIds, selectedLegendLocation]);
 
-  // Handle Select Legend from Search or Map Marker
   const handleSelectLegend = useCallback(
     (loc: LocationItem) => {
       setOpenKeyPinpointIds({ __closed__: true });
@@ -262,15 +305,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     [focusOnCoordinate]
   );
 
-  // Find active agenda item
-  const currentAgendaItem = useMemo(() => {
-    return (
-      ALL_RUNDOWN_ITEMS.find((item) => item.id === activeActivityId) ||
-      ALL_RUNDOWN_ITEMS[0]
-    );
-  }, [activeActivityId]);
-
-  // Dynamically attach updated waypoints & destination to VIP
   const activeVIPs: VIPArrival[] = useMemo(() => {
     const agendaWaypoints =
       customRoutes[activeActivityId] ||
@@ -284,8 +318,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     return VIP_ARRIVALS.map((vip) => ({
       ...vip,
       mapLocationName: currentAgendaItem.locationName || vip.mapLocationName,
-      roomLegendNumber:
-        currentAgendaItem.destLegendNumber || vip.roomLegendNumber,
       roomImage: currentAgendaItem.destImage || vip.roomImage,
       roomX: dest.x,
       roomY: dest.y,
@@ -300,76 +332,27 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     }));
   }, [customRoutes, activeActivityId, currentAgendaItem]);
 
-  const startPoint = useMemo(() => {
-    const waypoints =
-      customRoutes[activeActivityId] ||
-      currentAgendaItem.defaultWaypoints ||
-      ROUTE_ACTIVITIES[0].defaultWaypoints;
-    return waypoints[0] || WELCOME_GATE_COORDS;
-  }, [customRoutes, activeActivityId, currentAgendaItem]);
-
-  // Helper mapping agenda activity ID to key event pinpoint ID
-  const getPinIdForAgenda = useCallback((agendaId: string): string => {
-    switch (agendaId) {
-      case "d1-arrival":
-        return "pin-helipad";
-      case "d1-checkin":
-        return "pin-alpine";
-      case "d1-worship":
-        return "pin-masjid";
-      case "d1-dinner":
-      case "d1-ishoma":
-      case "d2-breakfast":
-      case "d2-sarapan":
-      case "d2-lunch":
-        return "pin-resto";
-      case "d1-games":
-      case "d1-malam-keakraban":
-      case "d1-acara-malam":
-      case "d2-grandprize":
-        return "pin-ballroom";
-      case "d2-skj":
-      case "d2-senam":
-      case "d2-games":
-      case "d2-outbound":
-        return "pin-helipad";
-      case "d2-jalan-sehat":
-      case "d2-closing":
-        return "pin-bridge";
-      default:
-        return "pin-alpine";
-    }
-  }, []);
-
-  // Play Continuous Smooth Animation along waypoints (from 0 to 1)
+  // Route movement animation: Only animates walking for d1-checkin-pju (PJU to Villa Alpine House)
   const startRouteAnimation = useCallback((targetAgendaId?: string) => {
     const agendaId = targetAgendaId || activeActivityId;
-    const agendaItem =
-      ALL_RUNDOWN_ITEMS.find((item) => item.id === agendaId) ||
-      currentAgendaItem;
 
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
     }
 
-    if (agendaItem.disablePawn) {
+    if (agendaId !== "d1-checkin-pju") {
       setIsAnimating(false);
       setAnimProgress(1);
-      const pinId = getPinIdForAgenda(agendaId);
-      setOpenKeyPinpointIds({ [pinId]: true });
-      setOpenPopupIds({ [VIP_ARRIVALS[0].id]: true });
       return;
     }
 
     setIsAnimating(true);
     setAnimProgress(0);
     setOpenPopupIds({});
-    setOpenRoomPopupIds({});
-    setOpenSpotPopupIds({});
     setOpenKeyPinpointIds({ __closed__: true });
 
     const startTime = performance.now();
-    const duration = 2800; // Continuous smooth movement
+    const duration = 2200;
 
     const animate = (now: number) => {
       const elapsed = now - startTime;
@@ -381,138 +364,227 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       } else {
         setIsAnimating(false);
         setAnimProgress(1);
-        // Automatically open destination location photo card on arrival
-        const pinId = getPinIdForAgenda(agendaId);
-        setOpenKeyPinpointIds({ [pinId]: true });
-        setOpenPopupIds({ [VIP_ARRIVALS[0].id]: true });
       }
     };
 
     animFrameRef.current = requestAnimationFrame(animate);
-  }, [activeActivityId, currentAgendaItem, getPinIdForAgenda]);
+  }, [activeActivityId]);
 
-  // Clean up animation on unmount (do not auto-play on initial load)
   useEffect(() => {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, []);
 
-  // Handle Select Agenda: Immediately zoom to agenda location, start animation, and open popup upon arrival
-  const handleSelectAgenda = useCallback(
+  // 1. Zoom to location and stay at pinpoint (without opening popup)
+  const focusOnAgendaPinpoint = useCallback(
     (agendaId: string) => {
       setActiveActivityId(agendaId);
-      setSelectedNodeIndex(null);
-      setSelectedLegendLocation(null);
+      setPresentationPhase("pinpoint_focus");
+
+      if (agendaId === "d1-checkin-pju") {
+        setShowPJUWalkVideo(true);
+      } else {
+        setShowPJUWalkVideo(false);
+      }
 
       const pinId = getPinIdForAgenda(agendaId);
-      const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId);
+      const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId) || ALL_RUNDOWN_ITEMS[0];
 
-      if (item) {
-        const targetPinCoords =
-          customPinCoords[pinId] ||
-          KEY_EVENT_PINPOINTS.find((p) => p.id === pinId)?.coords;
-        const waypoints =
-          customRoutes[agendaId] ||
-          item.defaultWaypoints ||
-          [];
-        const start = waypoints[0];
-        const dest =
-          targetPinCoords ||
-          waypoints[waypoints.length - 1] ||
-          item.destCoordinates;
+      const targetPinCoords =
+        customPinCoords[pinId] ||
+        KEY_EVENT_PINPOINTS.find((p) => p.id === pinId)?.coords;
+      const waypoints =
+        customRoutes[agendaId] ||
+        item.defaultWaypoints ||
+        [];
+      const start = waypoints[0];
+      const dest =
+        targetPinCoords ||
+        waypoints[waypoints.length - 1] ||
+        item.destCoordinates;
 
-        const zoom =
-          agendaId === "d2-jalan-sehat"
-            ? 2.35
-            : agendaId === "d1-checkin"
-            ? 2.3
-            : 2.15;
+      const zoom =
+        agendaId === "d2-jalan-sehat"
+          ? 2.25
+          : agendaId === "d1-checkin-pju"
+          ? 2.2
+          : 2.1;
 
-        const focusPoint =
-          start && (agendaId === "d1-arrival" || agendaId === "d1-checkin")
-            ? {
-                x: (start.x + (dest?.x || start.x)) / 2,
-                y: (start.y + (dest?.y || start.y)) / 2,
-              }
-            : dest || start;
+      const focusPoint =
+        start && (agendaId === "d1-arrival" || agendaId === "d1-checkin-pju")
+          ? {
+              x: (start.x + (dest?.x || start.x)) / 2,
+              y: (start.y + (dest?.y || start.y)) / 2,
+            }
+          : dest || start;
 
-        if (focusPoint) {
-          focusOnCoordinate(focusPoint, zoom);
-        }
+      if (focusPoint) {
+        focusOnCoordinate(focusPoint, zoom);
       }
 
-      // Keep popup closed while walking animation runs
-      setOpenKeyPinpointIds({ __closed__: true });
-
-      // Trigger animation
       startRouteAnimation(agendaId);
     },
-    [customRoutes, customPinCoords, focusOnCoordinate, getPinIdForAgenda, startRouteAnimation]
+    [customRoutes, customPinCoords, focusOnCoordinate, getPinIdForAgenda, startRouteAnimation, resetToOverviewMap]
   );
 
-  const handleReplayAnimation = useCallback(() => {
-    handleSelectAgenda(activeActivityId);
-  }, [handleSelectAgenda, activeActivityId]);
+  // 2. Open popup for current agenda
+  const openAgendaPopup = useCallback(() => {
+    setPresentationPhase("popup_open");
+    setShowPJUWalkVideo(false);
+    const pinId = getPinIdForAgenda(activeActivityId);
+    setOpenKeyPinpointIds({ [pinId]: true });
+  }, [activeActivityId, getPinIdForAgenda]);
 
-  // Next / Prev agenda helpers for Prezi Autoplay
-  const goToNextAgenda = useCallback(() => {
-    const currentIndex = ALL_RUNDOWN_ITEMS.findIndex((item) => item.id === activeActivityId);
-    const nextIndex = currentIndex < ALL_RUNDOWN_ITEMS.length - 1 ? currentIndex + 1 : 0;
-    const nextItem = ALL_RUNDOWN_ITEMS[nextIndex];
-    handleSelectAgenda(nextItem.id);
-    setAutoplayProgress(0);
-  }, [activeActivityId, handleSelectAgenda]);
+  // 3. Return to Overview Map
+  const returnToOverviewMap = useCallback(() => {
+    setPresentationPhase("overview");
+    setOpenKeyPinpointIds({ __closed__: true });
+    setOpenPopupIds({});
+    setShowPJUWalkVideo(false);
+    setSelectedLegendLocation(null);
+    resetToOverviewMap();
+  }, [resetToOverviewMap]);
 
-  const goToPrevAgenda = useCallback(() => {
-    const currentIndex = ALL_RUNDOWN_ITEMS.findIndex((item) => item.id === activeActivityId);
-    const prevIndex = currentIndex > 0 ? currentIndex - 1 : ALL_RUNDOWN_ITEMS.length - 1;
-    const prevItem = ALL_RUNDOWN_ITEMS[prevIndex];
-    handleSelectAgenda(prevItem.id);
-    setAutoplayProgress(0);
-  }, [activeActivityId, handleSelectAgenda]);
-
-  // Toggle Autoplay Simulation: Starts animation immediately on play
-  const toggleAutoplay = useCallback(() => {
-    setIsAutoplay((prev) => {
-      const nextVal = !prev;
-      if (nextVal) {
-        handleSelectAgenda(activeActivityId);
-      }
-      return nextVal;
-    });
-  }, [handleSelectAgenda, activeActivityId]);
-
-  // Advance to next agenda strictly when active spot's full photo slideshow/task is complete
-  const handleCardSlideCycleComplete = useCallback(() => {
-    if (isAutoplay) {
-      goToNextAgenda();
+  // Main Step-by-Step Spacebar Controller
+  const handleSpacebarAction = useCallback(() => {
+    // 1. Intro Slide ➔ Enter Main Overview Map
+    if (showIntroSlide) {
+      setShowIntroSlide(false);
+      setPresentationPhase("overview");
+      return;
     }
-  }, [isAutoplay, goToNextAgenda]);
 
-  // Keyboard navigation for Autoplay & Camera
+    // 2. Video Playing ➔ Skip/Finish Video & Open Villa Popup
+    if (showPJUWalkVideo) {
+      setShowPJUWalkVideo(false);
+      openAgendaPopup();
+      return;
+    }
+
+    // 3. Popup is Open (Alpine House, Legend, or Pinpoint Detail Card)
+    // ➔ Close popup, return smoothly to Overview Map, and advance to next agenda
+    if (Boolean(activeOpenPinId) || Boolean(selectedLegendLocation) || presentationPhase === "popup_open") {
+      returnToOverviewMap();
+      const nextIdx = (currentAgendaIndex + 1) % ALL_RUNDOWN_ITEMS.length;
+      setActiveActivityId(ALL_RUNDOWN_ITEMS[nextIdx].id);
+      return;
+    }
+
+    // 4. Pinpoint Focus (Zoomed in on pin, but popup not yet opened)
+    if (presentationPhase === "pinpoint_focus") {
+      if (activeActivityId === "d1-checkin-pju" && !showPJUWalkVideo) {
+        setShowPJUWalkVideo(true);
+      } else {
+        openAgendaPopup();
+      }
+      return;
+    }
+
+    // 5. Overview Map ➔ Focus & Zoom in on current agenda pin point
+    focusOnAgendaPinpoint(activeActivityId);
+  }, [
+    showIntroSlide,
+    showPJUWalkVideo,
+    activeOpenPinId,
+    selectedLegendLocation,
+    presentationPhase,
+    activeActivityId,
+    currentAgendaIndex,
+    openAgendaPopup,
+    returnToOverviewMap,
+    focusOnAgendaPinpoint,
+  ]);
+
+  const handleStepBackward = useCallback(() => {
+    if (presentationPhase === "popup_open" || Boolean(activeOpenPinId) || Boolean(selectedLegendLocation)) {
+      setPresentationPhase("pinpoint_focus");
+      setOpenKeyPinpointIds({ __closed__: true });
+      setSelectedLegendLocation(null);
+    } else if (presentationPhase === "pinpoint_focus") {
+      returnToOverviewMap();
+    } else {
+      const prevIdx = currentAgendaIndex > 0 ? currentAgendaIndex - 1 : ALL_RUNDOWN_ITEMS.length - 1;
+      const prevItem = ALL_RUNDOWN_ITEMS[prevIdx];
+      focusOnAgendaPinpoint(prevItem.id);
+    }
+  }, [presentationPhase, activeOpenPinId, selectedLegendLocation, currentAgendaIndex, returnToOverviewMap, focusOnAgendaPinpoint]);
+
+  const handleNextAgenda = useCallback(() => {
+    const nextIdx = (currentAgendaIndex + 1) % ALL_RUNDOWN_ITEMS.length;
+    focusOnAgendaPinpoint(ALL_RUNDOWN_ITEMS[nextIdx].id);
+  }, [currentAgendaIndex, focusOnAgendaPinpoint]);
+
+  const handlePrevAgenda = useCallback(() => {
+    const prevIdx = currentAgendaIndex > 0 ? currentAgendaIndex - 1 : ALL_RUNDOWN_ITEMS.length - 1;
+    focusOnAgendaPinpoint(ALL_RUNDOWN_ITEMS[prevIdx].id);
+  }, [currentAgendaIndex, focusOnAgendaPinpoint]);
+
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
-      if (isSearchModalOpen || isLocationModalOpen || isEditorOpen || isCalibratorOpen) return;
+      
+      // Editor / Calibrator / Search / Legend modal blocking
+      if (isEditorOpen || isCalibratorOpen || isSearchModalOpen || isLocationModalOpen || showFlatMapModal) {
+        if (e.key === "Escape") {
+          setIsSearchModalOpen(false);
+          setIsLocationModalOpen(false);
+          setShowFlatMapModal(false);
+        }
+        return;
+      }
 
-      if (e.key === " " || e.key.toLowerCase() === "p") {
+      // SPACEBAR: Always handles presentation step progression (Intro -> Map -> Pinpoint -> Video -> Popup -> Return to Map)
+      if (e.key === " " || e.code === "Space") {
         e.preventDefault();
-        toggleAutoplay();
-      } else if (e.key === "ArrowRight" || e.key === "PageDown") {
+        e.stopPropagation();
+        if (document.activeElement && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+        handleSpacebarAction();
+        return;
+      }
+
+      // If a popup or video is open, Arrow keys belong to photo gallery slider inside the modal
+      if (Boolean(activeOpenPinId) || showPJUWalkVideo || Boolean(selectedLegendLocation)) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          returnToOverviewMap();
+        }
+        return;
+      }
+
+      // Map Overview Arrow Key navigation
+      if (e.key === "ArrowRight" || e.key === "PageDown") {
         e.preventDefault();
-        goToNextAgenda();
+        handleNextAgenda();
       } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
         e.preventDefault();
-        goToPrevAgenda();
+        handlePrevAgenda();
+      } else if (e.key === "Escape" || e.key === "Home") {
+        e.preventDefault();
+        returnToOverviewMap();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleAutoplay, goToNextAgenda, goToPrevAgenda, isSearchModalOpen, isLocationModalOpen, isEditorOpen, isCalibratorOpen]);
+  }, [
+    handleSpacebarAction,
+    handleNextAgenda,
+    handlePrevAgenda,
+    returnToOverviewMap,
+    activeOpenPinId,
+    showPJUWalkVideo,
+    showFlatMapModal,
+    isSearchModalOpen,
+    isLocationModalOpen,
+    isEditorOpen,
+    isCalibratorOpen,
+    selectedLegendLocation,
+  ]);
 
-  // Handle Select Location directly from Map pin
   const handleSelectLocation = useCallback(
     (loc: LocationItem) => {
       setSelectedLocation(loc);
@@ -524,7 +596,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     [focusOnCoordinate]
   );
 
-  // Toggle Popup manually
   const handleTogglePopup = (vipId: string) => {
     setOpenPopupIds((prev) => ({
       ...prev,
@@ -532,44 +603,24 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     }));
   };
 
-  const handleOpenPopup = (vipId: string) => {
-    setOpenPopupIds((prev) => ({
-      ...prev,
-      [vipId]: true,
-    }));
-  };
-
-  const handleClosePopup = (vipId: string) => {
-    setOpenPopupIds((prev) => ({
-      ...prev,
-      [vipId]: false,
-    }));
-  };
-
-  // Update Waypoints from Editor with Instant Auto-Save
   const handleUpdateWaypoints = (newWaypoints: Waypoint[]) => {
     setCustomRoutes((prev) => ({
       ...prev,
       [activeActivityId]: newWaypoints,
     }));
 
-    // Auto-save instantly so changes are never lost across reloads/rebuilds
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(
-          `famgath_route_${activeActivityId}`,
-          JSON.stringify(newWaypoints)
-        );
+        localStorage.setItem(`famgath_route_${activeActivityId}`, JSON.stringify(newWaypoints));
       } catch (e) {
         console.error("Error auto-saving route to localStorage", e);
       }
     }
   };
 
-  // Delete specific node
   const handleDeleteNode = (index: number) => {
     if (activeWaypoints.length <= 2) {
-      alert("Rute minimal harus memiliki 2 titik (Titik Awal & Titik Akhir).");
+      alert("Rute minimal harus memiliki 2 titik.");
       return;
     }
     const updated = activeWaypoints.filter((_, i) => i !== index);
@@ -577,22 +628,6 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     setSelectedNodeIndex(null);
   };
 
-  // Keyboard shortcut: Delete or Backspace to delete selected node
-  useEffect(() => {
-    if (!isEditorOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedNodeIndex !== null) {
-        if (activeWaypoints.length > 2) {
-          e.preventDefault();
-          handleDeleteNode(selectedNodeIndex);
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditorOpen, selectedNodeIndex, activeWaypoints]);
-
-  // Interactive Node Dragging on Map Canvas
   const handleNodePointerDown = (index: number, e: React.PointerEvent) => {
     if (!isEditorOpen) return;
     e.stopPropagation();
@@ -629,15 +664,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   };
 
   const handleMapPointerUp = () => {
-    if (draggedPinId) {
-      setDraggedPinId(null);
-    }
-    if (draggedNodeIndex !== null) {
-      setDraggedNodeIndex(null);
-    }
+    if (draggedPinId) setDraggedPinId(null);
+    if (draggedNodeIndex !== null) setDraggedNodeIndex(null);
   };
 
-  // Click on Map to Add Waypoint Node or Move Selected Calibrate Pin
   const handleMapCanvasClick = (e: React.MouseEvent) => {
     if (isCalibratorOpen && selectedCalibratePinId && mapCanvasRef.current) {
       const rect = mapCanvasRef.current.getBoundingClientRect();
@@ -673,14 +703,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     handleUpdateWaypoints(updated);
   };
 
-  // Handle Fullscreen & Trigger "Tekan F11 untuk Full Screen" notification
   const handleToggleFullscreen = useCallback(() => {
-    // Show stylish instruction toast
     setShowF11Toast(true);
     if (f11TimerRef.current) clearTimeout(f11TimerRef.current);
     f11TimerRef.current = setTimeout(() => {
       setShowF11Toast(false);
-    }, 4500);
+    }, 4000);
 
     try {
       const doc = typeof document !== "undefined" ? (document as any) : null;
@@ -694,69 +722,86 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
 
       if (!isFs) {
         const elem = (doc.documentElement || doc.body || containerRef.current) as any;
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen().catch((err: any) => console.warn("Fullscreen request error:", err));
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
-          elem.mozRequestFullScreen();
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
-        }
+        if (elem?.requestFullscreen) elem.requestFullscreen();
       } else {
-        if (doc.exitFullscreen) {
-          doc.exitFullscreen().catch((err: any) => console.warn("Exit fullscreen error:", err));
-        } else if (doc.webkitExitFullscreen) {
-          doc.webkitExitFullscreen();
-        } else if (doc.mozCancelFullScreen) {
-          doc.mozCancelFullScreen();
-        } else if (doc.msExitFullscreen) {
-          doc.msExitFullscreen();
-        }
+        if (doc?.exitFullscreen) doc.exitFullscreen();
       }
     } catch (e) {
       console.error("Toggle fullscreen error:", e);
     }
   }, []);
 
-  useEffect(() => {
-    const onFsChange = () => {
-      const doc = document as any;
-      setIsFullscreen(
-        !!(
-          doc.fullscreenElement ||
-          doc.webkitFullscreenElement ||
-          doc.mozFullScreenElement ||
-          doc.msFullscreenElement
-        )
-      );
-    };
-
-    document.addEventListener("fullscreenchange", onFsChange);
-    document.addEventListener("webkitfullscreenchange", onFsChange);
-    document.addEventListener("mozfullscreenchange", onFsChange);
-    document.addEventListener("MSFullscreenChange", onFsChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFsChange);
-      document.removeEventListener("webkitfullscreenchange", onFsChange);
-      document.removeEventListener("mozfullscreenchange", onFsChange);
-      document.removeEventListener("MSFullscreenChange", onFsChange);
-    };
-  }, []);
-
-  const activeActivity =
-    ROUTE_ACTIVITIES.find((a) => a.id === activeActivityId) || ROUTE_ACTIVITIES[0];
+  const activeActivity = ROUTE_ACTIVITIES.find((a) => a.id === activeActivityId) || ROUTE_ACTIVITIES[0];
 
   return (
-    <div className="w-full flex flex-col lg:flex-row items-stretch gap-4">
-      {/* Side Schedule List */}
+    <div className="w-full flex flex-col lg:flex-row items-stretch gap-3">
+      {/* 1. SLIDE PEMBUKA (OPENING INTRO COVER SLIDE) */}
+      <AnimatePresence>
+        {showIntroSlide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 z-[150] flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#0e1d03] via-[#091502] to-[#040a01] text-white select-none overflow-hidden"
+          >
+            {/* Background Decorative Panorama */}
+            <div className="absolute inset-0 opacity-25 pointer-events-none">
+              <Image
+                src="/maps-area.png"
+                alt="Highland Park Resort"
+                fill
+                priority
+                unoptimized
+                className="object-cover object-center filter blur-[2px] scale-105"
+              />
+            </div>
+
+            {/* Subtle Gradient Glow */}
+            <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-500/10 blur-[120px] pointer-events-none" />
+
+            {/* Slide Pembuka Content Box */}
+            <div className="relative z-10 max-w-3xl w-full flex flex-col items-center text-center space-y-6 p-8 sm:p-12 rounded-[36px] bg-[#0c1a03]/90 border-2 border-lime-400/60 shadow-[0_0_80px_rgba(163,230,53,0.2)] backdrop-blur-2xl">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-xs sm:text-sm font-black tracking-widest uppercase shadow-sm">
+                <Trees className="w-4 h-4 text-amber-400" />
+                <span>PUSZIAD & THE HIGHLAND PARK RESORT</span>
+              </div>
+
+              <div className="space-y-3">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight uppercase font-fun drop-shadow-md">
+                  RUNDOWN FAMILY GATHERING PUSZIAD 2026
+                </h1>
+                <h2 className="text-lg sm:text-2xl font-extrabold text-lime-300 tracking-wide uppercase">
+                  THE HIGHLAND RESORT BOGOR
+                </h2>
+                <div className="text-sm sm:text-base font-bold text-slate-300 pt-1">
+                  9 - 10 OKTOBER 2026
+                </div>
+              </div>
+
+              {/* Start Button */}
+              <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowIntroSlide(false)}
+                  className="flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 hover:brightness-110 text-slate-950 font-black text-sm sm:text-base tracking-wide shadow-glow-gold transition-all cursor-pointer hover:scale-105"
+                >
+                  <Play className="w-5 h-5 fill-current" />
+                  <span>Mulai Presentasi (Tekan Spasi)</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Side Schedule List (Collapsible / Default Hidden) */}
       {showSidebar && (
         <ScheduleSidebar
           activeAgendaId={activeActivityId}
           isAnimating={isAnimating}
-          onSelectAgenda={handleSelectAgenda}
-          onReplayAnimation={handleReplayAnimation}
+          onSelectAgenda={(id) => focusOnAgendaPinpoint(id)}
+          onReplayAnimation={() => focusOnAgendaPinpoint(activeActivityId)}
           onToggleEditor={() => setIsEditorOpen(!isEditorOpen)}
           isEditorOpen={isEditorOpen}
           onHide={() => setShowSidebar(false)}
@@ -764,81 +809,152 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         />
       )}
 
-      {/* Full-Width Giant Map Stage Canvas */}
+      {/* Full Map Canvas Stage */}
       <div
         ref={containerRef}
-        className="relative flex-1 w-full overflow-hidden rounded-3xl border-2 border-lime-400/40 shadow-2xl bg-[#0e1d03] select-none h-[88vh] sm:h-[91vh] min-h-[680px] max-h-[1400px]"
+        className="relative flex-1 w-full overflow-hidden rounded-3xl border-2 border-lime-400/30 shadow-2xl bg-[#0b1803] select-none h-[calc(100vh-28px)] min-h-[640px] max-h-[1100px]"
       >
-        {/* Top Center: Prezi Autoplay HUD Controller */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 no-print flex items-center gap-2 select-none">
-          <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[#0b1803]/95 border-2 border-lime-400/80 shadow-2xl backdrop-blur-xl">
-            {/* Prev Agenda Button */}
+        {/* TOP HUD: Simplified Manual Navigation Bar with Clear Day 1 / Day 2 Switcher */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 no-print flex items-center gap-2 select-none">
+          <div className="flex items-center gap-2 p-1.5 px-3 rounded-full bg-[#081402]/95 border-2 border-lime-400/80 shadow-2xl backdrop-blur-xl">
+            {/* Direct Day 1 / Day 2 Pill Switcher */}
+            <div className="flex items-center bg-black/60 p-0.5 rounded-full border border-white/15">
+              <button
+                type="button"
+                onClick={() => {
+                  returnToOverviewMap();
+                  setActiveActivityId(RUNDOWN_SCHEDULE_DAY_1[0].id);
+                }}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer ${
+                  currentAgendaItem.day === 1
+                    ? "bg-gradient-to-r from-emerald-500 to-lime-500 text-slate-950 shadow-md shadow-lime-900/40 border border-lime-300"
+                    : "text-slate-300 hover:text-white"
+                }`}
+                title="Beralih ke Rangkaian Hari 1 (Jumat, 9 Okt)"
+              >
+                <span>🌿 Hari I</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  returnToOverviewMap();
+                  setActiveActivityId(RUNDOWN_SCHEDULE_DAY_2[0].id);
+                }}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer ${
+                  currentAgendaItem.day === 2
+                    ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 shadow-md shadow-amber-900/40 border border-amber-300"
+                    : "text-slate-300 hover:text-white"
+                }`}
+                title="Beralih ke Rangkaian Hari 2 (Sabtu, 10 Okt)"
+              >
+                <span>☀️ Hari II</span>
+              </button>
+            </div>
+
+            {/* Prev Step Button */}
             <button
               type="button"
-              onClick={goToPrevAgenda}
-              title="Agenda Sebelumnya (←)"
-              className="p-2 rounded-full hover:bg-lime-500/20 text-slate-200 hover:text-lime-300 transition-colors cursor-pointer"
+              onClick={handleStepBackward}
+              title="Langkah Sebelumnya (Arrow Left / PageUp)"
+              className="p-1.5 rounded-full hover:bg-lime-500/20 text-slate-200 hover:text-lime-300 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            {/* Play / Pause Autoplay Button */}
+            {/* Current Step Pill with Day & Title */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-xs font-bold text-lime-300">
+              <span className="text-[10px] font-mono text-amber-300 uppercase">
+                {currentAgendaIndex + 1}/{ALL_RUNDOWN_ITEMS.length}
+              </span>
+              <span className="max-w-[170px] truncate text-white">{currentAgendaItem.title}</span>
+            </div>
+
+            {/* Dynamic Spacebar Action Button */}
             <button
               type="button"
-              onClick={toggleAutoplay}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black transition-all shadow-lg overflow-hidden border cursor-pointer ${
-                isAutoplay
-                  ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white shadow-glow-gold"
-                  : "bg-gradient-to-r from-lime-500 to-emerald-500 text-slate-950 hover:brightness-110 border-lime-300 shadow-glow-lime"
+              onClick={handleSpacebarAction}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black transition-all shadow-lg border cursor-pointer ${
+                presentationPhase === "overview"
+                  ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white shadow-glow-gold hover:scale-[1.02]"
+                  : presentationPhase === "pinpoint_focus"
+                  ? "bg-gradient-to-r from-lime-400 to-emerald-400 text-slate-950 border-white shadow-glow-lime hover:scale-[1.02]"
+                  : "bg-gradient-to-r from-cyan-400 to-teal-400 text-slate-950 border-white hover:scale-[1.02]"
               }`}
-              title="Mulai / Jeda Simulasi Rangkaian Kegiatan Famgath (Tekan Spasi)"
+              title="Tekan Tombol Spasi pada keyboard untuk lanjut"
             >
-              {isAutoplay ? (
-                <>
-                  <Pause className="w-4 h-4" />
-                  <span>Jeda Simulasi Acara</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Mulai Simulasi Rangkaian Acara</span>
-                </>
-              )}
+              <span className="px-1.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] font-bold">
+                SPASI
+              </span>
+              <span>
+                {presentationPhase === "overview"
+                  ? `Tuju: ${currentAgendaItem.title}`
+                  : presentationPhase === "pinpoint_focus"
+                  ? "Buka Detail Info"
+                  : "Kembali ke Peta Utama"}
+              </span>
             </button>
 
-            {/* Next Agenda Button */}
+            {/* Direct Back to Overview Map Button */}
+            {presentationPhase !== "overview" && (
+              <button
+                type="button"
+                onClick={returnToOverviewMap}
+                title="Kembali ke Peta Utama (Esc / Home)"
+                className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs text-lime-200 font-bold transition-colors cursor-pointer flex items-center gap-1 border border-white/10"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Peta Utama</span>
+              </button>
+            )}
+
+            {/* Next Step Button */}
             <button
               type="button"
-              onClick={goToNextAgenda}
-              title="Agenda Berikutnya (→)"
-              className="p-2 rounded-full hover:bg-lime-500/20 text-slate-200 hover:text-lime-300 transition-colors cursor-pointer"
+              onClick={handleNextAgenda}
+              title="Agenda Berikutnya (Arrow Right / PageDown)"
+              className="p-1.5 rounded-full hover:bg-lime-500/20 text-slate-200 hover:text-lime-300 transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-
-            {/* Active Agenda Pill Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 border border-white/20 text-xs font-bold text-lime-300">
-              <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping" />
-              <span className="max-w-[150px] truncate">{currentAgendaItem.title}</span>
-            </div>
           </div>
         </div>
 
-        {/* Floating Button to Re-open Schedule Sidebar when Hidden */}
+        {/* Top-Left: Discreet Toggle Rundown Sidebar Button & Galeri Lokasi Button */}
         {!showSidebar && (
-          <div className="absolute top-4 left-4 z-40 no-print flex items-center gap-2">
+          <div className="absolute top-3 left-3 z-40 no-print flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowSidebar(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-lime-50 text-slate-900 border-2 border-lime-400/80 text-xs font-black shadow-xl backdrop-blur-md transition-all cursor-pointer hover:scale-105"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#081402]/95 hover:bg-[#122807] text-lime-200 border border-lime-400/60 text-xs font-bold shadow-xl backdrop-blur-md transition-all cursor-pointer hover:scale-105"
             >
-              <Calendar className="w-4 h-4 text-lime-700" />
-              <span>📋 Buka Rundown</span>
+              <Calendar className="w-3.5 h-3.5 text-lime-400" />
+              <span>📋 Rundown Acara</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextState = !showMasterGallery;
+                setShowMasterGallery(nextState);
+                setShowAllLocations(nextState);
+                if (nextState) {
+                  returnToOverviewMap();
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black shadow-xl backdrop-blur-md transition-all cursor-pointer hover:scale-105 border ${
+                showMasterGallery || showAllLocations
+                  ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 border-white shadow-glow-gold"
+                  : "bg-[#081402]/95 hover:bg-[#122807] text-lime-200 border-lime-400/60"
+              }`}
+              title="Tampilkan Peta Penuh & Galeri 86 Fasilitas Resort"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
+              <span>🗺️ Galeri Lokasi</span>
             </button>
           </div>
         )}
 
-        {/* Full Interactive Path & Node Editor Overlay Bar */}
+        {/* Full Interactive Path Editor Overlay (if active) */}
         <PathEditorOverlay
           isEditorOpen={isEditorOpen}
           onToggleEditor={() => setIsEditorOpen(!isEditorOpen)}
@@ -862,183 +978,138 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
           wheel={{ step: 0.15 }}
           pinch={{ step: 5 }}
           doubleClick={{ mode: "zoomIn", step: 0.7 }}
-          disabled={isEditorOpen} // Disable pan/zoom drag when editing nodes so user can drag nodes easily
+          disabled={isEditorOpen}
         >
           {({ zoomIn, zoomOut, resetTransform }) => (
             <>
-              {/* Floating Map Toolbar */}
-              <div className="absolute top-4 right-4 z-40 flex flex-col gap-1.5 no-print">
-                <div className="flex flex-col bg-[#0b1a03]/95 backdrop-blur-md rounded-2xl shadow-xl border-2 border-lime-400/40 p-1.5 gap-1">
-                  {/* Search Button in Toolbar */}
+              {/* Floating Right Map Toolbar */}
+              <div className="absolute top-3 right-3 z-40 flex flex-col gap-1.5 no-print">
+                <div className="flex flex-col bg-[#081402]/95 backdrop-blur-md rounded-2xl shadow-xl border border-lime-400/40 p-1.5 gap-1">
+                  {/* Search Button */}
                   <button
                     type="button"
                     onClick={() => setIsSearchModalOpen(true)}
-                    title="🔍 Cari Legenda (Ctrl+K)"
-                    className="p-2.5 rounded-xl text-butter-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                    title="🔍 Cari Fasilitas (Ctrl+K)"
+                    className="p-2 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
                   >
-                    <Search className="w-5 h-5" />
-                  </button>
-
-                  {/* Toggle All Location Pins (Angka Legenda) Button */}
-                  <button
-                    type="button"
-                    onClick={() => setShowAllLocations(!showAllLocations)}
-                    title={
-                      showAllLocations
-                        ? "Sembunyikan Angka Legenda (86 Titik Lokasi)"
-                        : "Tampilkan Angka Legenda (86 Titik Lokasi)"
-                    }
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer relative ${
-                      showAllLocations
-                        ? "text-slate-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
-                        : "text-slate-400 hover:text-white hover:bg-lime-800/40"
-                    }`}
-                  >
-                    {showAllLocations ? (
-                      <Eye className="w-5 h-5 text-slate-950" />
-                    ) : (
-                      <EyeOff className="w-5 h-5" />
-                    )}
-                  </button>
-
-                  {/* Edit Nodes Mode Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditorOpen(!isEditorOpen);
-                      if (!isEditorOpen) setIsCalibratorOpen(false);
-                    }}
-                    title={isEditorOpen ? "Tutup Editor Nodes Rute" : "🛠️ Edit Titik / Nodes Rute"}
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                      isEditorOpen
-                        ? "text-lime-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
-                        : "text-lime-300 hover:text-white hover:bg-lime-800/40"
-                    }`}
-                  >
-                    <Edit3 className="w-5 h-5" />
-                  </button>
-
-                  {/* Pin Point Visual Calibrator Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCalibratorOpen(!isCalibratorOpen);
-                      if (!isCalibratorOpen) setIsEditorOpen(false);
-                    }}
-                    title={
-                      isCalibratorOpen
-                        ? "Tutup Mode Kalibrasi Pin Point"
-                        : "📍 Mode Kalibrasi / Geser Posisi Pin Point"
-                    }
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                      isCalibratorOpen
-                        ? "text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-300 ring-2 ring-amber-300 shadow-md font-black"
-                        : "text-amber-300 hover:text-white hover:bg-lime-800/40"
-                    }`}
-                  >
-                    <Crosshair className="w-5 h-5" />
+                    <Search className="w-4 h-4" />
                   </button>
 
                   {/* Toggle Schedule Sidebar */}
                   <button
                     type="button"
                     onClick={() => setShowSidebar(!showSidebar)}
-                    title={showSidebar ? "Sembunyikan Daftar Jadwal" : "Tampilkan Daftar Jadwal"}
-                    className={`p-2.5 rounded-xl transition-colors cursor-pointer ${showSidebar
-                        ? "text-butter-pill bg-lime-800/60"
-                        : "text-lime-300 hover:text-white"
-                      }`}
+                    title={showSidebar ? "Sembunyikan Panel Rundown" : "Buka Panel Rundown"}
+                    className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                      showSidebar ? "text-amber-300 bg-lime-800/60" : "text-lime-300 hover:text-white"
+                    }`}
                   >
-                    {showSidebar ? (
-                      <PanelLeftClose className="w-5 h-5" />
-                    ) : (
-                      <PanelLeftOpen className="w-5 h-5" />
-                    )}
+                    {showSidebar ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
                   </button>
 
-                  {/* Open Rundown Poster Modal directly from toolbar */}
+                  {/* Open Rundown Poster Modal */}
                   {onOpenRundownModal && (
                     <button
                       type="button"
                       onClick={onOpenRundownModal}
                       title="Buka Poster Rundown Acara"
-                      className="p-2.5 rounded-xl text-butter-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                      className="p-2 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
                     >
-                      <Calendar className="w-5 h-5" />
+                      <Calendar className="w-4 h-4" />
                     </button>
                   )}
 
+                  {/* Zoom Controls */}
                   <button
                     type="button"
-                    onClick={() => zoomIn(0.5)}
+                    onClick={() => zoomIn(0.4)}
                     title="Perbesar Peta (+)"
-                    className="p-2.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
                   >
-                    <ZoomIn className="w-5 h-5" />
+                    <ZoomIn className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => zoomOut(0.5)}
+                    onClick={() => zoomOut(0.4)}
                     title="Perkecil Peta (-)"
-                    className="p-2.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
                   >
-                    <ZoomOut className="w-5 h-5" />
+                    <ZoomOut className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => resetTransform(400)}
-                    title="Reset Posisi Peta"
-                    className="p-2.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                    onClick={() => returnToOverviewMap()}
+                    title="Kembali ke Peta Utama"
+                    className="p-2 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
                   >
-                    <RotateCcw className="w-5 h-5" />
+                    <RotateCcw className="w-4 h-4" />
                   </button>
+
+                  {/* Toggle Master Gallery & All Locations */}
                   <button
                     type="button"
-                    onClick={() => setShowPaths(!showPaths)}
-                    title={
-                      showPaths
-                        ? "Sembunyikan Garis Rute (Jalur Lintasan)"
-                        : "Tampilkan Garis Rute (Jalur Lintasan)"
-                    }
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                      showPaths
-                        ? "text-slate-950 bg-butter-pill ring-2 ring-amber-300 shadow-md font-black"
+                    onClick={() => {
+                      const next = !showMasterGallery;
+                      setShowMasterGallery(next);
+                      setShowAllLocations(next);
+                      if (next) returnToOverviewMap();
+                    }}
+                    title={showMasterGallery ? "Tutup Galeri Lokasi" : "Buka Galeri Lokasi & Peta Lengkap"}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      showMasterGallery || showAllLocations
+                        ? "text-slate-950 bg-amber-400 font-bold shadow-glow-gold"
                         : "text-slate-400 hover:text-white hover:bg-lime-800/40"
                     }`}
                   >
-                    <Route className="w-5 h-5" />
+                    <Compass className="w-4 h-4" />
                   </button>
-                  {/* Pilihan Model Karakter: 4 PJU Berdampingan vs Avatar Pin Lingkaran */}
+
+                  {/* Open 2D Flat Map Modal Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowFlatMapModal(true)}
+                    title="Buka Peta Denah Asli (2D Flat) dalam Popup"
+                    className="p-2 rounded-xl text-amber-300 hover:text-slate-950 hover:bg-amber-400 transition-colors cursor-pointer"
+                  >
+                    <Layers className="w-4 h-4" />
+                  </button>
+
+                  {/* Toggle Walking Paths */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPaths(!showPaths)}
+                    title={showPaths ? "Sembunyikan Garis Rute" : "Tampilkan Garis Rute"}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      showPaths ? "text-slate-950 bg-amber-400 font-bold" : "text-slate-400 hover:text-white hover:bg-lime-800/40"
+                    }`}
+                  >
+                    <Route className="w-4 h-4" />
+                  </button>
+
+                  {/* Avatar Model Switcher */}
                   <button
                     type="button"
                     onClick={() => setAvatarMode(avatarMode === "squad" ? "circle" : "squad")}
                     title={
                       avatarMode === "squad"
-                        ? "Model Avatar: 4 PJU Berdampingan (Klik untuk Ganti ke Pin Lingkaran)"
-                        : "Model Avatar: Pin Lingkaran 1 Orang (Klik untuk Ganti ke 4 PJU Berdampingan)"
+                        ? "Model Avatar: PJU Squad (Klik untuk Ganti ke Lingkaran)"
+                        : "Model Avatar: Pin Lingkaran (Klik untuk Ganti ke PJU Squad)"
                     }
-                    className={`p-2.5 rounded-xl transition-colors cursor-pointer ${avatarMode === "squad"
-                        ? "text-butter-pill bg-lime-800/70 shadow-sm ring-1 ring-lime-400/40"
-                        : "text-lime-300 hover:text-white hover:bg-lime-800/40"
-                      }`}
+                    className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                      avatarMode === "squad" ? "text-amber-300 bg-lime-800/70" : "text-lime-300 hover:text-white"
+                    }`}
                   >
-                    {avatarMode === "squad" ? (
-                      <Users className="w-5 h-5 text-butter-300" />
-                    ) : (
-                      <UserCheck className="w-5 h-5 text-lime-300" />
-                    )}
+                    {avatarMode === "squad" ? <Users className="w-4 h-4 text-amber-300" /> : <UserCheck className="w-4 h-4 text-lime-300" />}
                   </button>
+
+                  {/* Fullscreen */}
                   <button
                     type="button"
                     onClick={handleToggleFullscreen}
                     title="Tekan F11 untuk Full Screen"
-                    className="p-2.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors cursor-pointer"
                   >
-                    {isFullscreen ? (
-                      <Minimize2 className="w-5 h-5" />
-                    ) : (
-                      <Maximize2 className="w-5 h-5" />
-                    )}
+                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -1059,15 +1130,14 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                   onClick={handleMapCanvasClick}
                   onPointerMove={handleMapPointerMove}
                   onPointerUp={handleMapPointerUp}
-                  className={`relative w-[1500px] lg:w-[2000px] aspect-[16/9] flex items-center justify-center rounded-2xl overflow-visible ${isEditorOpen
-                      ? "cursor-crosshair ring-4 ring-amber-400/50"
-                      : "cursor-grab active:cursor-grabbing"
-                    }`}
+                  className={`relative w-[1500px] lg:w-[2000px] aspect-[16/9] flex items-center justify-center rounded-2xl overflow-visible ${
+                    isEditorOpen ? "cursor-crosshair ring-4 ring-amber-400/50" : "cursor-grab active:cursor-grabbing"
+                  }`}
                 >
-                  {/* 3D Master Diorama Map Background */}
+                  {/* Clean 3D Master Isometric Diorama Map Background (Always 3D Isometric) */}
                   <Image
                     src="/maps-area.png"
-                    alt="Peta Jalur Kedatangan Tamu VIP"
+                    alt="Peta Kawasan Highland Park Resort (3D Isometric)"
                     fill
                     priority
                     unoptimized
@@ -1075,173 +1145,71 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     className="object-contain pointer-events-none drop-shadow-2xl"
                   />
 
-                  {/* SVG Waypoint Paths / Tracks */}
+                  {/* SVG Waypoint Paths */}
                   {showPaths && (
                     <svg
                       className="absolute inset-0 w-full h-full pointer-events-none z-20"
                       viewBox="0 0 100 100"
                       preserveAspectRatio="none"
                     >
-                      {/* Render Active Activity Path in Editor */}
-                      {isEditorOpen && (
-                        <g>
-                          <polyline
-                            points={activeWaypoints.map((p) => `${p.x},${p.y}`).join(" ")}
-                            fill="none"
-                            stroke={activeActivity.color}
-                            strokeWidth="2.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeOpacity="0.4"
-                          />
-                          <polyline
-                            points={activeWaypoints.map((p) => `${p.x},${p.y}`).join(" ")}
-                            fill="none"
-                            stroke={activeActivity.color}
-                            strokeWidth="1.2"
-                            strokeDasharray="2 1"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeOpacity="1"
-                            className="animate-pulse drop-shadow-lg"
-                          />
-                        </g>
-                      )}
-
-                      {/* Regular Simulation Path Tracks */}
-                      {!isEditorOpen &&
-                        activeVIPs.map((vip) => {
-                          const points = vip.pathWaypoints
-                            .map((p) => `${p.x},${p.y}`)
-                            .join(" ");
-
-                          return (
-                            <g key={vip.id}>
-                              <polyline
-                                points={points}
-                                fill="none"
-                                stroke={vip.color}
-                                strokeWidth="2.0"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeOpacity="0.25"
+                      {activeVIPs.map((vip) => {
+                        const points = vip.pathWaypoints.map((p) => `${p.x},${p.y}`).join(" ");
+                        return (
+                          <g key={vip.id}>
+                            <polyline
+                              points={points}
+                              fill="none"
+                              stroke={vip.color}
+                              strokeWidth="2.0"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeOpacity="0.25"
+                            />
+                            <polyline
+                              points={points}
+                              fill="none"
+                              stroke={vip.color}
+                              strokeWidth="0.8"
+                              strokeDasharray="1.2 1.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeOpacity="0.9"
+                              className="drop-shadow-md"
+                            />
+                            {vip.pathWaypoints.map((pt, pIdx) => (
+                              <circle
+                                key={pIdx}
+                                cx={pt.x}
+                                cy={pt.y}
+                                r={pIdx === 0 || pIdx === vip.pathWaypoints.length - 1 ? "0.6" : "0.38"}
+                                fill={vip.color}
+                                stroke="#ffffff"
+                                strokeWidth="0.18"
                               />
-                              <polyline
-                                points={points}
-                                fill="none"
-                                stroke={vip.color}
-                                strokeWidth="0.8"
-                                strokeDasharray="1.2 1.2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeOpacity="0.9"
-                                className="drop-shadow-md"
-                              />
-                              {vip.pathWaypoints.map((pt, pIdx) => (
-                                <circle
-                                  key={pIdx}
-                                  cx={pt.x}
-                                  cy={pt.y}
-                                  r={
-                                    pIdx === 0 || pIdx === vip.pathWaypoints.length - 1
-                                      ? "0.6"
-                                      : "0.38"
-                                  }
-                                  fill={vip.color}
-                                  stroke="#ffffff"
-                                  strokeWidth="0.18"
-                                  className="drop-shadow"
-                                />
-                              ))}
-                            </g>
-                          );
-                        })}
+                            ))}
+                          </g>
+                        );
+                      })}
                     </svg>
                   )}
 
-                  {/* Interactive Draggable Waypoint Nodes in Editor Mode */}
-                  {isEditorOpen &&
-                    activeWaypoints.map((pt, idx) => {
-                      const isFirst = idx === 0;
-                      const isLast = idx === activeWaypoints.length - 1;
-                      const isSelected = idx === selectedNodeIndex;
-
-                      return (
-                        <div
-                          key={`editor-node-${idx}`}
-                          onPointerDown={(e) => handleNodePointerDown(idx, e)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedNodeIndex(idx === selectedNodeIndex ? null : idx);
-                          }}
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (activeWaypoints.length > 2) {
-                              handleDeleteNode(idx);
-                            }
-                          }}
-                          className={`absolute z-40 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-move select-none transition-transform ${isSelected ? "scale-125 z-50" : "hover:scale-115"
-                            }`}
-                          style={{
-                            left: `${pt.x}%`,
-                            top: `${pt.y}%`,
-                          }}
-                          title={`Titik #${idx + 1} (${pt.x.toFixed(1)}%, ${pt.y.toFixed(1)}%) - Klik untuk pilih, Klik Kanan untuk hapus`}
-                        >
-                          <div
-                            className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-2xl border-2 transition-all ${isSelected
-                                ? "bg-amber-400 text-resort-950 border-white ring-4 ring-amber-400 shadow-glow-gold"
-                                : isFirst
-                                  ? "bg-emerald-500 text-white border-white ring-2 ring-emerald-400"
-                                  : isLast
-                                    ? "bg-rose-500 text-white border-white ring-2 ring-rose-400"
-                                    : "bg-resort-950 text-gold-300 border-gold-400 ring-1 ring-black/40"
-                              }`}
-                          >
-                            {isFirst ? "S" : isLast ? "E" : idx + 1}
-
-                            {/* Quick Delete Cross Button on Selected Node */}
-                            {isSelected && activeWaypoints.length > 2 && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteNode(idx);
-                                }}
-                                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center text-[10px] font-black shadow-lg border border-white cursor-pointer z-50 animate-bounce"
-                                title={`Hapus Titik #${idx + 1}`}
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Node Coordinate Pill */}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded-md bg-resort-950/95 border border-gold-500/40 text-[9px] font-mono font-bold text-gold-300 shadow-lg whitespace-nowrap pointer-events-none">
-                            #{idx + 1} ({pt.x.toFixed(1)}%, {pt.y.toFixed(1)}%)
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  {/* Interactive 86 Resort Location Markers (Clickable places across map) */}
-                  {!isEditorOpen && showAllLocations && !activeOpenPinId && !selectedLegendLocation && (
+                  {/* All 86 Locations (only when user manually toggles master gallery or searches) */}
+                  {!isEditorOpen && (showAllLocations || showMasterGallery) && !activeOpenPinId && !selectedLegendLocation && (
                     <div className="absolute inset-0 pointer-events-none z-15">
                       {mappedLocations.map((loc) => (
                         <div key={`loc-pin-${loc.id}`} className="pointer-events-auto">
                           <LocationMarker
                             location={loc}
-                            isSelected={false}
+                            isSelected={selectedLocation?.id === loc.id}
                             isHighlighted={true}
-                            onClick={handleSelectLegend}
+                            onClick={handleSelectLocation}
                           />
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Render Selected Searched Legend Popup Card */}
+                  {/* Selected Searched Legend Popup Card */}
                   {!isEditorOpen && selectedLegendLocation && (
                     <LegendMapPopup
                       location={selectedLegendLocation}
@@ -1258,75 +1226,15 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     />
                   )}
 
-                  {/* Starting Point Marker on Map (Only when PJU arrival/check-in is active) */}
-                  {!isEditorOpen &&
-                    !showAllLocations &&
-                    !currentAgendaItem.disablePawn &&
-                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin") &&
-                    startPoint && (
-                      <div
-                        className="absolute z-20 -translate-x-1/2 -translate-y-full pointer-events-none"
-                        style={{
-                          left: `${startPoint.x}%`,
-                          top: `${startPoint.y}%`,
-                        }}
-                      >
-                        <div className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow-md border border-white flex items-center gap-1 animate-bounce mb-1">
-                          <MapPin className="w-3 h-3" /> Titik Awal ({currentAgendaItem.badge})
-                        </div>
-                      </div>
-                    )}
-
-                  {/* Visual Draggable Pin Handles during Calibration Mode */}
-                  {isCalibratorOpen &&
-                    KEY_EVENT_PINPOINTS.map((pin) => {
-                      const coords = customPinCoords[pin.id] || pin.coords;
-                      const isSelected = pin.id === selectedCalibratePinId;
-
-                      return (
-                        <div
-                          key={`calib-handle-${pin.id}`}
-                          onPointerDown={(e) => {
-                            e.stopPropagation();
-                            setSelectedCalibratePinId(pin.id);
-                            setDraggedPinId(pin.id);
-                          }}
-                          className={`absolute z-50 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-move select-none transition-transform ${
-                            isSelected ? "scale-125 z-[60]" : "hover:scale-110"
-                          }`}
-                          style={{
-                            left: `${coords.x}%`,
-                            top: `${coords.y}%`,
-                          }}
-                          title={`No. ${pin.legendNumber} ${pin.name} (${coords.x}%, ${coords.y}%) - Drag untuk menggeser`}
-                        >
-                          <div
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-xs shadow-2xl border-2 transition-all ${
-                              isSelected
-                                ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 border-white ring-4 ring-amber-400 shadow-glow-gold animate-pulse"
-                                : "bg-[#0b1803]/95 text-amber-200 border-amber-400/80 shadow-lg"
-                            }`}
-                          >
-                            <Crosshair className="w-3.5 h-3.5 text-slate-950" />
-                            <span>No. {pin.legendNumber} {pin.name}</span>
-                          </div>
-
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded-md bg-[#061202]/95 border border-amber-400/50 text-[10px] font-mono font-bold text-amber-300 shadow-lg whitespace-nowrap pointer-events-none">
-                            X: {coords.x.toFixed(1)}% | Y: {coords.y.toFixed(1)}%
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  {/* Render Key Event Pin Points: Otomatis disembunyikan saat seluruh 86 nomor legenda di-unhide (showAllLocations) */}
+                  {/* Key Event Pin Points & Popups */}
                   {!isEditorOpen &&
                     !isCalibratorOpen &&
                     !showAllLocations &&
+                    !showMasterGallery &&
                     !selectedLegendLocation &&
                     KEY_EVENT_PINPOINTS.map((pin) => {
                       const pinActualCoords = customPinCoords[pin.id] || pin.coords;
                       const isDestinationOfCurrentAgenda = pin.id === getPinIdForAgenda(activeActivityId);
-
                       const isOpen = activeOpenPinId ? pin.id === activeOpenPinId : false;
 
                       return (
@@ -1335,27 +1243,21 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                           keyPinpoint={{ ...pin, coords: pinActualCoords }}
                           agendaItem={isDestinationOfCurrentAgenda ? currentAgendaItem : undefined}
                           isOpen={isOpen}
-                          isTourAutoplay={isAutoplay && isDestinationOfCurrentAgenda}
-                          onSlideCycleComplete={handleCardSlideCycleComplete}
-                          onClose={() =>
-                            setOpenKeyPinpointIds({ __closed__: true })
-                          }
+                          onClose={() => setOpenKeyPinpointIds({ __closed__: true })}
                           onOpen={() => {
                             setSelectedLegendLocation(null);
                             setOpenKeyPinpointIds({ [pin.id]: true });
+                            setPresentationPhase("popup_open");
                             focusOnCoordinate(pinActualCoords, 1.85);
                           }}
-                          onFocusPinPoint={() =>
-                            focusOnCoordinate(pinActualCoords, 1.85)
-                          }
+                          onFocusPinPoint={() => focusOnCoordinate(pinActualCoords, 1.85)}
                         />
                       );
                     })}
 
-                  {/* Render All Animated Continuous Pawns: Only active for d1-arrival and d1-checkin (until entering room) */}
+                  {/* Animated Pawns: Hanya tampil saat Kedatangan di Helipad dan Berjalan ke Villa Alpine House */}
                   {!isEditorOpen &&
-                    !currentAgendaItem.disablePawn &&
-                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin") &&
+                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin-pju") &&
                     activeVIPs.map((vip, idx) => (
                       <Pawn
                         key={vip.id}
@@ -1365,8 +1267,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                         isArrived={animProgress >= 1}
                         offsetIndex={idx}
                         avatarMode={avatarMode}
-                        isPopupOpen={activeActivityId !== "d1-arrival" && !!openPopupIds[vip.id]}
-                        onTogglePopup={activeActivityId === "d1-arrival" ? () => { } : handleTogglePopup}
+                        isPopupOpen={!!openPopupIds[vip.id]}
+                        onTogglePopup={handleTogglePopup}
                       />
                     ))}
                 </div>
@@ -1374,9 +1276,135 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
             </>
           )}
         </TransformWrapper>
+
+        {/* Location Gallery Drawer (Master Interactive Gallery for all 86 points) */}
+        <LocationGalleryDrawer
+          locations={LOCATIONS}
+          isOpen={showMasterGallery}
+          selectedLocation={selectedLocation}
+          onClose={() => {
+            setShowMasterGallery(false);
+            setShowAllLocations(false);
+          }}
+          onSelectLocation={handleSelectLocation}
+          onFocusOnMap={(loc) => {
+            if (loc.mapX !== undefined && loc.mapY !== undefined) {
+              focusOnCoordinate({ x: loc.mapX, y: loc.mapY }, 1.85);
+            }
+          }}
+          onOpenFlatMapModal={() => setShowFlatMapModal(true)}
+        />
       </div>
 
-      {/* Location Details Modal when clicking any place on the map */}
+      {/* 2D Flat Denah Map Popup Modal */}
+      <AnimatePresence>
+        {showFlatMapModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[125] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-xl select-none"
+            onClick={() => setShowFlatMapModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              className="relative w-full max-w-6xl h-[90vh] rounded-3xl overflow-hidden shadow-2xl bg-[#081402] border-2 border-lime-400/80 ring-4 ring-lime-400/20 flex flex-col text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Header */}
+              <div className="px-5 py-3.5 bg-[#0f2305] border-b border-lime-500/30 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 font-fun uppercase tracking-wider shadow-sm border border-amber-300">
+                    🗺️ PETA DENAH ASLI (2D)
+                  </span>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-white">
+                      The Highland Park Resort - Hotel Bogor
+                    </h3>
+                    <p className="text-[11px] text-lime-300 hidden sm:block">
+                      Gunakan scroll mouse atau pinch untuk perbesar (zoom) & geser peta
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowFlatMapModal(false)}
+                  title="Tutup Peta Denah (Esc)"
+                  className="p-2 rounded-full bg-black/60 hover:bg-rose-600 text-slate-300 hover:text-white border border-white/20 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Zoomable / Pannable 2D Map Container */}
+              <div className="relative flex-1 w-full bg-black overflow-hidden flex items-center justify-center">
+                <TransformWrapper
+                  initialScale={1.0}
+                  minScale={0.6}
+                  maxScale={6}
+                  centerOnInit={true}
+                  wheel={{ step: 0.15 }}
+                  pinch={{ step: 5 }}
+                >
+                  {({ zoomIn, zoomOut, resetTransform }) => (
+                    <>
+                      {/* Floating Zoom Controls inside modal */}
+                      <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/80 backdrop-blur-md border border-lime-400/40 shadow-xl">
+                        <button
+                          type="button"
+                          onClick={() => zoomIn(0.4)}
+                          title="Perbesar Peta (+)"
+                          className="p-1.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors"
+                        >
+                          <ZoomIn className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => zoomOut(0.4)}
+                          title="Perkecil Peta (-)"
+                          className="p-1.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors"
+                        >
+                          <ZoomOut className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => resetTransform()}
+                          title="Reset Tampilan"
+                          className="p-1.5 rounded-xl text-lime-200 hover:text-white hover:bg-lime-800/40 transition-colors"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <TransformComponent
+                        wrapperStyle={{ width: "100%", height: "100%" }}
+                        contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        <div className="relative w-[1500px] lg:w-[2000px] aspect-[16/9] flex items-center justify-center cursor-grab active:cursor-grabbing">
+                          <Image
+                            src="/map_only_clean.jpg"
+                            alt="Peta Denah Asli 2D"
+                            fill
+                            unoptimized
+                            sizes="100vw"
+                            className="object-contain"
+                          />
+                        </div>
+                      </TransformComponent>
+                    </>
+                  )}
+                </TransformWrapper>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Location Modal */}
       <LocationModal
         location={selectedLocation}
         locations={LOCATIONS}
@@ -1390,46 +1418,132 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         }}
       />
 
-      {/* F11 Full Screen Notification Banner Toast */}
+      {/* PJU Walking Video Modal (Plays Before Alpine House Villa Popup) */}
+      <AnimatePresence>
+        {showPJUWalkVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[115] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl select-none"
+            onClick={() => {
+              setShowPJUWalkVideo(false);
+              openAgendaPopup();
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              className="relative w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl bg-[#081402] border-2 border-lime-400/80 ring-4 ring-lime-400/20 shadow-[0_0_80px_rgba(163,230,53,0.3)] flex flex-col text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Header */}
+              <div className="px-5 py-3.5 bg-[#0f2305] border-b border-lime-500/30 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-fun uppercase tracking-wider shadow-sm border border-amber-300">
+                    🎬 PJU BERJALAN
+                  </span>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-white">
+                      Mayjen TNI Budi Hariswanto & Rombongan PJU
+                    </h3>
+                    <p className="text-[11px] text-lime-300">
+                      Menuju Villa Alpine House (Kamar Utama PJU)
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPJUWalkVideo(false);
+                    openAgendaPopup();
+                  }}
+                  title="Lewati Video (Esc)"
+                  className="p-1.5 rounded-full bg-black/60 hover:bg-rose-600 text-slate-300 hover:text-white border border-white/20 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Video Container (16:9 Aspect Ratio) */}
+              <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+                <video
+                  src="/videos/pju_berjalan.mp4"
+                  autoPlay
+                  controls
+                  playsInline
+                  onEnded={() => {
+                    setShowPJUWalkVideo(false);
+                    openAgendaPopup();
+                  }}
+                  className="w-full h-full object-contain bg-black"
+                />
+              </div>
+
+              {/* Footer Action Bar */}
+              <div className="px-5 py-3.5 bg-[#0a1703] border-t border-lime-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-slate-300">
+                  <span>Tekan <strong className="text-amber-300 font-mono">Spasi</strong> atau tombol di samping untuk langsung ke detail villa.</span>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPJUWalkVideo(false);
+                      openAgendaPopup();
+                    }}
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm shadow-glow-gold transition-all cursor-pointer hover:scale-105 border border-white"
+                  >
+                    <span className="px-1.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] font-bold">
+                      SPASI
+                    </span>
+                    <span>Lanjut ke Info Villa Alpine House</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* F11 Toast Notification */}
       <AnimatePresence>
         {showF11Toast && (
           <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 450, damping: 28 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[120] px-5 py-3 rounded-2xl bg-[#0b1803]/95 backdrop-blur-2xl border-2 border-lime-400 text-white shadow-2xl flex items-center gap-3.5 ring-4 ring-lime-400/25 select-none"
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[120] px-4 py-2.5 rounded-2xl bg-[#081402]/95 backdrop-blur-2xl border border-lime-400 text-white shadow-2xl flex items-center gap-3 select-none"
           >
-            <div className="px-3 py-1.5 rounded-xl bg-lime-400 text-lime-950 font-mono font-black text-sm shadow-md border border-lime-300 flex items-center justify-center">
+            <div className="px-2.5 py-1 rounded-lg bg-lime-400 text-slate-950 font-mono font-black text-xs">
               F11
             </div>
-            <div className="flex flex-col">
-              <span className="text-[11px] text-lime-300 font-bold uppercase tracking-wider">
-                Mode Layar Penuh
-              </span>
-              <span className="text-sm font-extrabold text-white">
-                Tekan <span className="text-butter-pill underline decoration-lime-400">F11</span> pada keyboard untuk Full Screen
-              </span>
-            </div>
+            <span className="text-xs font-bold text-white">
+              Tekan <span className="text-amber-300 font-black">F11</span> untuk Layar Penuh (Full Screen)
+            </span>
             <button
               type="button"
               onClick={() => setShowF11Toast(false)}
-              className="ml-2 p-1.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-white/10 text-slate-300"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Search Legend Modal */}
+      {/* Search Modal */}
       <LegendSearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
         onSelectLocation={handleSelectLegend}
       />
 
-      {/* Visual Pin Point Calibrator */}
+      {/* Pin Point Calibrator */}
       <PinPointCalibrator
         isCalibrating={isCalibratorOpen}
         onToggleCalibrating={() => setIsCalibratorOpen(!isCalibratorOpen)}
@@ -1439,9 +1553,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         onSelectPin={(id) => {
           setSelectedCalibratePinId(id);
           const coords = customPinCoords[id] || KEY_EVENT_PINPOINTS.find((p) => p.id === id)?.coords;
-          if (coords) {
-            focusOnCoordinate(coords, 1.85);
-          }
+          if (coords) focusOnCoordinate(coords, 1.85);
         }}
         onUpdatePinCoord={handleUpdatePinCoord}
         onSavePermanent={handleSavePinCoords}

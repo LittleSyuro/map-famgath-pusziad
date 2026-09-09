@@ -111,7 +111,7 @@ export const Pawn: React.FC<PawnProps> = ({
       >
         {avatarMode === "squad" ? (
           <div className="relative flex flex-col items-center">
-            {/* 4 PJU Standing Cutout (Walking animation when in motion) */}
+            {/* 5 PJU Standing Cutout (Walking animation when in motion) */}
             <motion.div
               animate={
                 isWalking
@@ -127,11 +127,11 @@ export const Pawn: React.FC<PawnProps> = ({
                     }
                   : undefined
               }
-              className="relative w-28 sm:w-36 aspect-[972/658] drop-shadow-[0_10px_16px_rgba(0,0,0,0.75)] filter hover:brightness-110 transition-all cursor-pointer"
+              className="relative w-32 sm:w-44 aspect-[950/578] drop-shadow-[0_12px_20px_rgba(0,0,0,0.8)] filter hover:brightness-110 transition-all cursor-pointer"
             >
               <Image
-                src="/avatars/pju_squad_4.png"
-                alt="4 Pimpinan PJU Pusziad"
+                src="/avatars/pju_squad_5.png"
+                alt="5 Pimpinan PJU Pusziad"
                 fill
                 unoptimized
                 className="object-contain"
@@ -140,7 +140,7 @@ export const Pawn: React.FC<PawnProps> = ({
             </motion.div>
 
             {/* Ground shadow beneath squad */}
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/60 blur-[3px] pointer-events-none w-28 sm:w-32 h-4" />
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/60 blur-[3px] pointer-events-none w-32 sm:w-40 h-4" />
 
             {/* PJU Tag Badge (Placed AT THE BOTTOM, high-contrast solid black text on bright gold pill) */}
             <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-black text-[11px] font-black tracking-widest uppercase shadow-2xl border-1.5 border-white ring-1 ring-black/40 flex items-center justify-center whitespace-nowrap z-20 select-none">
@@ -168,21 +168,15 @@ export const Pawn: React.FC<PawnProps> = ({
 
         {/* Hover Tooltip */}
         {isHovered && !isPopupOpen && (
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-52 p-2.5 rounded-2xl bg-resort-950/98 text-white border border-lime-400 shadow-2xl backdrop-blur-md z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-100 text-center">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
-              <span className="px-2 py-0.5 rounded-full bg-butter-pill text-slate-950 text-[10px] font-black uppercase tracking-wider">
-                {avatarMode === "squad" ? "PIMPINAN PJU PUSZIAD" : "PEJABAT UTAMA (PJU)"}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 rounded-2xl bg-resort-950/98 text-white border border-lime-400 shadow-2xl backdrop-blur-md z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-100 text-center whitespace-nowrap">
+            <div className="flex items-center justify-center gap-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider">
+                PJU
               </span>
             </div>
-
-            <h4 className="text-xs font-bold text-white mt-1">
-              {avatarMode === "squad"
-                ? "Mayjen TNI Budi Hariswanto, Pak Nurdihin & Rombongan PJU"
-                : vip.name}
+            <h4 className="text-xs font-black text-white mt-1">
+              Mayjen TNI Budi Hariswanto & Rombongan PJU
             </h4>
-            <p className="text-[10px] text-lime-300 mt-0.5">
-              {isWalking ? "Sedang berjalan menuju lokasi..." : `Tiba di ${vip.mapLocationName}`}
-            </p>
           </div>
         )}
       </motion.div>

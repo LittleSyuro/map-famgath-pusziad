@@ -120,7 +120,7 @@ export const PinPointCalibrator: React.FC<PinPointCalibratorProps> = ({
               const coords = customPinCoords[pin.id] || pin.coords;
               return (
                 <option key={pin.id} value={pin.id} className="bg-[#0b1803] text-white">
-                  No. {pin.legendNumber} {pin.name} ({coords.x}%, {coords.y}%)
+                  {pin.name} ({coords.x}%, {coords.y}%)
                 </option>
               );
             })}

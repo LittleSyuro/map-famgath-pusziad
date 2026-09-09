@@ -138,7 +138,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
         {/* Content Body */}
         <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
           {/* Main Photo / Video display */}
-          <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden bg-[#142807] border-2 border-lime-500/30 shadow-xl flex items-center justify-center">
+          <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden bg-[#142807] border-2 border-lime-500/30 shadow-xl flex items-center justify-center group">
             {location.image.endsWith(".mp4") || location.image.endsWith(".mov") ? (
               <video
                 src={location.image}
@@ -172,6 +172,41 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                 priority
               />
             )}
+
+            {/* Left & Right Arrow Buttons Overlay */}
+            <div className="absolute inset-y-0 inset-x-2 flex items-center justify-between pointer-events-none z-20">
+              {hasPrev ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrev();
+                  }}
+                  title="Lokasi Sebelumnya (Panah Kiri / ◀)"
+                  className="w-10 h-10 rounded-full bg-black/80 hover:bg-amber-400 text-white hover:text-slate-950 flex items-center justify-center border-2 border-lime-400/60 pointer-events-auto transition-all duration-200 shadow-glow-gold cursor-pointer hover:scale-110 active:scale-95"
+                >
+                  <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+                </button>
+              ) : (
+                <div className="w-10" />
+              )}
+
+              {hasNext ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  title="Lokasi Berikutnya (Panah Kanan / ▶)"
+                  className="w-10 h-10 rounded-full bg-black/80 hover:bg-amber-400 text-white hover:text-slate-950 flex items-center justify-center border-2 border-lime-400/60 pointer-events-auto transition-all duration-200 shadow-glow-gold cursor-pointer hover:scale-110 active:scale-95"
+                >
+                  <ChevronRight className="w-6 h-6 stroke-[2.5]" />
+                </button>
+              ) : (
+                <div className="w-10" />
+              )}
+            </div>
           </div>
 
           {/* Title & Badges */}

@@ -121,14 +121,18 @@ export const ArrivalSummary: React.FC<ArrivalSummaryProps> = ({
                     </h4>
                   </div>
 
-                  {/* Room info: Internal event room number + Building location name */}
+                  {/* Room info: Internal event room name */}
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-zinc-600 dark:text-zinc-300">
-                    <span className="font-bold text-gold-700 dark:text-gold-400">
-                      Kamar No. {vip.internalNumber}
-                    </span>
-                    <span className="text-zinc-400">•</span>
+                    {vip.internalNumber && (
+                      <>
+                        <span className="font-bold text-gold-700 dark:text-gold-400">
+                          Kamar No. {vip.internalNumber}
+                        </span>
+                        <span className="text-zinc-400">•</span>
+                      </>
+                    )}
                     <span className="text-zinc-500 dark:text-zinc-400 truncate">
-                      {vip.roomLegendNumber}. {vip.mapLocationName}
+                      {vip.mapLocationName}
                     </span>
                   </div>
                 </div>
