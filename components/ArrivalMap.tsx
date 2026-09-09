@@ -970,6 +970,21 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
               <span>🗺️ Galeri Lokasi</span>
             </button>
+
+            {/* Tombol Buat Rute Manual */}
+            <button
+              type="button"
+              onClick={() => setIsEditorOpen(!isEditorOpen)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black shadow-xl backdrop-blur-md transition-all cursor-pointer hover:scale-105 border ${
+                isEditorOpen
+                  ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 border-white shadow-glow-gold"
+                  : "bg-[#081402]/95 hover:bg-[#122807] text-lime-200 border-lime-400/60"
+              }`}
+              title="Buka / Tutup Editor Rute Manual (Klik di peta untuk tambah titik)"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+              <span>✏️ Buat Rute Manual</span>
+            </button>
           </div>
         )}
 
@@ -1105,6 +1120,20 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                     <Route className="w-4 h-4" />
                   </button>
 
+                  {/* Toggle Manual Route Editor */}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditorOpen(!isEditorOpen)}
+                    title={isEditorOpen ? "Tutup Editor Rute" : "Buka Editor Rute Manual (Edit Titik di Peta)"}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      isEditorOpen
+                        ? "text-slate-950 bg-amber-400 font-bold shadow-glow-gold"
+                        : "text-slate-400 hover:text-white hover:bg-lime-800/40"
+                    }`}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+
                   {/* Avatar Model Switcher */}
                   <button
                     type="button"
@@ -1165,7 +1194,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                   />
 
                   {/* SVG Waypoint Paths */}
-                  {showPaths && (
+                  {(showPaths || isEditorOpen) && (
                     <svg
                       className="absolute inset-0 w-full h-full pointer-events-none z-20"
                       viewBox="0 0 100 100"
@@ -1211,6 +1240,69 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       })}
                     </svg>
                   )}
+
+                  {/* Interactive Draggable Waypoint Nodes in Editor Mode */}
+                  {isEditorOpen &&
+                    activeWaypoints.map((pt, idx) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === activeWaypoints.length - 1;
+                      const isSelected = idx === selectedNodeIndex;
+
+                      return (
+                        <div
+                          key={`editor-node-${idx}`}
+                          onPointerDown={(e) => handleNodePointerDown(idx, e)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNodeIndex(idx === selectedNodeIndex ? null : idx);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (activeWaypoints.length > 2) {
+                              handleDeleteNode(idx);
+                            }
+                          }}
+                          className={`absolute z-40 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-move select-none transition-transform ${
+                            isSelected ? "scale-125 z-50" : "hover:scale-115"
+                          }`}
+                          style={{
+                            left: `${pt.x}%`,
+                            top: `${pt.y}%`,
+                          }}
+                          title={`Titik #${idx + 1} (${pt.x.toFixed(1)}%, ${pt.y.toFixed(1)}%) - Drag untuk geser, Klik untuk pilih, Klik Kanan untuk hapus`}
+                        >
+                          <div
+                            className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-2xl border-2 transition-all ${
+                              isSelected
+                                ? "bg-amber-400 text-slate-950 border-white ring-4 ring-amber-400 shadow-glow-gold"
+                                : isFirst
+                                ? "bg-emerald-500 text-white border-white ring-2 ring-emerald-400"
+                                : isLast
+                                ? "bg-rose-500 text-white border-white ring-2 ring-rose-400"
+                                : "bg-[#081402] text-amber-300 border-amber-400 ring-1 ring-black/40"
+                            }`}
+                          >
+                            {isFirst ? "S" : isLast ? "E" : idx + 1}
+
+                            {/* Quick Delete Cross Button on Selected Node */}
+                            {isSelected && activeWaypoints.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNode(idx);
+                                }}
+                                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center text-[10px] font-black shadow-lg border border-white cursor-pointer z-50 animate-pulse"
+                                title={`Hapus Titik #${idx + 1}`}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
 
                   {/* All 86 Locations (only when user manually toggles master gallery or searches) */}
                   {!isEditorOpen && (showAllLocations || showMasterGallery) && !activeOpenPinId && !selectedLegendLocation && (
