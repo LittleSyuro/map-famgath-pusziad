@@ -172,6 +172,10 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const placeName = activeRoom?.name || agendaItem?.title || keyPinpoint?.name || roomData?.name || spotData?.name || vip?.mapLocationName || "";
   const subtitleText = activeRoom?.role ? `${activeRoom.role} (${activeRoom.totalUnits})` : agendaItem?.badge || keyPinpoint?.category || "";
   const isPJU = !!(activeRoom?.isPJU || keyPinpoint?.isPJU || agendaItem?.badge?.includes("PJU") || vip?.isPJU);
+  // ArrivalMap only passes agendaItem for the pin that's the CURRENT agenda's
+  // destination — so this marks "happening now / about to open" on the map,
+  // distinct from every other pin that's just sitting there unrelated.
+  const isCurrentAgendaPin = Boolean(agendaItem);
 
   const activeFocusCoords = activeRoom ? activeRoom.coords : { x: pinX, y: pinY };
   const timeRangeStr = agendaItem?.startTime && agendaItem?.endTime ? `${agendaItem.startTime} - ${agendaItem.endTime} WIB` : "";
@@ -236,20 +240,36 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
         onMouseEnter={() => setIsMarkerHovered(true)}
         onMouseLeave={() => setIsMarkerHovered(false)}
       >
+        {/* Beacon ring: marks this pin as the CURRENT agenda's destination —
+            "about to open" or "happening now" — so it reads apart from every
+            other, unrelated pin sitting quietly on the map. */}
+        {isCurrentAgendaPin && !isOpen && (
+          <span className="absolute inset-0 rounded-full bg-cyan-400/50 animate-ping pointer-events-none" />
+        )}
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           title={`Buka detail ${placeName}`}
           aria-label={`Buka detail ${placeName}`}
           className={`relative flex items-center justify-center w-9 h-9 rounded-full shadow-2xl backdrop-blur-md border transition-all duration-200 ease-out ${
-            isOpen ? "ring-4 ring-lime-400 scale-105" : ""
+            isOpen
+              ? "ring-4 ring-lime-400 scale-105"
+              : isCurrentAgendaPin
+              ? "ring-4 ring-cyan-300 scale-110"
+              : ""
           } ${
-            isPJU
+            isCurrentAgendaPin && !isOpen
+              ? "bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-400 text-slate-950 border-white shadow-[0_0_18px_rgba(34,211,238,0.75)]"
+              : isPJU
               ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 border-white ring-2 ring-amber-400/70 shadow-glow-gold"
               : "bg-[#0b1f0c]/95 text-emerald-200 border-emerald-400/80 ring-1 ring-emerald-400/30 shadow-lg"
           }`}
         >
-          <PinIcon className={`w-4 h-4 ${isPJU ? "text-slate-950" : "text-lime-400"}`} />
+          <PinIcon
+            className={`w-4 h-4 ${
+              isCurrentAgendaPin && !isOpen ? "text-slate-950" : isPJU ? "text-slate-950" : "text-lime-400"
+            }`}
+          />
         </motion.div>
 
         {/* Name label: only appears on hover / while open, instead of always-on */}

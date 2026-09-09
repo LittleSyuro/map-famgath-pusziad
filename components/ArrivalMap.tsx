@@ -103,6 +103,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [showMasterGallery, setShowMasterGallery] = useState<boolean>(false);
   const [showFlatMapModal, setShowFlatMapModal] = useState<boolean>(false);
   const [showPJUWalkVideo, setShowPJUWalkVideo] = useState<boolean>(false);
+  // The "PJU Berjalan" video should only autoplay the first time this step
+  // is reached — revisiting it later (Previous/Next, replay, sidebar) should
+  // go straight to the Alpine House info card instead of replaying it. A ref
+  // (not state) so the rAF loop in startRouteAnimation always reads the
+  // latest value without needing to be re-created as a dependency.
+  const hasPlayedPJUWalkVideoRef = useRef(false);
 
   // Active room & pinpoint popups
   const [openPopupIds, setOpenPopupIds] = useState<Record<string, boolean>>({});
@@ -196,26 +202,26 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [draggedNodeIndex, setDraggedNodeIndex] = useState<number | null>(null);
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
 
-  // Load custom routes from LocalStorage on mount
+  // NOTE: routes used to also load a per-visitor override from localStorage
+  // here (saved by the "Buat Rute Manual" editor, now removed from the UI).
+  // That's gone on purpose: with no way to create a fresh override anymore,
+  // it only ever served up whatever was cached from someone's very first
+  // visit — silently shadowing every later fix to the waypoints in this
+  // file for anyone who'd been here before. customRoutes now always reflects
+  // the current data/arrivals.ts + WALKING_ROUTES_DAY2 defaults, seeded once
+  // above, for every visitor.
+  //
+  // One-time cleanup: purge any of those old per-visitor overrides still
+  // sitting in localStorage from before, so returning visitors immediately
+  // get today's real waypoints instead of whatever was cached on their
+  // first-ever visit.
   useEffect(() => {
     try {
-      const loaded: Record<string, Waypoint[]> = {};
-      ROUTE_ACTIVITIES.forEach((act) => {
-        const saved = localStorage.getItem(`famgath_route_${act.id}`);
-        if (saved) {
-          loaded[act.id] = JSON.parse(saved);
-        } else {
-          loaded[act.id] = act.defaultWaypoints;
-        }
-      });
-      WALKING_ROUTES_DAY2.forEach((route) => {
-        const key = walkingRouteEditorKey(route.id);
-        const saved = localStorage.getItem(`famgath_route_${key}`);
-        loaded[key] = saved ? JSON.parse(saved) : route.waypoints;
-      });
-      setCustomRoutes((prev) => ({ ...prev, ...loaded }));
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith("famgath_route_"))
+        .forEach((key) => localStorage.removeItem(key));
     } catch (e) {
-      console.error("Error loading routes from localStorage", e);
+      console.error("Error clearing stale route overrides from localStorage", e);
     }
   }, []);
 
@@ -405,8 +411,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         // Auto-start the "PJU Berjalan" video the instant the walk-in
         // animation finishes, so it always plays right after the avatar
         // arrives — never cutting the walk short from an early Space press.
+        // Only the very first time, though — revisiting this step later
+        // (Previous/Next, sidebar, replay) should skip straight to the
+        // Alpine House card instead of replaying the video.
         if (agendaId === "d1-checkin-pju") {
-          setShowPJUWalkVideo(true);
+          if (!hasPlayedPJUWalkVideoRef.current) {
+            hasPlayedPJUWalkVideoRef.current = true;
+            setShowPJUWalkVideo(true);
+          } else {
+            openAgendaPopup();
+          }
         }
       }
     };
@@ -551,7 +565,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         return;
       }
 
-      if (activeActivityId === "d1-checkin-pju" && !showPJUWalkVideo) {
+      if (activeActivityId === "d1-checkin-pju" && !showPJUWalkVideo && !hasPlayedPJUWalkVideoRef.current) {
+        hasPlayedPJUWalkVideoRef.current = true;
         setShowPJUWalkVideo(true);
       } else {
         openAgendaPopup();

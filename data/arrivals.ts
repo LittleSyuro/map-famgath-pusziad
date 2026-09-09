@@ -99,7 +99,6 @@ export const ROOM_ALPINE_HOUSE: AccommodationRoom = {
   totalUnits: "6 buah",
   image: "/resort_media/alpine/alpine_1.png",
   detailImages: [
-    "/videos/pju_berjalan.mp4",
     "/resort_media/alpine/alpine_1.png",
     "/resort_media/alpine/alpine_2.png",
     "/resort_media/alpine/alpine_3.png",
@@ -400,7 +399,6 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     isPJU: true,
     image: "/resort_media/alpine/alpine_1.png",
     galleryImages: [
-      "/videos/pju_berjalan.mp4",
       "/resort_media/alpine/alpine_1.png",
       "/resort_media/alpine/alpine_2.png",
       "/resort_media/alpine/alpine_3.png",
@@ -581,7 +579,6 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     destCoordinates: { x: 58.5, y: 22.5 },
     roomSingle: ROOM_ALPINE_HOUSE,
     galleryImages: [
-      "/videos/pju_berjalan.mp4",
       "/resort_media/alpine/alpine_1.png",
       "/resort_media/alpine/alpine_2.png",
       "/resort_media/alpine/alpine_3.png",
@@ -589,7 +586,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
       "/resort_media/alpine/alpine_6.png"
     ],
     defaultWaypoints: [
-      { x: 82.0, y: 16.9 },
+      { x: 68.6, y: 34.9 },
       { x: 74.5, y: 21.0 },
       { x: 67.0, y: 22.5 },
       { x: 58.5, y: 22.5 },
