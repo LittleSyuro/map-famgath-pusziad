@@ -335,8 +335,13 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   );
 
   const activeVIPs: VIPArrival[] = useMemo(() => {
+    // Use editorRouteKey (not the plain activeActivityId) so that testing
+    // the walk animation for "Jalan Santai" follows whichever sub-route
+    // (Anggota/PJU) is currently selected/being edited — otherwise the test
+    // walk would silently fall back to the agenda's own separate, unrelated
+    // defaultWaypoints and look like the just-edited nodes "changed".
     const agendaWaypoints =
-      customRoutes[activeActivityId] ||
+      customRoutes[editorRouteKey] ||
       currentAgendaItem.defaultWaypoints ||
       ROUTE_ACTIVITIES[0].defaultWaypoints;
 
@@ -359,7 +364,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       pathWaypoints: agendaWaypoints,
       color: currentAgendaItem.color || vip.color,
     }));
-  }, [customRoutes, activeActivityId, currentAgendaItem]);
+  }, [customRoutes, activeActivityId, currentAgendaItem, editorRouteKey]);
 
   // Route movement animation: Only animates walking for d1-checkin-pju (PJU to Villa Alpine House)
   const startRouteAnimation = useCallback((targetAgendaId?: string) => {
