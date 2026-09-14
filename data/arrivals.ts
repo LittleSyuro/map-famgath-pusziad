@@ -188,6 +188,21 @@ export const DAY1_DINNER_MENU: MenuItem[] = [
   }
 ];
 
+// Hari Ke-1: Snack Malam & Coffee Break saat Games di Resto Anthurium Lt. 2 (CB 3)
+export const DAY1_CB3_EVENING_MENU: MenuItem[] = [
+  {
+    category: "COFFEE BREAK 3 (SNACK REBUSAN & HANGAT)",
+    items: [
+      "Pisang Rebus",
+      "Jagung Rebus",
+      "Kacang Rebus",
+      "Assorted Chips",
+      "Coffee & Tea"
+    ],
+    note: "Sajian Snack Tradisional Hangat & Coffee Break saat Games PJU & Ibu-Ibu di Resto Anthurium Lt. 2 (setelah Makan Malam)"
+  }
+];
+
 // Hari Ke-2: Menu Makan Pagi (Sarapan)
 export const DAY2_BREAKFAST_MENU: MenuItem[] = [
   {
@@ -202,6 +217,39 @@ export const DAY2_BREAKFAST_MENU: MenuItem[] = [
       "Kopi Panas, Teh & Susu Segar"
     ],
     note: "Disajikan di Resto Anthurium Lt. 2 (06.00 - 07.00)"
+  }
+];
+
+// Hari Ke-2: Menu Setelah Jalan Pagi di Kopi Hip (CB 1 + Kelapa Muda)
+export const DAY2_AFTER_WALK_MENU: MenuItem[] = [
+  {
+    category: "COFFEE BREAK 1 (KOPI HIP + KELAPA MUDA)",
+    items: [
+      "Chicken Nugget",
+      "Panettone",
+      "Velvet Roll",
+      "Assorted Chips",
+      "Kelapa Muda Segar",
+      "Coffee & Tea"
+    ],
+    note: "Sajian Coffee Break 1 & Kelapa Muda Segar setelah Jalan Santai di Kopi Hip"
+  }
+];
+
+// Hari Ke-2: Menu Makan Siang di Ball Room (LUNCH B)
+export const DAY2_LUNCH_MENU: MenuItem[] = [
+  {
+    category: "MENU MAKAN SIANG (LUNCH B - BUFFET)",
+    items: [
+      "Steamed Rice (Nasi Putih)",
+      "Cream Potato Soup",
+      "Capcay",
+      "Gepuk Chicken (Ayam Gepuk)",
+      "Sweet and Sour Snapper (Kakap Asam Manis)",
+      "Mixed Fruits (Aneka Buah Potong)",
+      "Pudding Dessert"
+    ],
+    note: "Sajian Buffet Makan Siang di Area Grand Ballroom"
   }
 ];
 
@@ -229,7 +277,7 @@ export const DAY1_GAMES_IBU_PJU = {
   items: [
     "Serok Rejeki",
     "Botol Rejeki",
-    "Kotak Sultan",
+    "Tebak Lagu",
     "Pantulan Rejeki"
   ]
 };
@@ -487,24 +535,29 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     coords: { x: 60.8, y: 50.0 },
-    description: "Area Resto Lantai 2 untuk santap makan malam dan sarapan pagi bersama.",
+    description: "Area Resto Lantai 2 untuk santap makan malam, sesi Games santai PJU & Ibu-Ibu (CB 3), serta sarapan pagi bersama.",
     badge: "Resto Anthurium Lt. 2",
     color: "#10b981",
-    menuCategories: DAY1_DINNER_MENU,
+    menuCategories: [...DAY1_DINNER_MENU, ...DAY1_CB3_EVENING_MENU],
   },
   {
     id: "pin-ballroom",
     name: "Grand Ballroom",
     category: "Area Ball Room",
-    image: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+    image: "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
     galleryImages: [
-      "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
+      "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_5.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_1.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_2.jpg",
+      "/resort_media/grand_ballroom/grand_ballroom_1.jpg"
     ],
     coords: { x: 87.7, y: 29.5 },
-    description: "Area gedung pertemuan utama untuk acara sambutan, pengundian Grand Prize, dan makan siang.",
+    description: "Area gedung pertemuan utama untuk acara sambutan, pengundian Grand Prize, dan makan siang buffet bersama.",
     badge: "Grand Ballroom",
     color: "#a855f7",
+    menuCategories: DAY2_LUNCH_MENU,
   },
   {
     id: "pin-bridge",
@@ -531,9 +584,10 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/kopi_hip/Foto/DSCF0432.jpg"
     ],
     coords: { x: 75.5, y: 29.5 },
-    description: "Setelah sampai di finish line, PJU menuju Kopi Hip untuk coffee break.",
+    description: "Setelah sampai di finish line, PJU dan rombongan menuju Kopi Hip untuk menikmati Coffee Break 1 (Chicken Nugget, Panettone, Velvet Roll, Chips, Kopi/Teh) dan kelapa muda segar.",
     badge: "Coffee Break PJU",
     color: "#ca8a04",
+    menuCategories: DAY2_AFTER_WALK_MENU,
   },
 ];
 
@@ -707,25 +761,22 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "22.30",
     startMinutes: 1200, // 20:00
     endMinutes: 1350, // 22:30
-    title: "Games (PJU & Ibu-Ibu PJU)",
-    locationName: "Grand Ballroom",
-    badge: "Games",
+    title: "Games (PJU & Ibu-Ibu PJU) & Coffee Break 3",
+    locationName: "Resto Anthurium Lt. 2",
+    description: "Turnamen keakraban Games PJU (Outdoor Resto) & Ibu-Ibu (Indoor Resto) setelah makan malam, berbarengan dengan sajian Coffee Break 3 (rebusan tradisional & minuman hangat).",
+    badge: "Games & CB 3",
     color: "#a855f7",
-    destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-    destCoordinates: { x: 87.7, y: 29.5 },
+    destImage: "/resort_media/anthurium/DSCF3443.jpg",
+    destCoordinates: { x: 60.8, y: 50.0 },
+    menuCategories: DAY1_CB3_EVENING_MENU,
     pjuGames: DAY1_GAMES_PJU,
     ibuGames: DAY1_GAMES_IBU_PJU,
     galleryImages: [
-      "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
+      "/resort_media/anthurium/DSCF3443.jpg",
+      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     defaultWaypoints: [
-      { x: 63.2, y: 42.6 },
-      { x: 68.7, y: 37.9 },
-      { x: 75.0, y: 33.4 },
-      { x: 73.9, y: 30.1 },
-      { x: 79.0, y: 26.2 },
-      { x: 83.5, y: 23.3 },
+      { x: 60.8, y: 50.0 },
     ],
   },
 ];
@@ -842,13 +893,14 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "09.00",
     startMinutes: 525, // 08:45
     endMinutes: 540, // 09:00
-    title: "Kopi Hip (Coffee Break PJU)",
+    title: "Kopi Hip (Coffee Break 1 & Kelapa Muda)",
     locationName: "Kopi Hip",
-    description: "Setelah sampai di finish line, PJU menuju Kopi Hip untuk coffee break.",
-    badge: "Coffee Break PJU",
+    description: "Setelah sampai di finish line jalan santai, rombongan menuju Kopi Hip untuk menikmati sajian Coffee Break 1 (Chicken Nugget, Panettone, Velvet Roll, Chips, Kopi/Teh) dan kesegaran kelapa muda segar.",
+    badge: "CB 1 & Kelapa Muda",
     color: "#ca8a04",
     destImage: "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
     destCoordinates: { x: 75.5, y: 29.5 },
+    menuCategories: DAY2_AFTER_WALK_MENU,
     galleryImages: [
       "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0426.jpg",
@@ -869,13 +921,17 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endMinutes: 720, // 12:00
     title: "Acara di Ball Room (Sambutan & Grand Prize)",
     locationName: "Area Ball Room",
+    description: "Puncak kemeriahan acara dengan sambutan pimpinan, hiburan musik, dan pengundian Grand Prize di Area Grand Ballroom.",
     badge: "Acara Ball Room",
     color: "#a855f7",
-    destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+    destImage: "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
     destCoordinates: { x: 87.7, y: 29.5 },
     galleryImages: [
-      "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
-      "/resort_media/grand_ballroom/grand_ballroom_2.jpg"
+      "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_5.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_1.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_2.jpg"
     ],
     defaultWaypoints: [
       { x: 75.5, y: 29.5 },
@@ -890,14 +946,19 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "13.00",
     startMinutes: 720, // 12:00
     endMinutes: 780, // 13:00
-    title: "Makan Siang",
+    title: "Makan Siang (Lunch Buffet)",
     locationName: "Area Ball Room",
+    description: "Sajian santap makan siang buffet bersama di Area Grand Ballroom.",
     badge: "Makan Siang",
     color: "#10b981",
-    destImage: "/resort_media/grand_ballroom/grand_ballroom_1.jpg",
+    destImage: "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
     destCoordinates: { x: 87.7, y: 29.5 },
+    menuCategories: DAY2_LUNCH_MENU,
     galleryImages: [
-      "/resort_media/grand_ballroom/grand_ballroom_1.jpg"
+      "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_1.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
+      "/resort_media/grand_ballroom/ballroom_3d_5.jpg"
     ],
     defaultWaypoints: [
       { x: 78.5, y: 24.5 },

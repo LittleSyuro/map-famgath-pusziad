@@ -10,6 +10,7 @@ import {
   AccommodationRoom,
   HighlightSpot,
   KeyEventPinpoint,
+  MenuItem,
   DAY1_DINNER_MENU,
   DAY2_BREAKFAST_MENU,
   DAY1_GAMES_PJU,
@@ -127,11 +128,21 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   useEffect(() => {
     if (isOpen) {
       setActiveImageIndex(0);
-      if (agendaItem?.id === "d1-dinner" || agendaItem?.id === "d2-breakfast" || keyPinpoint?.id === "pin-resto") {
+      if (
+        agendaItem?.menuCategories ||
+        keyPinpoint?.menuCategories ||
+        agendaItem?.id === "d1-dinner" ||
+        agendaItem?.id === "d2-breakfast" ||
+        agendaItem?.id === "d2-lunch" ||
+        agendaItem?.id === "d2-kopi-hip" ||
+        agendaItem?.id === "d2-ballroom-grandprize" ||
+        keyPinpoint?.id === "pin-resto" ||
+        keyPinpoint?.id === "pin-kopihip"
+      ) {
         setActiveTab("menu");
       } else if (agendaItem?.id === "d1-games" || agendaItem?.pjuGames) {
         setActiveTab("games");
-      } else if (agendaItem?.id === "d2-jalan-sehat" || agendaItem?.walkingRoutes) {
+      } else if (agendaItem?.id === "d2-jalan-santai" || agendaItem?.id === "d2-jalan-sehat" || agendaItem?.walkingRoutes) {
         setActiveTab("rute");
       } else if (activeRoom?.facilities && activeRoom.facilities.length > 0) {
         setActiveTab("fasilitas");
@@ -183,10 +194,16 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   // Content flags
   const isDay1Dinner = agendaItem?.id === "d1-dinner" || (agendaItem?.day === 1 && keyPinpoint?.id === "pin-resto");
   const isDay2Breakfast = agendaItem?.id === "d2-breakfast" || (agendaItem?.day === 2 && keyPinpoint?.id === "pin-resto");
-  const hasMenu = isDay1Dinner || isDay2Breakfast;
+
+  const effectiveMenuCategories: MenuItem[] | undefined =
+    agendaItem?.menuCategories ||
+    keyPinpoint?.menuCategories ||
+    (isDay1Dinner ? DAY1_DINNER_MENU : isDay2Breakfast ? DAY2_BREAKFAST_MENU : undefined);
+
+  const hasMenu = Boolean(effectiveMenuCategories && effectiveMenuCategories.length > 0);
 
   const isGames = agendaItem?.id === "d1-games" || !!agendaItem?.pjuGames;
-  const hasWalkingRoutes = agendaItem?.id === "d2-jalan-sehat" || !!agendaItem?.walkingRoutes;
+  const hasWalkingRoutes = agendaItem?.id === "d2-jalan-santai" || agendaItem?.id === "d2-jalan-sehat" || !!agendaItem?.walkingRoutes;
   const facilitiesList = activeRoom?.facilities || keyPinpoint?.facilities || [];
   const hasFacilities = facilitiesList.length > 0;
   const hasTabs = Boolean(hasMenu || isGames || hasWalkingRoutes || hasFacilities);
@@ -640,7 +657,27 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       }`}
                     >
                       <Utensils className="w-3.5 h-3.5" />
-                      <span>{isDay1Dinner ? "Menu Makan Malam" : "Menu Sarapan Pagi"}</span>
+                      <span>
+                        {agendaItem?.id === "d1-dinner"
+                          ? "Menu Makan Malam"
+                          : agendaItem?.id === "d1-games"
+                          ? "Snack Malam (CB 3)"
+                          : agendaItem?.id === "d2-breakfast"
+                          ? "Menu Sarapan Pagi"
+                          : agendaItem?.id === "d2-lunch"
+                          ? "Menu Makan Siang"
+                          : agendaItem?.id === "d2-kopi-hip"
+                          ? "Menu Kelapa Muda & CB 1"
+                          : agendaItem?.id === "d2-ballroom-grandprize"
+                          ? "Menu Coffee Break"
+                          : keyPinpoint?.id === "pin-resto"
+                          ? "Menu Resto & CB 3"
+                          : keyPinpoint?.id === "pin-kopihip"
+                          ? "Menu Kelapa Muda & CB 1"
+                          : keyPinpoint?.id === "pin-ballroom"
+                          ? "Menu Makan Siang Ballroom"
+                          : "Menu Sajian"}
+                      </span>
                     </button>
                   )}
 
@@ -695,16 +732,23 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   )}
 
                   {/* Menu Makan */}
-                  {activeTab === "menu" && hasMenu && (
+                  {activeTab === "menu" && hasMenu && effectiveMenuCategories && (
                     <div className="space-y-3">
-                      {(isDay1Dinner ? DAY1_DINNER_MENU : DAY2_BREAKFAST_MENU).map((cat, idx) => (
+                      {effectiveMenuCategories.map((cat, idx) => (
                         <div
                           key={idx}
                           className="p-3 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2"
                         >
-                          <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                            {cat.category}
-                          </span>
+                          <div className="flex items-center justify-between flex-wrap gap-1">
+                            <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                              {cat.category}
+                            </span>
+                            {cat.note && (
+                              <span className="text-[10px] text-lime-300/90 font-medium italic">
+                                {cat.note}
+                              </span>
+                            )}
+                          </div>
                           <div className="grid grid-cols-1 gap-1.5">
                             {cat.items.map((item, itemIdx) => (
                               <div

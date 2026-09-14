@@ -287,9 +287,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       case "d1-worship":
         return "pin-masjid";
       case "d1-dinner":
-        return "pin-resto";
       case "d1-games":
-        return "pin-ballroom";
+        return "pin-resto";
       case "d2-breakfast":
         return "pin-resto";
       case "d2-prep-jalan-santai":
