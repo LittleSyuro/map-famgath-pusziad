@@ -20,6 +20,11 @@ import {
   GRAND_PRIZE_ITEMS,
 } from "@/data/arrivals";
 import {
+  DOORPRIZE_SUMMARY,
+  DOORPRIZE_GRADE_A,
+  DOORPRIZE_GRADE_B,
+} from "@/data/doorprize";
+import {
   Clock,
   X,
   Sparkles,
@@ -45,6 +50,7 @@ import {
   DoorOpen,
   Flag,
   HeartPulse,
+  Search,
 } from "lucide-react";
 
 // Distinct icon per map pin, instead of the same generic building icon
@@ -98,6 +104,8 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const [isFullFrame, setIsFullFrame] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMarkerHovered, setIsMarkerHovered] = useState(false);
+  const [doorprizeSubTab, setDoorprizeSubTab] = useState<"grand" | "gradeA" | "gradeB">("grand");
+  const [doorprizeSearch, setDoorprizeSearch] = useState<string>("");
 
   useEffect(() => {
     setMounted(true);
@@ -1111,78 +1119,231 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     </div>
                   )}
 
-                  {/* Grand Prize */}
+                  {/* Grand Prize & Doorprize Complete Display */}
                   {activeTab === "grandprize" && hasGrandPrizes && (
                     <div className="space-y-3">
-                      <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-400/50 text-center">
-                        <p className="text-xs font-black uppercase tracking-wider text-amber-300">
-                          🎁 Hadiah Utama Grand Prize
-                        </p>
-                        <p className="text-sm sm:text-base font-black text-white">
-                          Family Gathering Pusziad HUT Ke-81 Zeni TNI AD
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {GRAND_PRIZE_ITEMS.map((prize, idx) => (
-                          <div
-                            key={idx}
-                            className="p-3 rounded-2xl bg-black/60 border border-amber-400/35 hover:border-amber-400/80 transition-all flex flex-col gap-2 group shadow-lg"
-                          >
-                            <div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-gradient-to-b from-white/10 to-black/50 border border-white/10 flex items-center justify-center p-2">
-                              <Image
-                                src={prize.image}
-                                alt={prize.name}
-                                fill
-                                unoptimized
-                                className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase shadow-md">
-                                {prize.badge}
-                              </span>
-                            </div>
-                            <div className="space-y-0.5">
-                              <h4 className="text-sm font-black text-amber-200 group-hover:text-amber-300 transition-colors">
-                                {prize.name}
-                              </h4>
-                              <p className="text-[11px] text-lime-200/80">
-                                {prize.category}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Doorprize Categories */}
-                      <div className="p-3.5 rounded-2xl bg-black/50 border border-amber-400/30 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black uppercase text-amber-300 flex items-center gap-1.5">
-                            <span>🎁</span>
-                            <span>Kategori Hadiah Doorprize</span>
-                          </span>
-                          <span className="text-[10px] text-lime-300 font-bold bg-lime-400/15 px-2 py-0.5 rounded-full border border-lime-400/30">
-                            Ratusan Hadiah
-                          </span>
+                      {/* Summary Dashboard Banner */}
+                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-400/50 space-y-2 text-center shadow-lg">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                            HUT KE-81 ZENI TNI AD — PANITIA DOORPRIZE
+                          </p>
+                          <h4 className="text-base sm:text-lg font-black text-white">
+                            Daftar Item Doorprize & Grand Prize
+                          </h4>
+                          <p className="text-[10px] text-lime-300/80">
+                            Sumber: {DOORPRIZE_SUMMARY.sourceDocument}
+                          </p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
-                            <p className="font-bold text-amber-200">📺 Elektronik Rumah</p>
-                            <p className="text-[10px] text-slate-300 leading-snug">Smart TV LED, Lemari Es 2 Pintu, Mesin Cuci Otomatis</p>
+
+                        {/* 4 Stat Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+                          <div className="p-2 rounded-xl bg-black/60 border border-amber-400/30">
+                            <p className="text-xl sm:text-2xl font-black text-amber-300 leading-none">
+                              {DOORPRIZE_SUMMARY.totalItems}
+                            </p>
+                            <p className="text-[10px] text-slate-300 font-bold mt-0.5">Jenis Item</p>
                           </div>
-                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
-                            <p className="font-bold text-amber-200">🍳 Peralatan Dapur</p>
-                            <p className="text-[10px] text-slate-300 leading-snug">Air Fryer, Magic Com Digital, Blender, Kompor Gas</p>
+                          <div className="p-2 rounded-xl bg-black/60 border border-amber-400/30">
+                            <p className="text-xl sm:text-2xl font-black text-white leading-none">
+                              {DOORPRIZE_SUMMARY.totalUnits}
+                            </p>
+                            <p className="text-[10px] text-slate-300 font-bold mt-0.5">Total Unit</p>
                           </div>
-                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
-                            <p className="font-bold text-amber-200">🚲 Rekreasi & Sepeda</p>
-                            <p className="text-[10px] text-slate-300 leading-snug">Sepeda Lipat, Sepeda Anak, Tenda Camping & Perlengkapan</p>
+                          <div className="p-2 rounded-xl bg-black/60 border border-amber-400/30">
+                            <p className="text-xl sm:text-2xl font-black text-yellow-300 leading-none">
+                              {DOORPRIZE_SUMMARY.gradeA.itemsCount}
+                            </p>
+                            <p className="text-[10px] text-slate-300 font-bold mt-0.5">Grade A (90 Unit)</p>
                           </div>
-                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
-                            <p className="font-bold text-amber-200">🛍️ Hiburan & Voucher</p>
-                            <p className="text-[10px] text-slate-300 leading-snug">Voucher Belanja, Set Alat Masak Premium & Hadiah Hiburan</p>
+                          <div className="p-2 rounded-xl bg-black/60 border border-amber-400/30">
+                            <p className="text-xl sm:text-2xl font-black text-emerald-400 leading-none">
+                              {DOORPRIZE_SUMMARY.gradeB.itemsCount}
+                            </p>
+                            <p className="text-[10px] text-slate-300 font-bold mt-0.5">Grade B (847 Unit)</p>
                           </div>
                         </div>
+
+                        {/* Status Bar */}
+                        <div className="flex flex-wrap items-center justify-between gap-1 px-2 py-1 rounded-xl bg-black/40 border border-white/10 text-[10px]">
+                          <span className="text-emerald-300 font-bold">
+                            ✅ {DOORPRIZE_SUMMARY.receivedUnits} Unit Sudah Diterima
+                          </span>
+                          <span className="text-amber-300 font-medium">
+                            ⏳ {DOORPRIZE_SUMMARY.pendingNote}
+                          </span>
+                        </div>
                       </div>
+
+                      {/* Sub-Tab Selector Buttons */}
+                      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/50 border border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setDoorprizeSubTab("grand")}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            doorprizeSubTab === "grand"
+                              ? "bg-amber-400 text-slate-950 shadow-md"
+                              : "text-slate-300 hover:text-white"
+                          }`}
+                        >
+                          🏆 5 Grand Prize
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDoorprizeSubTab("gradeA")}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            doorprizeSubTab === "gradeA"
+                              ? "bg-amber-400 text-slate-950 shadow-md"
+                              : "text-slate-300 hover:text-white"
+                          }`}
+                        >
+                          💎 Grade A (38 Item)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDoorprizeSubTab("gradeB")}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            doorprizeSubTab === "gradeB"
+                              ? "bg-amber-400 text-slate-950 shadow-md"
+                              : "text-slate-300 hover:text-white"
+                          }`}
+                        >
+                          🎁 Grade B (101 Item)
+                        </button>
+                      </div>
+
+                      {/* SubTab 1: 5 Grand Prize Cards */}
+                      {doorprizeSubTab === "grand" && (
+                        <div className="space-y-2.5">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {GRAND_PRIZE_ITEMS.map((prize, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3 rounded-2xl bg-black/60 border border-amber-400/35 hover:border-amber-400/80 transition-all flex flex-col gap-2 group shadow-lg"
+                              >
+                                <div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-gradient-to-b from-white/10 to-black/50 border border-white/10 flex items-center justify-center p-2">
+                                  <Image
+                                    src={prize.image}
+                                    alt={prize.name}
+                                    fill
+                                    unoptimized
+                                    className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase shadow-md">
+                                    {prize.badge}
+                                  </span>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <h4 className="text-sm font-black text-amber-200 group-hover:text-amber-300 transition-colors">
+                                    {prize.name}
+                                  </h4>
+                                  <p className="text-[11px] text-lime-200/80">
+                                    {prize.category}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SubTab 2: Grade A Table */}
+                      {doorprizeSubTab === "gradeA" && (
+                        <div className="space-y-2">
+                          <div className="relative">
+                            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              value={doorprizeSearch}
+                              onChange={(e) => setDoorprizeSearch(e.target.value)}
+                              placeholder="Cari item Grade A atau donatur (contoh: TV, Kulkas, Kapusziad)..."
+                              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/60 border border-amber-400/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                            />
+                          </div>
+
+                          <div className="max-h-72 overflow-y-auto rounded-xl border border-amber-400/25 custom-scrollbar">
+                            <table className="w-full text-left text-xs">
+                              <thead className="bg-[#122608] text-amber-300 sticky top-0 font-black border-b border-amber-400/30 z-10">
+                                <tr>
+                                  <th className="p-2 w-10 text-center">No</th>
+                                  <th className="p-2">Nama Barang</th>
+                                  <th className="p-2 w-16 text-center">Jml</th>
+                                  <th className="p-2">Donatur</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/5 bg-black/40">
+                                {DOORPRIZE_GRADE_A
+                                  .filter(item =>
+                                    doorprizeSearch === "" ||
+                                    item.name.toLowerCase().includes(doorprizeSearch.toLowerCase()) ||
+                                    item.donor.toLowerCase().includes(doorprizeSearch.toLowerCase())
+                                  )
+                                  .map((item) => (
+                                    <tr key={item.no} className="hover:bg-amber-400/10 transition-colors">
+                                      <td className="p-2 text-center text-slate-400 font-mono">{item.no}</td>
+                                      <td className="p-2 text-white font-medium">{item.name}</td>
+                                      <td className="p-2 text-center">
+                                        <span className="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 font-bold text-[10px]">
+                                          {item.quantity}
+                                        </span>
+                                      </td>
+                                      <td className="p-2 text-lime-200/90">{item.donor}</td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SubTab 3: Grade B Table */}
+                      {doorprizeSubTab === "gradeB" && (
+                        <div className="space-y-2">
+                          <div className="relative">
+                            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              value={doorprizeSearch}
+                              onChange={(e) => setDoorprizeSearch(e.target.value)}
+                              placeholder="Cari item Grade B atau donatur (contoh: Magic Com, Setrika, Pusdikzi)..."
+                              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/60 border border-amber-400/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                            />
+                          </div>
+
+                          <div className="max-h-72 overflow-y-auto rounded-xl border border-amber-400/25 custom-scrollbar">
+                            <table className="w-full text-left text-xs">
+                              <thead className="bg-[#122608] text-amber-300 sticky top-0 font-black border-b border-amber-400/30 z-10">
+                                <tr>
+                                  <th className="p-2 w-10 text-center">No</th>
+                                  <th className="p-2">Nama Barang</th>
+                                  <th className="p-2 w-16 text-center">Jml</th>
+                                  <th className="p-2">Donatur</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/5 bg-black/40">
+                                {DOORPRIZE_GRADE_B
+                                  .filter(item =>
+                                    doorprizeSearch === "" ||
+                                    item.name.toLowerCase().includes(doorprizeSearch.toLowerCase()) ||
+                                    item.donor.toLowerCase().includes(doorprizeSearch.toLowerCase())
+                                  )
+                                  .map((item) => (
+                                    <tr key={item.no} className="hover:bg-amber-400/10 transition-colors">
+                                      <td className="p-2 text-center text-slate-400 font-mono">{item.no}</td>
+                                      <td className="p-2 text-white font-medium">{item.name}</td>
+                                      <td className="p-2 text-center">
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 border border-emerald-400/40 text-emerald-300 font-bold text-[10px]">
+                                          {item.quantity}
+                                        </span>
+                                      </td>
+                                      <td className="p-2 text-lime-200/90">{item.donor}</td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
