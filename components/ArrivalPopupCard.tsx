@@ -17,6 +17,7 @@ import {
   DAY1_GAMES_IBU_PJU,
   WALKING_ROUTES_DAY2,
   Waypoint,
+  GRAND_PRIZE_ITEMS,
 } from "@/data/arrivals";
 import {
   Clock,
@@ -88,7 +89,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   keyPinpoint,
   onFocusPinPoint,
 }) => {
-  const [activeTab, setActiveTab] = useState<"menu" | "games" | "rute" | "fasilitas">("fasilitas");
+  const [activeTab, setActiveTab] = useState<"menu" | "games" | "rute" | "fasilitas" | "grandprize">("fasilitas");
   const [activeWalkingRouteTab, setActiveWalkingRouteTab] = useState<"pju" | "anggota">("pju");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isFullFrame, setIsFullFrame] = useState(false);
@@ -211,8 +212,13 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const hasFacilities = facilitiesList.length > 0;
   // Flag: this is the Welcome Gate popup — shows special Selamat Datang section with PJU photos
   const isGateWelcome = keyPinpoint?.id === "pin-gate" || agendaItem?.id === "d1-arrival";
+  const hasGrandPrizes = Boolean(
+    (agendaItem?.grandPrizes && agendaItem.grandPrizes.length > 0) ||
+    agendaItem?.id === "d2-ballroom-grandprize" ||
+    keyPinpoint?.id === "pin-ballroom"
+  );
 
-  const hasTabs = Boolean(hasMenu || isGames || hasWalkingRoutes || hasFacilities);
+  const hasTabs = Boolean(hasMenu || isGames || hasWalkingRoutes || hasFacilities || hasGrandPrizes);
   // These agenda items reuse a map pin (for waypoint routing only) whose own description
   // doesn't belong on the agenda card: "d2-prep-jalan-santai"/"d2-freetime" were inheriting
   // pin-helipad's "Selamat Datang..." arrival blurb, and "d2-jalan-santai" was inheriting
@@ -759,6 +765,21 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       <span>Pilihan Rute</span>
                     </button>
                   )}
+
+                  {hasGrandPrizes && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("grandprize")}
+                      className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                        activeTab === "grandprize"
+                          ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black shadow-glow-gold"
+                          : "text-lime-200 hover:text-white"
+                      }`}
+                    >
+                      <Gift className="w-3.5 h-3.5" />
+                      <span>Grand Prize</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Tab Contents */}
@@ -783,35 +804,74 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* Menu Makan */}
                   {activeTab === "menu" && hasMenu && effectiveMenuCategories && (
                     <div className="space-y-3">
-                      {effectiveMenuCategories.map((cat, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2.5"
-                        >
-                          <div className="flex items-center justify-between flex-wrap gap-1">
-                            <span className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-                              <span>🍽️</span>
-                              <span>{cat.category}</span>
-                            </span>
-                            {cat.note && (
-                              <span className="text-[10px] text-lime-300/90 font-medium italic">
-                                {cat.note}
+                      {effectiveMenuCategories.map((cat, idx) => {
+                        const isBallroomSnack = cat.category.includes("SNACK SETELAH JALAN SANTAI");
+                        const isKopiHip = cat.category.includes("COFFEE HEAT");
+                        const isCBMalam = cat.category.includes("COFFEE BREAK (REBUSAN");
+                        const catImage = isBallroomSnack
+                          ? "/resort_media/grand_ballroom/snack_setelah_jalan_santai.jpg"
+                          : isKopiHip
+                          ? "/resort_media/kopi_hip/menu_kopi_hip.jpg"
+                          : isCBMalam
+                          ? "/games/pisang_rebus.jpg"
+                          : null;
+
+                        return (
+                          <div
+                            key={idx}
+                            className="p-3.5 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2.5"
+                          >
+                            <div className="flex items-center justify-between flex-wrap gap-1">
+                              <span className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                                <span>🍽️</span>
+                                <span>{cat.category}</span>
                               </span>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-1 gap-1.5">
-                            {cat.items.map((item, itemIdx) => (
-                              <div
-                                key={itemIdx}
-                                className="text-xs text-slate-200 flex items-center gap-2 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5"
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                                <span>{item}</span>
+                              {cat.note && (
+                                <span className="text-[10px] text-lime-300/90 font-medium italic">
+                                  {cat.note}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Foto sajian jika ada */}
+                            {catImage && (
+                              <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden border border-amber-400/40 shadow-lg">
+                                <Image
+                                  src={catImage}
+                                  alt={cat.category}
+                                  fill
+                                  unoptimized
+                                  className="object-cover object-center"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex items-end p-2.5">
+                                  <span className="text-[11px] font-bold text-amber-200 flex items-center gap-1">
+                                    <span>📸</span>
+                                    <span>
+                                      {isBallroomSnack
+                                        ? "Sajian Snack Setelah Jalan Santai di Ballroom"
+                                        : isKopiHip
+                                        ? "Sajian Rebusan & Kelapa Muda Segar Kopi Hip"
+                                        : "Sajian Coffee Break Malam"}
+                                    </span>
+                                  </span>
+                                </div>
                               </div>
-                            ))}
+                            )}
+
+                            <div className="grid grid-cols-1 gap-1.5">
+                              {cat.items.map((item, itemIdx) => (
+                                <div
+                                  key={itemIdx}
+                                  className="text-xs text-slate-200 flex items-center gap-2 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                  <span>{item}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
@@ -956,6 +1016,50 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Grand Prize */}
+                  {activeTab === "grandprize" && hasGrandPrizes && (
+                    <div className="space-y-3">
+                      <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-400/50 text-center">
+                        <p className="text-xs font-black uppercase tracking-wider text-amber-300">
+                          🎁 Hadiah Utama Grand Prize
+                        </p>
+                        <p className="text-sm sm:text-base font-black text-white">
+                          Family Gathering Pusziad HUT Ke-81 Zeni TNI AD
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {GRAND_PRIZE_ITEMS.map((prize, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 rounded-2xl bg-black/60 border border-amber-400/35 hover:border-amber-400/80 transition-all flex flex-col gap-2 group shadow-lg"
+                          >
+                            <div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-gradient-to-b from-white/10 to-black/50 border border-white/10 flex items-center justify-center p-2">
+                              <Image
+                                src={prize.image}
+                                alt={prize.name}
+                                fill
+                                unoptimized
+                                className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase shadow-md">
+                                {prize.badge}
+                              </span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <h4 className="text-sm font-black text-amber-200 group-hover:text-amber-300 transition-colors">
+                                {prize.name}
+                              </h4>
+                              <p className="text-[11px] text-lime-200/80">
+                                {prize.category}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

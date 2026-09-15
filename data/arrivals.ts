@@ -57,6 +57,14 @@ export interface WalkingRouteOption {
   color: string;
 }
 
+export interface GrandPrizeItem {
+  id: string;
+  name: string;
+  category: string;
+  image: string;
+  badge: string;
+}
+
 export interface RundownItem {
   id: string;
   day: 1 | 2;
@@ -76,6 +84,7 @@ export interface RundownItem {
   defaultWaypoints?: Waypoint[];
   subActivities?: RundownSubActivity[];
   menuCategories?: MenuItem[];
+  grandPrizes?: GrandPrizeItem[];
   galleryImages?: string[];
   highlightSpots?: HighlightSpot[];
   roomSingle?: AccommodationRoom;
@@ -249,6 +258,61 @@ export const DAY2_LUNCH_MENU: MenuItem[] = [
       "Pudding Dessert"
     ],
     note: "Sajian Buffet Makan Siang di Area Grand Ballroom"
+  }
+];
+
+// Hari Ke-2: Snack Setelah Jalan Santai di Area Grand Ballroom
+export const DAY2_BALLROOM_SNACK_MENU: MenuItem[] = [
+  {
+    category: "SNACK SETELAH JALAN SANTAI (BALLROOM)",
+    items: [
+      "Chicken Nuggets & Dipping Sauce",
+      "Panettone (Fruit Bread Cake)",
+      "Red Velvet Roll Cake",
+      "Potato Chips & Potato Wedges",
+      "Kopi Panas (Hot Coffee)",
+      "Teh Lemon Hangat (Hot Lemon Tea)"
+    ],
+    note: "Sajian snack hangat & coffee break setelah jalan santai di Area Grand Ballroom"
+  }
+];
+
+// Hadiah Grand Prize Family Gathering Pusziad 2026
+export const GRAND_PRIZE_ITEMS: GrandPrizeItem[] = [
+  {
+    id: "gp-scoopy",
+    name: "Honda Scoopy Prestige",
+    category: "Hadiah Utama Motor Matic",
+    image: "/grand_prize/honda_scoopy.png",
+    badge: "Grand Prize"
+  },
+  {
+    id: "gp-beat",
+    name: "Honda BeAT Sporty",
+    category: "Hadiah Utama Motor Matic",
+    image: "/grand_prize/honda_beat.png",
+    badge: "Grand Prize"
+  },
+  {
+    id: "gp-verza",
+    name: "Honda CB150 Verza",
+    category: "Hadiah Utama Motor Sport",
+    image: "/grand_prize/honda_verza.png",
+    badge: "Grand Prize"
+  },
+  {
+    id: "gp-emotor",
+    name: "United E-Motor Sepeda Listrik",
+    category: "Hadiah Motor Listrik Ramah Lingkungan",
+    image: "/grand_prize/united_emotor.png",
+    badge: "Grand Prize"
+  },
+  {
+    id: "gp-polygon",
+    name: "Polygon Mountain Bike",
+    category: "Hadiah Sepeda Gunung",
+    image: "/grand_prize/polygon_bike.png",
+    badge: "Grand Prize"
   }
 ];
 
@@ -521,8 +585,9 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     id: "pin-ballroom",
     name: "Grand Ballroom",
     category: "Area Ball Room",
-    image: "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
+    image: "/resort_media/grand_ballroom/snack_setelah_jalan_santai.jpg",
     galleryImages: [
+      "/resort_media/grand_ballroom/snack_setelah_jalan_santai.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_5.jpg",
@@ -531,10 +596,10 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/grand_ballroom/grand_ballroom_1.jpg"
     ],
     coords: { x: 87.7, y: 29.5 },
-    description: "Area gedung pertemuan utama untuk acara sambutan, pengundian Grand Prize, dan makan siang buffet bersama.",
+    description: "Area gedung pertemuan utama untuk acara sambutan, sajian snack setelah jalan santai, pengundian Grand Prize, dan makan siang buffet bersama.",
     badge: "Grand Ballroom",
     color: "#a855f7",
-    menuCategories: DAY2_LUNCH_MENU,
+    menuCategories: [...DAY2_BALLROOM_SNACK_MENU, ...DAY2_LUNCH_MENU],
   },
   {
     id: "pin-bridge",
@@ -930,18 +995,20 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     id: "d2-ballroom-grandprize",
     day: 2,
     startTime: "09.00",
-    endTime: "12.00",
+    endTime: "13.00",
     startMinutes: 540, // 09:00
-    endMinutes: 720, // 12:00
-    title: "Acara di Ball Room & Makan Siang",
+    endMinutes: 780, // 13:00
+    title: "Acara di Ball Room (Snack & Makan Siang)",
     locationName: "Area Ball Room",
-    description: "Puncak kemeriahan acara dengan sambutan pimpinan, hiburan musik, pengundian Grand Prize, serta santap Makan Siang bersama di Area Grand Ballroom.",
+    description: "Puncak kemeriahan acara dengan sajian snack setelah jalan santai, sambutan pimpinan, pengundian Grand Prize, serta santap Makan Siang buffet bersama di Area Grand Ballroom.",
     badge: "Acara Ball Room",
     color: "#a855f7",
-    destImage: "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
+    destImage: "/resort_media/grand_ballroom/snack_setelah_jalan_santai.jpg",
     destCoordinates: { x: 87.7, y: 29.5 },
-    menuCategories: DAY2_LUNCH_MENU,
+    menuCategories: [...DAY2_BALLROOM_SNACK_MENU, ...DAY2_LUNCH_MENU],
+    grandPrizes: GRAND_PRIZE_ITEMS,
     galleryImages: [
+      "/resort_media/grand_ballroom/snack_setelah_jalan_santai.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_5.jpg",
@@ -952,35 +1019,6 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
       { x: 75.5, y: 29.5 },
       { x: 82.0, y: 29.5 },
       { x: 87.7, y: 29.5 },
-    ],
-  },
-  {
-    id: "d2-lunch",
-    day: 2,
-    startTime: "12.00",
-    endTime: "13.00",
-    startMinutes: 720, // 12:00
-    endMinutes: 780, // 13:00
-    title: "Makan Siang (Buffet)",
-    locationName: "Area Ball Room",
-    description: "Sajian santap makan siang buffet bersama di Area Grand Ballroom.",
-    badge: "Makan Siang",
-    color: "#10b981",
-    destImage: "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
-    destCoordinates: { x: 87.7, y: 29.5 },
-    menuCategories: DAY2_LUNCH_MENU,
-    galleryImages: [
-      "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
-      "/resort_media/grand_ballroom/ballroom_3d_1.jpg",
-      "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
-      "/resort_media/grand_ballroom/ballroom_3d_5.jpg"
-    ],
-    defaultWaypoints: [
-      { x: 78.5, y: 24.5 },
-      { x: 71.5, y: 27.5 },
-      { x: 66.0, y: 32.5 },
-      { x: 58.0, y: 38.0 },
-      { x: 48.5, y: 43.5 },
     ],
   },
   {
