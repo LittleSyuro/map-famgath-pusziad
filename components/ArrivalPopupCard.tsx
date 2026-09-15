@@ -42,13 +42,14 @@ import {
   Landmark,
   PartyPopper,
   DoorOpen,
+  Flag,
 } from "lucide-react";
 
 // Distinct icon per map pin, instead of the same generic building icon
 // for every single stop — matched by KeyEventPinpoint.id.
 const PIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "pin-gate": DoorOpen,
-  "pin-helipad": Plane,
+  "pin-helipad": Flag,
   "pin-alpine": BedDouble,
   "pin-cave": Mountain,
   "pin-mongolian": Tent,
@@ -817,6 +818,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* Games */}
                   {activeTab === "games" && isGames && (
                     <div className="space-y-3">
+                      {/* Games PJU (Outdoor) */}
                       <div className="p-3.5 rounded-2xl bg-black/50 border border-amber-500/40 space-y-2.5 shadow-lg">
                         <div className="flex items-center justify-between flex-wrap gap-1">
                           <span className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
@@ -828,18 +830,40 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                           </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {DAY1_GAMES_PJU.items.map((g, idx) => (
+                          {[
+                            { name: "Catur", icon: "♟️", desc: "Turnamen taktik meja" },
+                            { name: "Gaple", icon: "🀄", desc: "Adu keakraban domino" },
+                            { name: "Pantulan Rezeki", icon: "🎾", desc: "Tangkas pantul bola" },
+                          ].map((g, idx) => (
                             <div
                               key={idx}
-                              className="text-xs text-slate-100 flex items-center gap-2 p-2 rounded-xl bg-[#14260a] border border-amber-400/30 font-semibold"
+                              className="text-xs text-slate-100 flex flex-col gap-0.5 p-2 rounded-xl bg-[#14260a] border border-amber-400/30 font-semibold"
                             >
-                              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                              <span>{g}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm">{g.icon}</span>
+                                <span className="text-amber-200 font-bold">{g.name}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-300 font-normal">{g.desc}</span>
                             </div>
                           ))}
                         </div>
+                        <div className="relative w-full h-28 sm:h-32 rounded-xl overflow-hidden border border-amber-400/30">
+                          <Image
+                            src="/games/pju_games.jpg"
+                            alt="Kolase Foto Games PJU"
+                            fill
+                            unoptimized
+                            className="object-cover object-center"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
+                            <span className="text-[10px] font-bold text-amber-200">
+                              📸 Ilustrasi PJU Games (Outdoor Resto)
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
+                      {/* Games Ibu-Ibu (Indoor) */}
                       <div className="p-3.5 rounded-2xl bg-black/50 border border-pink-500/40 space-y-2.5 shadow-lg">
                         <div className="flex items-center justify-between flex-wrap gap-1">
                           <span className="text-xs font-black uppercase tracking-wider text-pink-300 flex items-center gap-1.5">
@@ -850,16 +874,37 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                             berlokasi di indoor area resto
                           </span>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {DAY1_GAMES_IBU_PJU.items.map((g, idx) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {[
+                            { name: "Botol Rezeki", icon: "🍾", desc: "Sasaran gelang botol" },
+                            { name: "Tebak Lagu", icon: "🎵", desc: "Tebak irama & lirik" },
+                            { name: "Pantulan Rezeki", icon: "🎾", desc: "Pantul bola berhadiah" },
+                          ].map((g, idx) => (
                             <div
                               key={idx}
-                              className="text-xs text-slate-100 flex items-center gap-2 p-2 rounded-xl bg-[#260e1d] border border-pink-400/30 font-semibold"
+                              className="text-xs text-slate-100 flex flex-col gap-0.5 p-2 rounded-xl bg-[#260e1d] border border-pink-400/30 font-semibold"
                             >
-                              <span className="w-2 h-2 rounded-full bg-pink-400 shrink-0" />
-                              <span>{g}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm">{g.icon}</span>
+                                <span className="text-pink-200 font-bold">{g.name}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-300 font-normal">{g.desc}</span>
                             </div>
                           ))}
+                        </div>
+                        <div className="relative w-full h-28 sm:h-32 rounded-xl overflow-hidden border border-pink-400/30">
+                          <Image
+                            src="/games/ibu_pju_games.jpg"
+                            alt="Kolase Foto Games Ibu-Ibu"
+                            fill
+                            unoptimized
+                            className="object-cover object-center"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
+                            <span className="text-[10px] font-bold text-pink-200">
+                              📸 Ilustrasi Games Ibu-Ibu (Indoor Resto)
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>

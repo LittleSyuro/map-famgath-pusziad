@@ -69,7 +69,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const animFrameRef = useRef<number | null>(null);
 
   // Opening Intro Cover Slide State
-  const [showIntroSlide, setShowIntroSlide] = useState<boolean>(true);
+  const [showIntroSlide, setShowIntroSlide] = useState<boolean>(false);
 
   // Route animation progress: 0 (Start) to 1 (Destination)
   const [animProgress, setAnimProgress] = useState<number>(0);
@@ -102,13 +102,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const [showAllLocations, setShowAllLocations] = useState<boolean>(false);
   const [showMasterGallery, setShowMasterGallery] = useState<boolean>(false);
   const [showFlatMapModal, setShowFlatMapModal] = useState<boolean>(false);
-  const [showPJUWalkVideo, setShowPJUWalkVideo] = useState<boolean>(false);
-  // The "PJU Berjalan" video should only autoplay the first time this step
-  // is reached — revisiting it later (Previous/Next, replay, sidebar) should
-  // go straight to the Alpine House info card instead of replaying it. A ref
-  // (not state) so the rAF loop in startRouteAnimation always reads the
-  // latest value without needing to be re-created as a dependency.
-  const hasPlayedPJUWalkVideoRef = useRef(false);
+  const [showPJUDinnerModal, setShowPJUDinnerModal] = useState<boolean>(false);
+  const hasShownPJUDinnerModalRef = useRef(false);
 
   // Active room & pinpoint popups
   const [openPopupIds, setOpenPopupIds] = useState<Record<string, boolean>>({});
@@ -288,6 +283,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         return "pin-masjid";
       case "d1-dinner":
       case "d1-games":
+      case "d1-coffee-break":
         return "pin-resto";
       case "d2-breakfast":
         return "pin-resto";
@@ -378,11 +374,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       cancelAnimationFrame(animFrameRef.current);
     }
 
-    // The PJU pawn is only ever rendered during these two steps (see the
-    // activeActivityId check further below) — walk it smoothly for both,
-    // instead of only "d1-checkin-pju". Every other agenda has no visible
-    // pawn, so snapping progress to 1 there is harmless.
-    const hasAnimatedPawn = agendaId === "d1-arrival" || agendaId === "d1-checkin-pju";
+    const hasAnimatedPawn = agendaId === "d1-arrival" || agendaId === "d1-checkin-pju" || agendaId === "d1-dinner";
     if (!hasAnimatedPawn) {
       setIsAnimating(false);
       setAnimProgress(1);
@@ -395,7 +387,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     setOpenKeyPinpointIds({ __closed__: true });
 
     const startTime = performance.now();
-    const duration = 2200;
+    const duration = 5800; // Perlambat animasi agar pergerakan nyaman diikuti mata
 
     const animate = (now: number) => {
       const elapsed = now - startTime;
@@ -407,16 +399,12 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       } else {
         setIsAnimating(false);
         setAnimProgress(1);
-        // Auto-start the "PJU Berjalan" video the instant the walk-in
-        // animation finishes, so it always plays right after the avatar
-        // arrives — never cutting the walk short from an early Space press.
-        // Only the very first time, though — revisiting this step later
-        // (Previous/Next, sidebar, replay) should skip straight to the
-        // Alpine House card instead of replaying the video.
         if (agendaId === "d1-checkin-pju") {
-          if (!hasPlayedPJUWalkVideoRef.current) {
-            hasPlayedPJUWalkVideoRef.current = true;
-            setShowPJUWalkVideo(true);
+          openAgendaPopup();
+        } else if (agendaId === "d1-dinner") {
+          if (!hasShownPJUDinnerModalRef.current) {
+            hasShownPJUDinnerModalRef.current = true;
+            setShowPJUDinnerModal(true);
           } else {
             openAgendaPopup();
           }
@@ -443,7 +431,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       // immediately, before the avatar had even started walking on the map.
       // It's now triggered by startRouteAnimation once the walk-in
       // animation actually finishes (see its completion branch below).
-      setShowPJUWalkVideo(false);
+      setShowPJUDinnerModal(false);
 
       const pinId = getPinIdForAgenda(agendaId);
       const item = ALL_RUNDOWN_ITEMS.find((a) => a.id === agendaId) || ALL_RUNDOWN_ITEMS[0];
@@ -462,14 +450,18 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         item.destCoordinates;
 
       const zoom =
-        agendaId === "d2-jalan-sehat"
+        agendaId === "d1-arrival"
+          ? 2.3
+          : agendaId === "d2-jalan-sehat"
           ? 2.25
           : agendaId === "d1-checkin-pju"
           ? 2.2
           : 2.1;
 
       const focusPoint =
-        start && (agendaId === "d1-arrival" || agendaId === "d1-checkin-pju")
+        agendaId === "d1-arrival"
+          ? targetPinCoords || { x: 77.0, y: 32.0 }
+          : start && agendaId === "d1-checkin-pju"
           ? {
               x: (start.x + (dest?.x || start.x)) / 2,
               y: (start.y + (dest?.y || start.y)) / 2,
@@ -496,7 +488,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   // 2. Open popup for current agenda
   const openAgendaPopup = useCallback(() => {
     setPresentationPhase("popup_open");
-    setShowPJUWalkVideo(false);
+    setShowPJUDinnerModal(false);
     const pinId = getPinIdForAgenda(activeActivityId);
     setOpenKeyPinpointIds({ [pinId]: true });
   }, [activeActivityId, getPinIdForAgenda]);
@@ -506,7 +498,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     setPresentationPhase("overview");
     setOpenKeyPinpointIds({ __closed__: true });
     setOpenPopupIds({});
-    setShowPJUWalkVideo(false);
+    setShowPJUDinnerModal(false);
     setSelectedLegendLocation(null);
     resetToOverviewMap();
   }, [resetToOverviewMap]);
@@ -520,9 +512,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
       return;
     }
 
-    // 2. Video Playing ➔ Skip/Finish Video & Open Villa Popup
-    if (showPJUWalkVideo) {
-      setShowPJUWalkVideo(false);
+    // 2. Avatar Dinner Modal ➔ Open Dinner Menu Popup
+    if (showPJUDinnerModal) {
+      setShowPJUDinnerModal(false);
       openAgendaPopup();
       return;
     }
@@ -584,9 +576,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         return;
       }
 
-      if (activeActivityId === "d1-checkin-pju" && !showPJUWalkVideo && !hasPlayedPJUWalkVideoRef.current) {
-        hasPlayedPJUWalkVideoRef.current = true;
-        setShowPJUWalkVideo(true);
+      if (activeActivityId === "d1-dinner" && !showPJUDinnerModal && !hasShownPJUDinnerModalRef.current) {
+        hasShownPJUDinnerModalRef.current = true;
+        setShowPJUDinnerModal(true);
       } else {
         openAgendaPopup();
       }
@@ -597,7 +589,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     focusOnAgendaPinpoint(activeActivityId);
   }, [
     showIntroSlide,
-    showPJUWalkVideo,
+    showPJUDinnerModal,
     activeOpenPinId,
     selectedLegendLocation,
     presentationPhase,
@@ -625,9 +617,24 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   }, [presentationPhase, activeOpenPinId, selectedLegendLocation, currentAgendaIndex, returnToOverviewMap, focusOnAgendaPinpoint]);
 
   const handleNextAgenda = useCallback(() => {
+    const DIRECT_ROOM_SEQUENCE: Record<string, string> = {
+      "d1-checkin-pju": "d1-checkin-the-cave",
+      "d1-checkin-the-cave": "d1-checkin-mongolian",
+    };
+    if (activeActivityId in DIRECT_ROOM_SEQUENCE && presentationPhase === "popup_open") {
+      const nextRoomId = DIRECT_ROOM_SEQUENCE[activeActivityId];
+      setActiveActivityId(nextRoomId);
+      setAnimProgress(0);
+      const nextPinId = getPinIdForAgenda(nextRoomId);
+      setOpenKeyPinpointIds({ [nextPinId]: true });
+      setPresentationPhase("popup_open");
+      const nextPin = KEY_EVENT_PINPOINTS.find((p) => p.id === nextPinId);
+      if (nextPin) focusOnCoordinate(nextPin.coords, 2.1);
+      return;
+    }
     const nextIdx = (currentAgendaIndex + 1) % ALL_RUNDOWN_ITEMS.length;
     focusOnAgendaPinpoint(ALL_RUNDOWN_ITEMS[nextIdx].id);
-  }, [currentAgendaIndex, focusOnAgendaPinpoint]);
+  }, [activeActivityId, presentationPhase, currentAgendaIndex, focusOnAgendaPinpoint, getPinIdForAgenda, focusOnCoordinate]);
 
   const handlePrevAgenda = useCallback(() => {
     const prevIdx = currentAgendaIndex > 0 ? currentAgendaIndex - 1 : ALL_RUNDOWN_ITEMS.length - 1;
@@ -660,8 +667,8 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         return;
       }
 
-      // If a popup or video is open, Arrow keys belong to photo gallery slider inside the modal
-      if (Boolean(activeOpenPinId) || showPJUWalkVideo || Boolean(selectedLegendLocation)) {
+      // If a popup or dinner modal is open, Arrow keys belong to photo gallery slider inside the modal
+      if (Boolean(activeOpenPinId) || showPJUDinnerModal || Boolean(selectedLegendLocation)) {
         if (e.key === "Escape") {
           e.preventDefault();
           returnToOverviewMap();
@@ -690,7 +697,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     handlePrevAgenda,
     returnToOverviewMap,
     activeOpenPinId,
-    showPJUWalkVideo,
+    showPJUDinnerModal,
     showFlatMapModal,
     isSearchModalOpen,
     isLocationModalOpen,
@@ -1507,11 +1514,31 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       );
                     })}
 
+                  {/* Spanduk Titik Awal & Titik Akhir Jalan Santai (Sebelah Kanan Helipad) */}
+                  {!isEditorOpen && currentAgendaItem.day === 2 && (
+                    <div
+                      className="absolute z-35 pointer-events-auto -translate-y-1/2 select-none"
+                      style={{ left: "82.5%", top: "35.5%" }}
+                    >
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#081402]/95 border-2 border-amber-400 shadow-[0_0_20px_rgba(234,179,8,0.45)] backdrop-blur-md">
+                        <span className="text-sm">🏁</span>
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-amber-300">
+                            Area Helipad
+                          </span>
+                          <span className="text-[11px] font-bold text-white whitespace-nowrap leading-tight">
+                            Titik awal dan titik akhir / finish jalan santai
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Animated Red Tracking Line (TRK) — draws the route trail behind the pawn
-                      during d1-arrival and d1-checkin-pju. Rendered as a progressive SVG reveal
+                      during d1-arrival, d1-checkin-pju, and d1-dinner. Rendered as a progressive SVG reveal
                       so only the portion already travelled is visible. */}
                   {!isEditorOpen &&
-                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin-pju") &&
+                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin-pju" || activeActivityId === "d1-dinner") &&
                     (() => {
                       const trkVip = activeVIPs[0];
                       if (!trkVip || trkVip.pathWaypoints.length < 2) return null;
@@ -1547,7 +1574,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                           preserveAspectRatio="none"
                         >
                           <defs>
-                            <filter id="trk-glow">
+                            <filter id="trk-glow" x="-20%" y="-20%" width="140%" height="140%">
                               <feGaussianBlur stdDeviation="0.6" result="blur" />
                               <feMerge>
                                 <feMergeNode in="blur" />
@@ -1569,19 +1596,19 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                           <polyline
                             points={points}
                             fill="none"
-                            stroke="#ff2222"
-                            strokeWidth="2.5"
+                            stroke="#ff1111"
+                            strokeWidth="2.6"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeOpacity="0.35"
+                            strokeOpacity="0.45"
                             filter="url(#trk-glow)"
                           />
                           {/* Solid bright red core line */}
                           <polyline
                             points={points}
                             fill="none"
-                            stroke="#ff2222"
-                            strokeWidth="1.0"
+                            stroke="#ef4444"
+                            strokeWidth="1.1"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeOpacity="0.95"
@@ -1596,7 +1623,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                             strokeDasharray="1.0 1.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeOpacity="0.55"
+                            strokeOpacity="0.65"
                           >
                             <animate
                               attributeName="stroke-dashoffset"
@@ -1606,20 +1633,50 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                               repeatCount="indefinite"
                             />
                           </polyline>
-                          {/* TRK label at the head of the trail */}
+                          {/* Animated Car Icon & TRK Badge moving at head of the line */}
                           {revealedPoints.length >= 1 && (() => {
                             const head = revealedPoints[revealedPoints.length - 1];
                             return (
-                              <g>
+                              <g transform={`translate(${head.x}, ${head.y})`}>
                                 <circle
-                                  cx={head.x}
-                                  cy={head.y}
+                                  cx={0}
+                                  cy={0}
+                                  r="1.4"
+                                  fill="#ff0000"
+                                  fillOpacity="0.35"
+                                  className="animate-ping"
+                                />
+                                <circle
+                                  cx={0}
+                                  cy={0}
                                   r="0.8"
-                                  fill="#ff2222"
+                                  fill="#ff0000"
                                   stroke="#ffffff"
                                   strokeWidth="0.25"
-                                  opacity={animProgress > 0 ? 1 : 0}
+                                  filter="url(#trk-glow)"
                                 />
+                                <g transform="translate(-2.5, -3.6)">
+                                  <rect
+                                    width="5"
+                                    height="2.2"
+                                    rx="0.6"
+                                    fill="#991b1b"
+                                    stroke="#ffffff"
+                                    strokeWidth="0.2"
+                                    filter="url(#trk-glow)"
+                                  />
+                                  <text
+                                    x="2.5"
+                                    y="1.5"
+                                    fill="#ffffff"
+                                    fontSize="1.1"
+                                    fontWeight="900"
+                                    textAnchor="middle"
+                                    fontFamily="sans-serif"
+                                  >
+                                    🚗 TRK
+                                  </text>
+                                </g>
                               </g>
                             );
                           })()}
@@ -1627,9 +1684,9 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                       );
                     })()}
 
-                  {/* Animated Pawns: Hanya tampil saat Kedatangan di Helipad dan Berjalan ke Villa Alpine House */}
+                  {/* Animated Pawns: Tampil saat Kedatangan di Gate/Helipad, Berjalan ke Villa Alpine, dan ke Dinner */}
                   {!isEditorOpen &&
-                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin-pju") &&
+                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin-pju" || activeActivityId === "d1-dinner") &&
                     activeVIPs.map((vip, idx) => (
                       <Pawn
                         key={vip.id}
@@ -1790,16 +1847,16 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         }}
       />
 
-      {/* PJU Walking Video Modal (Plays Before Alpine House Villa Popup) */}
+      {/* PJU Menuju Makan Malam Modal (Replaces old video) */}
       <AnimatePresence>
-        {showPJUWalkVideo && (
+        {showPJUDinnerModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[115] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl select-none"
             onClick={() => {
-              setShowPJUWalkVideo(false);
+              setShowPJUDinnerModal(false);
               openAgendaPopup();
             }}
           >
@@ -1814,15 +1871,15 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
               {/* Top Header */}
               <div className="px-5 py-3.5 bg-[#0f2305] border-b border-lime-500/30 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-fun uppercase tracking-wider shadow-sm border border-amber-300">
-                    🎬 PJU BERJALAN
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-emerald-400 to-lime-400 text-slate-950 font-fun uppercase tracking-wider shadow-sm border border-emerald-300">
+                    🍽️ MENUJU DINNER
                   </span>
                   <div>
                     <h3 className="text-xs sm:text-sm font-black text-white">
-                      Mayjen TNI Budi Hariswanto & Rombongan PJU
+                      Bapak-bapak menuju tempat makan malam
                     </h3>
                     <p className="text-[11px] text-lime-300">
-                      Menuju Villa Alpine House (Kamar Utama PJU)
+                      Rombongan Pejabat Utama (PJU) berseragam sweater hijau berjalan santai keluar dari arah kamar
                     </p>
                   </div>
                 </div>
@@ -1830,48 +1887,51 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                 <button
                   type="button"
                   onClick={() => {
-                    setShowPJUWalkVideo(false);
+                    setShowPJUDinnerModal(false);
                     openAgendaPopup();
                   }}
-                  title="Lewati Video (Esc)"
+                  title="Tutup (Esc)"
                   className="p-1.5 rounded-full bg-black/60 hover:bg-rose-600 text-slate-300 hover:text-white border border-white/20 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Video Container (16:9 Aspect Ratio) */}
+              {/* Image Container (16:9 Aspect Ratio) */}
               <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-                <video
-                  src="/videos/pju_berjalan.mp4"
-                  autoPlay
-                  controls
-                  playsInline
-                  onEnded={() => {
-                    setShowPJUWalkVideo(false);
-                    openAgendaPopup();
-                  }}
-                  className="w-full h-full object-contain bg-black"
+                <Image
+                  src="/resort_media/pju_menuju_dinner.jpg"
+                  alt="Bapak-bapak menuju tempat makan malam"
+                  fill
+                  unoptimized
+                  priority
+                  className="object-cover object-center"
                 />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 sm:p-6 flex flex-col gap-1">
+                  <span className="text-base sm:text-xl font-black text-amber-300">
+                    Bapak-bapak menuju tempat makan malam
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-200">
+                    Visualisasi Mayjen TNI Budi Hariswanto & Rombongan PJU mengenakan sweater lengan panjang hijau santai, keluar dari deretan kamar Alpin menuju Resto Anthurium Lantai 2.
+                  </p>
+                </div>
               </div>
 
               {/* Footer Action Bar */}
               <div className="px-5 py-3.5 bg-[#0a1703] border-t border-lime-500/30 flex items-center justify-end gap-3">
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPJUWalkVideo(false);
-                      openAgendaPopup();
-                    }}
-                    className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm shadow-glow-gold transition-all cursor-pointer hover:scale-105 border border-white"
-                  >
-                    <span className="px-1.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] font-bold">
-                      SPASI
-                    </span>
-                    <span>Lanjut ke Info Villa Alpine House</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPJUDinnerModal(false);
+                    openAgendaPopup();
+                  }}
+                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm shadow-glow-gold transition-all cursor-pointer hover:scale-105 border border-white"
+                >
+                  <span className="px-1.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] font-bold">
+                    SPASI
+                  </span>
+                  <span>Lanjut ke Menu Makan Malam Resto</span>
+                </button>
               </div>
             </motion.div>
           </motion.div>

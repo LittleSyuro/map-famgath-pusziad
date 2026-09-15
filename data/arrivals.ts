@@ -549,6 +549,20 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     color: "#06b6d4",
   },
   {
+    id: "pin-helipad",
+    name: "Titik Awal & Akhir Jalan Santai",
+    category: "Start & Finish Jalan Santai",
+    image: "/resort_media/helipad/helipad_1.jpg",
+    galleryImages: [
+      "/resort_media/helipad/helipad_1.jpg",
+      "/resort_media/helipad/helipad_2.jpg"
+    ],
+    coords: { x: 80.5, y: 35.5 },
+    description: "Titik awal dan titik akhir / finish jalan santai. Jarak ± 2.5 KM dengan estimasi durasi 45 menit - 1 jam.",
+    badge: "Start & Finish",
+    color: "#eab308",
+  },
+  {
     id: "pin-kopihip",
     name: "Kopi Hip",
     category: "Coffee Break PJU",
@@ -718,7 +732,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     locationName: "Resto Anthurium Lt. 2",
     badge: "Makan Malam",
     color: "#10b981",
-    destImage: "/resort_media/anthurium/DSCF3443.jpg",
+    destImage: "/resort_media/pju_menuju_dinner.jpg",
     destCoordinates: { x: 60.8, y: 50.0 },
     menuCategories: DAY1_DINNER_MENU,
     galleryImages: [
