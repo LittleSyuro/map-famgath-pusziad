@@ -646,6 +646,20 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     color: "#ca8a04",
     menuCategories: DAY2_AFTER_WALK_MENU,
   },
+  {
+    id: "pin-k3",
+    name: "Posko Kesehatan (K3) & Jalur Evakuasi",
+    category: "Urusan Kesehatan Pusdikzi",
+    image: "/k3/jalur_evakuasi_k3.png",
+    galleryImages: [
+      "/k3/jalur_evakuasi_k3.png",
+      "/resort_media/helipad/helipad_1.jpg"
+    ],
+    coords: { x: 79.5, y: 34.0 },
+    description: "SOP Prosedur Keselamatan dan Jalur Rujukan Evakuasi Medis oleh Urusan Kesehatan Pusat Pendidikan Zeni TNI AD (Pusdikzi). Perwira Urusan Kesehatan: dr. Mindou Dipendri Datka S, Kapten Ckm NRP 11210003740594.",
+    badge: "K3 & Jalur Evakuasi",
+    color: "#ef4444",
+  },
 ];
 
 // ----------------------------------------------------
@@ -1043,6 +1057,56 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     defaultWaypoints: [
       { x: 87.7, y: 29.5 },
       { x: 50.0, y: 50.0 },
+    ],
+  },
+  {
+    id: "d2-doorprize",
+    day: 2,
+    startTime: "17.00",
+    endTime: "17.30",
+    startMinutes: 1020, // 17:00
+    endMinutes: 1050, // 17:30
+    title: "Pengundian Doorprize & Grand Prize",
+    locationName: "Area Ball Room (Panggung Utama)",
+    description: "Sesi pengundian Doorprize spektakuler dan 5 Hadiah Utama Grand Prize (Honda Scoopy, Honda BeAT, Honda CB150 Verza, United E-Motor Listrik, Polygon Mountain Bike) untuk seluruh keluarga besar Pusziad.",
+    badge: "Doorprize & Grand Prize",
+    color: "#f59e0b",
+    destImage: "/grand_prize/honda_scoopy.png",
+    destCoordinates: { x: 87.7, y: 29.5 },
+    grandPrizes: GRAND_PRIZE_ITEMS,
+    galleryImages: [
+      "/grand_prize/honda_scoopy.png",
+      "/grand_prize/honda_beat.png",
+      "/grand_prize/honda_verza.png",
+      "/grand_prize/united_emotor.png",
+      "/grand_prize/polygon_bike.png"
+    ],
+    defaultWaypoints: [
+      { x: 50.0, y: 50.0 },
+      { x: 87.7, y: 29.5 },
+    ],
+  },
+  {
+    id: "d2-k3-evakuasi",
+    day: 2,
+    startTime: "17.30",
+    endTime: "18.00",
+    startMinutes: 1050, // 17:30
+    endMinutes: 1080, // 18:00
+    title: "Prosedur Keselamatan (K3) & Jalur Evakuasi",
+    locationName: "Posko Urusan Kesehatan (Pusdikzi)",
+    description: "SOP Prosedur Keselamatan dan Rantai Rujukan Jalur Evakuasi Medis Urusan Kesehatan Pusat Pendidikan Zeni TNI AD (Pusdikzi). Dilengkapi tim medis siaga, mobil ambulans, dan rumah sakit rujukan darurat.",
+    badge: "K3 & Evakuasi Medis",
+    color: "#ef4444",
+    destImage: "/k3/jalur_evakuasi_k3.png",
+    destCoordinates: { x: 79.5, y: 34.0 },
+    galleryImages: [
+      "/k3/jalur_evakuasi_k3.png",
+      "/resort_media/helipad/helipad_1.jpg"
+    ],
+    defaultWaypoints: [
+      { x: 87.7, y: 29.5 },
+      { x: 79.5, y: 34.0 },
     ],
   },
 ];

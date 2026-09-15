@@ -295,7 +295,10 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
         return "pin-kopihip";
       case "d2-ballroom-grandprize":
       case "d2-lunch":
+      case "d2-doorprize":
         return "pin-ballroom";
+      case "d2-k3-evakuasi":
+        return "pin-k3";
       case "d2-freetime":
         return "pin-helipad";
       default:

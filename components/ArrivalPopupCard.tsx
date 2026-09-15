@@ -44,6 +44,7 @@ import {
   PartyPopper,
   DoorOpen,
   Flag,
+  HeartPulse,
 } from "lucide-react";
 
 // Distinct icon per map pin, instead of the same generic building icon
@@ -59,6 +60,8 @@ const PIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "pin-ballroom": PartyPopper,
   "pin-bridge": Camera,
   "pin-kopihip": Coffee,
+  "pin-k3": HeartPulse,
+  "pin-doorprize": Gift,
 };
 
 interface ArrivalPopupCardProps {
@@ -132,7 +135,9 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   useEffect(() => {
     if (isOpen) {
       setActiveImageIndex(0);
-      if (
+      if (agendaItem?.id === "d2-doorprize") {
+        setActiveTab("grandprize");
+      } else if (
         agendaItem?.menuCategories ||
         keyPinpoint?.menuCategories ||
         agendaItem?.id === "d1-dinner" ||
@@ -212,9 +217,11 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const hasFacilities = facilitiesList.length > 0;
   // Flag: this is the Welcome Gate popup — shows special Selamat Datang section with PJU photos
   const isGateWelcome = keyPinpoint?.id === "pin-gate" || agendaItem?.id === "d1-arrival";
+  const isK3Evakuasi = keyPinpoint?.id === "pin-k3" || agendaItem?.id === "d2-k3-evakuasi";
   const hasGrandPrizes = Boolean(
     (agendaItem?.grandPrizes && agendaItem.grandPrizes.length > 0) ||
     agendaItem?.id === "d2-ballroom-grandprize" ||
+    agendaItem?.id === "d2-doorprize" ||
     keyPinpoint?.id === "pin-ballroom"
   );
 
@@ -230,7 +237,9 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const suppressPinDescription =
     agendaItem?.id === "d2-prep-jalan-santai" ||
     agendaItem?.id === "d2-freetime" ||
-    agendaItem?.id === "d2-jalan-santai";
+    agendaItem?.id === "d2-jalan-santai" ||
+    agendaItem?.id === "d2-doorprize" ||
+    agendaItem?.id === "d2-k3-evakuasi";
   // pin-resto's description covers both Day 1 Dinner and Day 2 Breakfast ("...makan malam
   // dan sarapan pagi..."), so the Day 2 Breakfast card was showing a stray dinner mention.
   const descriptionOverrides: Record<string, string> = {
@@ -584,6 +593,89 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                           </p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* K3 & Jalur Evakuasi Special Section */}
+                {isK3Evakuasi && (
+                  <div className="mt-3 space-y-2.5">
+                    <div className="p-3 rounded-2xl bg-gradient-to-r from-red-900/40 via-rose-900/30 to-red-900/40 border border-red-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-wider text-rose-300">
+                          Pusat Pendidikan Zeni TNI AD
+                        </p>
+                        <h4 className="text-sm sm:text-base font-black text-white">
+                          Urusan Kesehatan (K3 & Posko Medis)
+                        </h4>
+                      </div>
+                      <div className="px-2.5 py-1 rounded-xl bg-black/60 border border-white/10 text-right">
+                        <p className="text-[9px] text-slate-300 font-bold">Perwira Urusan Kesehatan</p>
+                        <p className="text-[10px] text-amber-300 font-black">dr. Mindou Dipendri Datka S</p>
+                        <p className="text-[9px] text-slate-400 font-mono">Kapten Ckm NRP 11210003740594</p>
+                      </div>
+                    </div>
+
+                    {/* Jalur Darurat Critical Alert */}
+                    <div className="p-2.5 rounded-xl bg-red-950/80 border-2 border-red-500 shadow-lg flex items-start gap-2">
+                      <span className="text-base shrink-0">🚨</span>
+                      <div className="text-[11px] leading-relaxed text-red-100">
+                        <span className="font-black text-red-300 uppercase tracking-wide mr-1">
+                          JALUR DARURAT:
+                        </span>
+                        Kondisi darurat kritis langsung dievakuasi via Ambulans dari TKP menuju <strong>Rumkit Tk. III Salak dr. H. Sadjiman Bogor</strong>.
+                      </div>
+                    </div>
+
+                    {/* Alur Evakuasi Rantai Medis */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-1.5">
+                      <div className="p-2 rounded-xl bg-black/50 border border-lime-500/30 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-lime-400/20 text-lime-300">
+                            Tahap 1
+                          </span>
+                          <p className="text-xs font-black text-white mt-1">TKP ➔ KESLAP</p>
+                        </div>
+                        <p className="text-[10px] text-slate-300 mt-1">
+                          Pertolongan pertama medis di lokasi acara resort
+                        </p>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-black/50 border border-lime-500/30 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-cyan-400/20 text-cyan-300">
+                            ⏱️ 10 Menit
+                          </span>
+                          <p className="text-xs font-black text-white mt-1">Klinik Pratama Aisyah</p>
+                        </div>
+                        <p className="text-[10px] text-slate-300 mt-1">
+                          Rawat Inap fasilitas kesehatan terdekat
+                        </p>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-black/50 border border-lime-500/30 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300">
+                            ⏱️ 40 Menit
+                          </span>
+                          <p className="text-xs font-black text-white mt-1">Rumkit Tk. III Salak</p>
+                        </div>
+                        <p className="text-[10px] text-slate-300 mt-1">
+                          dr. H. Sadjiman Bogor (Rujukan Wilayah)
+                        </p>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-black/50 border border-lime-500/30 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-rose-400/20 text-rose-300">
+                            ⏱️ 1 Jam 20 Mnt
+                          </span>
+                          <p className="text-xs font-black text-white mt-1">RSPAD Gatot Soebroto</p>
+                        </div>
+                        <p className="text-[10px] text-slate-300 mt-1">
+                          Pusat Rujukan Tertinggi TNI AD di Jakarta
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1059,6 +1151,37 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                             </div>
                           </div>
                         ))}
+                      </div>
+
+                      {/* Doorprize Categories */}
+                      <div className="p-3.5 rounded-2xl bg-black/50 border border-amber-400/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-amber-300 flex items-center gap-1.5">
+                            <span>🎁</span>
+                            <span>Kategori Hadiah Doorprize</span>
+                          </span>
+                          <span className="text-[10px] text-lime-300 font-bold bg-lime-400/15 px-2 py-0.5 rounded-full border border-lime-400/30">
+                            Ratusan Hadiah
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
+                            <p className="font-bold text-amber-200">📺 Elektronik Rumah</p>
+                            <p className="text-[10px] text-slate-300 leading-snug">Smart TV LED, Lemari Es 2 Pintu, Mesin Cuci Otomatis</p>
+                          </div>
+                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
+                            <p className="font-bold text-amber-200">🍳 Peralatan Dapur</p>
+                            <p className="text-[10px] text-slate-300 leading-snug">Air Fryer, Magic Com Digital, Blender, Kompor Gas</p>
+                          </div>
+                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
+                            <p className="font-bold text-amber-200">🚲 Rekreasi & Sepeda</p>
+                            <p className="text-[10px] text-slate-300 leading-snug">Sepeda Lipat, Sepeda Anak, Tenda Camping & Perlengkapan</p>
+                          </div>
+                          <div className="p-2 rounded-xl bg-[#12240a] border border-amber-400/20 text-slate-200 space-y-1">
+                            <p className="font-bold text-amber-200">🛍️ Hiburan & Voucher</p>
+                            <p className="text-[10px] text-slate-300 leading-snug">Voucher Belanja, Set Alat Masak Premium & Hadiah Hiburan</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
