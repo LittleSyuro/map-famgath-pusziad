@@ -107,7 +107,7 @@ export const ROOM_ALPINE_HOUSE: AccommodationRoom = {
     "/resort_media/alpine/alpine_7.png"
   ],
   coords: { x: 58.5, y: 22.5 },
-  description: "Kamar Utama bergaya Alpine Eropa dengan panorama asri Gunung Salak untuk Pejabat Utama (PJU) Pusziad.",
+  description: "Bergaya Alpin Eropa dengan panorama asri Gunung Salak untuk Pejabat Utama (PJU) Pusziad.",
   facilities: [
     "King Size Bed Luxury",
     "Balkon Panorama Gunung Salak",
@@ -184,14 +184,13 @@ export const DAY1_DINNER_MENU: MenuItem[] = [
       "Puding Dessert Manis",
       "Kopi, Teh & Air Mineral"
     ],
-    note: "Sajian Buffet Makan Malam di Resto Anthurium Lantai 2"
   }
 ];
 
-// Hari Ke-1: Snack Malam & Coffee Break saat Games di Resto Anthurium Lt. 2 (CB 3)
-export const DAY1_CB3_EVENING_MENU: MenuItem[] = [
+// Hari Ke-1: Coffee Break saat Games di Resto Anthurium Lt. 2
+export const DAY1_CB_EVENING_MENU: MenuItem[] = [
   {
-    category: "COFFEE BREAK 3 (SNACK REBUSAN & HANGAT)",
+    category: "MENU COFFEE BREAK (REBUSAN & HANGAT)",
     items: [
       "Pisang Rebus",
       "Jagung Rebus",
@@ -199,9 +198,9 @@ export const DAY1_CB3_EVENING_MENU: MenuItem[] = [
       "Assorted Chips",
       "Coffee & Tea"
     ],
-    note: "Sajian Snack Tradisional Hangat & Coffee Break saat Games PJU & Ibu-Ibu di Resto Anthurium Lt. 2 (setelah Makan Malam)"
   }
 ];
+export const DAY1_CB3_EVENING_MENU = DAY1_CB_EVENING_MENU;
 
 // Hari Ke-2: Menu Makan Pagi (Sarapan)
 export const DAY2_BREAKFAST_MENU: MenuItem[] = [
@@ -220,26 +219,25 @@ export const DAY2_BREAKFAST_MENU: MenuItem[] = [
   }
 ];
 
-// Hari Ke-2: Menu Setelah Jalan Pagi di Kopi Hip (CB 1 + Kelapa Muda)
+// Hari Ke-2: Menu Setelah Jalan Pagi di Kopi Hip (Coffee Heat)
 export const DAY2_AFTER_WALK_MENU: MenuItem[] = [
   {
-    category: "COFFEE BREAK 1 (KOPI HIP + KELAPA MUDA)",
+    category: "COFFEE HEAT (COFFEE BREAK)",
     items: [
       "Chicken Nugget",
       "Panettone",
       "Velvet Roll",
       "Assorted Chips",
-      "Kelapa Muda Segar",
       "Coffee & Tea"
     ],
-    note: "Sajian Coffee Break 1 & Kelapa Muda Segar setelah Jalan Santai di Kopi Hip"
+    note: "Sajian Coffee Heat (Coffee Break) di Kopi Hip"
   }
 ];
 
-// Hari Ke-2: Menu Makan Siang di Ball Room (LUNCH B)
+// Hari Ke-2: Menu Makan Siang di Ball Room
 export const DAY2_LUNCH_MENU: MenuItem[] = [
   {
-    category: "MENU MAKAN SIANG (LUNCH B - BUFFET)",
+    category: "MENU MAKAN SIANG (BUFFET)",
     items: [
       "Steamed Rice (Nasi Putih)",
       "Cream Potato Soup",
@@ -259,26 +257,25 @@ export const DAY2_LUNCH_MENU: MenuItem[] = [
 
 export const DAY1_GAMES_PJU = {
   title: "Games PJU",
-  area: "Area Outdoor Resto",
+  area: "Outdoor Area Resto",
   icon: "♟️",
-  description: "Turnamen keakraban santai antar Pejabat Utama (PJU) di area outdoor Restoran Anthurium.",
+  description: "berlokasi di outdoor area resto",
   items: [
     "Catur",
     "Gaple",
-    "Pantulan Rejeki"
+    "Pantulan Rezeki"
   ]
 };
 
 export const DAY1_GAMES_IBU_PJU = {
-  title: "Games Ibu-Ibu PJU",
-  area: "Area Indoor Resto",
+  title: "Games Ibu-Ibu",
+  area: "Indoor Area Resto",
   icon: "🎁",
-  description: "Keseruan lomba berhadiah dan keceriaan interaktif untuk Ibu-Ibu PJU di area indoor Restoran Anthurium.",
+  description: "berlokasi di indoor area resto",
   items: [
-    "Serok Rejeki",
-    "Botol Rejeki",
+    "Botol Rezeki",
     "Tebak Lagu",
-    "Pantulan Rejeki"
+    "Pantulan Rezeki"
   ]
 };
 
@@ -294,38 +291,30 @@ export const WALKING_ROUTES_DAY2: WalkingRouteOption[] = [
     estimatedTime: "± 3 - 5 Menit",
     estimatedDistance: "± 150 Meter",
     description: "Untuk rute PJU, akan mengunjungi area kebun dan sayuran lalu menuju spot area tangga untuk foto bersama anggota.",
-    specialNote: "☕ Setelah Jalan Santai: Ada Coffee Morning di Kopi HIP (Khusus PJU)",
     highlights: [
       "Start: Area Lapangan Helipad",
-      "Jalur Teduh Hutan Pinus",
-      "Finish: Tangga Samping Kolam Renang (Sesi Foto Bersama)",
-      "☕ Lanjut: Coffee Morning di Kopi HIP (Khusus PJU)"
+      "Track Luar Dekat Kolam Renang / Resto",
+      "Titik Balik Putar Dekat Bangunan Merah PJU",
+      "Finish: Tangga Samping Kolam Renang (Sesi Foto Bersama)"
     ],
     waypoints: [
-      { x: 83.8, y: 16.2 },
-      { x: 86.6, y: 19.7 },
+      { x: 80.5, y: 35.5 },
       { x: 74.7, y: 29.6 },
-      { x: 65.9, y: 37 },
-      { x: 68, y: 38.8 },
-      { x: 66.7, y: 43.1 },
-      { x: 61, y: 48 },
+      { x: 65.9, y: 37.0 },
+      { x: 61.0, y: 48.0 },
       { x: 53.4, y: 54.3 },
       { x: 45.7, y: 60.1 },
       { x: 43.4, y: 62.6 },
-      { x: 30.6, y: 74.7 },
-      { x: 28.9, y: 72.6 },
       { x: 40.5, y: 60.9 },
-      { x: 42.8, y: 59.7 },
-      { x: 48.7, y: 55 },
-      { x: 50.1, y: 50.5 },
-      { x: 51.4, y: 47 },
+      { x: 48.7, y: 55.0 },
       { x: 54.6, y: 43.8 },
-      { x: 59.8, y: 40.7 },
-      { x: 70.9, y: 30.1 },
-      { x: 72.3, y: 26.6 },
-      { x: 70.5, y: 22.4 },
-      { x: 80.4, y: 12.6 },
-      { x: 82.6, y: 15.2 },
+      { x: 65.7, y: 37.0 },
+      { x: 70.8, y: 29.0 },
+      { x: 71.8, y: 25.0 },
+      { x: 67.0, y: 24.5 },
+      { x: 62.0, y: 23.0 },
+      { x: 58.5, y: 22.5 },
+      { x: 54.1, y: 43.5 },
     ],
     color: "#eab308",
   },
@@ -335,39 +324,25 @@ export const WALKING_ROUTES_DAY2: WalkingRouteOption[] = [
     targetGroup: "Seluruh Anggota & Rombongan Keluarga",
     estimatedTime: "± 8 - 12 Menit",
     estimatedDistance: "± 350 Meter",
-    description: "Sebelum mencapai titik finish, peserta atau anggota mengisi spot-spot area tangga untuk foto bersama (akan diarahkan oleh tim EO, sambil menunggu kedatangan PJU).",
+    description: "Sebelum mencapai titik finish, anggota mengisi spot-spot area tangga untuk foto bersama (akan diarahkan oleh tim EO, sambil menunggu kedatangan PJU).",
     highlights: [
       "Start: Area Lapangan Helipad",
       "Hutan Pinus Resort (Spot Foto Sejuk)",
-      "Wahana Edukasi Noah AR & Satwa",
+      "Wahana Edukasi Noah Ark & Satwa",
       "Lapangan Gerbera (Area Hijau Luas)",
       "Finish: Tangga Samping Kolam Renang (Sesi Foto Bersama)"
     ],
     waypoints: [
-      { x: 83.8, y: 16.2 },
-      { x: 86.6, y: 19.7 },
+      { x: 80.5, y: 35.5 },
       { x: 74.7, y: 29.6 },
-      { x: 65.9, y: 37 },
-      { x: 68, y: 38.8 },
-      { x: 66.7, y: 43.1 },
-      { x: 61, y: 48 },
+      { x: 65.9, y: 37.0 },
+      { x: 61.0, y: 48.0 },
       { x: 53.4, y: 54.3 },
       { x: 45.7, y: 60.1 },
-      { x: 43.4, y: 62.6 },
-      { x: 39.9, y: 65.6 },
       { x: 38.3, y: 63.2 },
       { x: 40.5, y: 60.9 },
-      { x: 42.8, y: 59.7 },
-      { x: 48.7, y: 55 },
-      { x: 50.1, y: 50.5 },
-      { x: 51.4, y: 47 },
-      { x: 54.6, y: 43.8 },
-      { x: 59.8, y: 40.7 },
-      { x: 70.9, y: 30.1 },
-      { x: 72.3, y: 26.6 },
-      { x: 70.5, y: 22.4 },
-      { x: 80.4, y: 12.6 },
-      { x: 82.6, y: 15.2 },
+      { x: 48.7, y: 55.0 },
+      { x: 54.1, y: 43.5 },
     ],
     color: "#dc2626",
   }
@@ -392,7 +367,7 @@ export const DAY2_HIGHLIGHT_SPOTS: HighlightSpot[] = [
   },
   {
     id: "spot-noah",
-    name: "Wahana Edukasi Noah & Satwa",
+    name: "Wahana Edukasi Noah Ark & Satwa",
     image: "/legend/51_Mini_Zoo.png",
     coords: { x: 31.0, y: 64.0 },
     category: "Spot Foto Jalan Santai",
@@ -427,18 +402,19 @@ export interface KeyEventPinpoint {
 
 export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
   {
-    id: "pin-helipad",
-    name: "Kedatangan PJU",
-    category: "Pimpinan PJU Pusziad",
+    id: "pin-gate",
+    name: "Gate Utama",
+    category: "Kedatangan PJU Pusziad",
     isPJU: true,
-    image: "/resort_media/helipad/kedatangan_pju_gate.jpg",
+    image: "/legend/01_Welcome_Gate.png",
     galleryImages: [
-      "/resort_media/helipad/kedatangan_pju_gate.jpg"
+      "/resort_media/helipad/kedatangan_pju_gate.jpg",
+      "/legend/01_Welcome_Gate.png"
     ],
-    coords: { x: 82.0, y: 16.9 },
+    coords: { x: 77.0, y: 32.0 },
     description: "Selamat Datang di Family Gathering Pusziad 2026: Mayjen TNI Budi Hariswanto & Rombongan PJU di The Highland Park Resort Bogor.",
-    badge: "Kedatangan PJU",
-    color: "#eab308",
+    badge: "Gate Utama",
+    color: "#ef4444",
   },
   {
     id: "pin-alpine",
@@ -454,8 +430,8 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/alpine/alpine_6.png"
     ],
     coords: { x: 58.5, y: 22.5 },
-    description: "Kamar Utama PJU bergaya Alpine Eropa berpanorama Gunung Salak (Total 6 buah).",
-    badge: "Kamar PJU",
+    description: "Bergaya Alpin Eropa berpanorama Gunung Salak (Total 6 buah).",
+    badge: "Bergaya Alpin",
     color: "#eab308",
     facilities: [
       "King Size Bed Luxury",
@@ -535,10 +511,10 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     coords: { x: 60.8, y: 50.0 },
-    description: "Area Resto Lantai 2 untuk santap makan malam, sesi Games santai PJU & Ibu-Ibu (CB 3), serta sarapan pagi bersama.",
+    description: "Area Resto Lantai 2 untuk santap makan malam serta sesi Games santai PJU & Ibu-Ibu.",
     badge: "Resto Anthurium Lt. 2",
     color: "#10b981",
-    menuCategories: [...DAY1_DINNER_MENU, ...DAY1_CB3_EVENING_MENU],
+    menuCategories: [...DAY1_DINNER_MENU, ...DAY1_CB_EVENING_MENU],
   },
   {
     id: "pin-ballroom",
@@ -584,8 +560,8 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
       "/resort_media/kopi_hip/Foto/DSCF0432.jpg"
     ],
     coords: { x: 75.5, y: 29.5 },
-    description: "Setelah sampai di finish line, PJU dan rombongan menuju Kopi Hip untuk menikmati Coffee Break 1 (Chicken Nugget, Panettone, Velvet Roll, Chips, Kopi/Teh) dan kelapa muda segar.",
-    badge: "Coffee Break PJU",
+    description: "Setelah sampai di finish line jalan santai, rombongan menikmati sajian Coffee Heat (Coffee Break) di Kopi Hip.",
+    badge: "Coffee Heat",
     color: "#ca8a04",
     menuCategories: DAY2_AFTER_WALK_MENU,
   },
@@ -603,19 +579,24 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "17.00",
     startMinutes: 960,  // 16:00
     endMinutes: 1020,  // 17:00
-    title: "Kedatangan PJU",
-    locationName: "Area Helipad (Tampilkan 5 PJU)",
-    badge: "Kedatangan PJU",
-    color: "#eab308",
-    destImage: "/resort_media/helipad/kedatangan_pju_gate.jpg",
-    destCoordinates: { x: 82.0, y: 16.9 },
+    title: "Kedatangan di Gate Utama",
+    locationName: "Gate Utama (Gerbang Masuk Resort)",
+    badge: "Gate Utama",
+    color: "#ef4444",
+    destImage: "/legend/01_Welcome_Gate.png",
+    destCoordinates: { x: 77.0, y: 32.0 },
     galleryImages: [
-      "/resort_media/helipad/kedatangan_pju_gate.jpg"
+      "/resort_media/helipad/kedatangan_pju_gate.jpg",
+      "/legend/01_Welcome_Gate.png"
     ],
     defaultWaypoints: [
-      { x: 84.6, y: 15.9 },
-      { x: 86.4, y: 19.9 },
-      { x: 68.6, y: 34.9 },
+      { x: 77.0, y: 32.0 },
+      { x: 73.0, y: 32.0 },
+      { x: 70.8, y: 29.0 },
+      { x: 71.8, y: 25.0 },
+      { x: 67.0, y: 24.5 },
+      { x: 62.0, y: 23.0 },
+      { x: 58.5, y: 22.5 },
     ],
   },
   {
@@ -625,9 +606,9 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "18.00",
     startMinutes: 1020, // 17:00
     endMinutes: 1080, // 18:00
-    title: "Menempati Kamar PJU - Alpine House (6 buah)",
+    title: "Bergaya Alpin - Alpine House (6 buah)",
     locationName: "Alpine House",
-    badge: "Kamar PJU",
+    badge: "Bergaya Alpin",
     color: "#eab308",
     destImage: "/resort_media/alpine/alpine_1.png",
     destCoordinates: { x: 58.5, y: 22.5 },
@@ -640,9 +621,12 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
       "/resort_media/alpine/alpine_6.png"
     ],
     defaultWaypoints: [
-      { x: 68.6, y: 34.9 },
-      { x: 74.5, y: 21.0 },
-      { x: 67.0, y: 22.5 },
+      { x: 77.0, y: 32.0 },
+      { x: 73.0, y: 32.0 },
+      { x: 70.8, y: 29.0 },
+      { x: 71.8, y: 25.0 },
+      { x: 67.0, y: 24.5 },
+      { x: 62.0, y: 23.0 },
       { x: 58.5, y: 22.5 },
     ],
   },
@@ -703,7 +687,7 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     endTime: "19.30",
     startMinutes: 1080, // 18:00
     endMinutes: 1170, // 19:30
-    title: "Ibadah",
+    title: "Ibadah (ISOMA)",
     locationName: "Tempat Ibadah (Masjid Resort)",
     badge: "Ibadah",
     color: "#6366f1",
@@ -738,42 +722,62 @@ export const RUNDOWN_SCHEDULE_DAY_1: RundownItem[] = [
     destCoordinates: { x: 60.8, y: 50.0 },
     menuCategories: DAY1_DINNER_MENU,
     galleryImages: [
+      "/resort_media/pju_menuju_dinner.jpg",
       "/resort_media/anthurium/DSCF3443.jpg",
       "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
     ],
     defaultWaypoints: [
-      { x: 57.5, y: 26.2 },
-      { x: 62.3, y: 21.4 },
-      { x: 68.3, y: 17.6 },
-      { x: 71.0, y: 20.3 },
-      { x: 71.9, y: 26.1 },
-      { x: 70.9, y: 29.0 },
-      { x: 71.4, y: 32.4 },
-      { x: 65.7, y: 37.0 },
-      { x: 66.9, y: 39.7 },
-      { x: 63.0, y: 42.7 },
+      { x: 58.5, y: 22.5 },
+      { x: 67.0, y: 24.5 },
+      { x: 71.8, y: 25.0 },
+      { x: 70.8, y: 29.0 },
+      { x: 70.0, y: 36.0 },
+      { x: 65.5, y: 41.5 },
+      { x: 60.8, y: 50.0 },
     ],
   },
   {
     id: "d1-games",
     day: 1,
     startTime: "20.00",
-    endTime: "22.30",
+    endTime: "21.00",
     startMinutes: 1200, // 20:00
-    endMinutes: 1350, // 22:30
-    title: "Games (PJU & Ibu-Ibu PJU) & Coffee Break 3",
+    endMinutes: 1260, // 21:00
+    title: "Games (PJU & Ibu-Ibu PJU)",
     locationName: "Resto Anthurium Lt. 2",
-    description: "Turnamen keakraban Games PJU (Outdoor Resto) & Ibu-Ibu (Indoor Resto) setelah makan malam, berbarengan dengan sajian Coffee Break 3 (rebusan tradisional & minuman hangat).",
-    badge: "Games & CB 3",
+    description: "Turnamen keakraban Games PJU (berlokasi di outdoor area resto) & Games Ibu-Ibu (berlokasi di indoor area resto).",
+    badge: "Games PJU & Ibu",
     color: "#a855f7",
-    destImage: "/resort_media/anthurium/DSCF3443.jpg",
+    destImage: "/games/pju_games.jpg",
     destCoordinates: { x: 60.8, y: 50.0 },
-    menuCategories: DAY1_CB3_EVENING_MENU,
     pjuGames: DAY1_GAMES_PJU,
     ibuGames: DAY1_GAMES_IBU_PJU,
     galleryImages: [
-      "/resort_media/anthurium/DSCF3443.jpg",
-      "/resort_media/mountain_lounge/Foto/SKY LOUNGE RESTAURANT.jpg"
+      "/games/pju_games.jpg",
+      "/games/ibu_pju_games.jpg"
+    ],
+    defaultWaypoints: [
+      { x: 60.8, y: 50.0 },
+    ],
+  },
+  {
+    id: "d1-coffee-break",
+    day: 1,
+    startTime: "21.00",
+    endTime: "22.30",
+    startMinutes: 1260, // 21:00
+    endMinutes: 1350, // 22:30
+    title: "Coffee Break Malam",
+    locationName: "Resto Anthurium Lt. 2",
+    description: "Disajikan bersamaan dengan games PJU dan Ibu-Ibu PJU.",
+    badge: "Coffee Break",
+    color: "#ca8a04",
+    destImage: "/games/pisang_rebus.jpg",
+    destCoordinates: { x: 60.8, y: 50.0 },
+    menuCategories: DAY1_CB_EVENING_MENU,
+    galleryImages: [
+      "/games/pisang_rebus.jpg",
+      "/resort_media/anthurium/DSCF3443.jpg"
     ],
     defaultWaypoints: [
       { x: 60.8, y: 50.0 },
@@ -821,10 +825,10 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "07.45",
     startMinutes: 420, // 07:00
     endMinutes: 465, // 07:45
-    title: "Titik Start & Finish Jalan Santai",
-    locationName: "Area Helipad (Titik Awal)",
-    description: "Keterangan Jalan Santai: Jarak +- 2.5 KM dengan estimasi durasi 45 menit - 1 jam.",
-    badge: "Persiapan",
+    title: "Titik Awal & Titik Akhir Jalan Santai",
+    locationName: "Area Helipad (Start & Finish)",
+    description: "Titik awal dan titik akhir / finish jalan santai. Jarak ± 2.5 KM dengan estimasi durasi 45 menit - 1 jam.",
+    badge: "Start & Finish",
     color: "#eab308",
     destImage: "/resort_media/helipad/helipad_1.jpg",
     destCoordinates: { x: 80.5, y: 35.5 },
@@ -860,30 +864,23 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
       "/legend/51_Mini_Zoo.png"
     ],
     defaultWaypoints: [
-      { x: 83.8, y: 16.2 },
-      { x: 86.6, y: 19.7 },
+      { x: 80.5, y: 35.5 },
       { x: 74.7, y: 29.6 },
       { x: 65.9, y: 37.0 },
-      { x: 68.0, y: 38.8 },
-      { x: 66.7, y: 43.1 },
       { x: 61.0, y: 48.0 },
       { x: 53.4, y: 54.3 },
       { x: 45.7, y: 60.1 },
       { x: 43.4, y: 62.6 },
-      { x: 30.2, y: 75.5 },
-      { x: 28.2, y: 72.6 },
       { x: 40.5, y: 60.9 },
-      { x: 42.8, y: 59.7 },
       { x: 48.7, y: 55.0 },
-      { x: 50.1, y: 50.5 },
-      { x: 51.4, y: 47.0 },
       { x: 54.6, y: 43.8 },
-      { x: 59.8, y: 40.7 },
-      { x: 70.9, y: 30.1 },
-      { x: 72.3, y: 26.6 },
-      { x: 70.5, y: 22.4 },
-      { x: 80.4, y: 12.6 },
-      { x: 82.6, y: 15.2 },
+      { x: 65.7, y: 37.0 },
+      { x: 70.8, y: 29.0 },
+      { x: 71.8, y: 25.0 },
+      { x: 67.0, y: 24.5 },
+      { x: 62.0, y: 23.0 },
+      { x: 58.5, y: 22.5 },
+      { x: 54.1, y: 43.5 },
     ],
   },
   {
@@ -893,10 +890,10 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "09.00",
     startMinutes: 525, // 08:45
     endMinutes: 540, // 09:00
-    title: "Kopi Hip (Coffee Break 1 & Kelapa Muda)",
+    title: "Coffee Heat (Coffee Break)",
     locationName: "Kopi Hip",
-    description: "Setelah sampai di finish line jalan santai, rombongan menuju Kopi Hip untuk menikmati sajian Coffee Break 1 (Chicken Nugget, Panettone, Velvet Roll, Chips, Kopi/Teh) dan kesegaran kelapa muda segar.",
-    badge: "CB 1 & Kelapa Muda",
+    description: "Setelah sampai di finish line jalan santai, rombongan menikmati sajian Coffee Heat (Coffee Break) di Kopi Hip.",
+    badge: "Coffee Heat",
     color: "#ca8a04",
     destImage: "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
     destCoordinates: { x: 75.5, y: 29.5 },
@@ -919,13 +916,14 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "12.00",
     startMinutes: 540, // 09:00
     endMinutes: 720, // 12:00
-    title: "Acara di Ball Room (Sambutan & Grand Prize)",
+    title: "Acara di Ball Room & Makan Siang",
     locationName: "Area Ball Room",
-    description: "Puncak kemeriahan acara dengan sambutan pimpinan, hiburan musik, dan pengundian Grand Prize di Area Grand Ballroom.",
+    description: "Puncak kemeriahan acara dengan sambutan pimpinan, hiburan musik, pengundian Grand Prize, serta santap Makan Siang bersama di Area Grand Ballroom.",
     badge: "Acara Ball Room",
     color: "#a855f7",
     destImage: "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
     destCoordinates: { x: 87.7, y: 29.5 },
+    menuCategories: DAY2_LUNCH_MENU,
     galleryImages: [
       "/resort_media/grand_ballroom/ballroom_3d_3.jpg",
       "/resort_media/grand_ballroom/ballroom_3d_4.jpg",
@@ -946,7 +944,7 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     endTime: "13.00",
     startMinutes: 720, // 12:00
     endMinutes: 780, // 13:00
-    title: "Makan Siang (Lunch Buffet)",
+    title: "Makan Siang (Buffet)",
     locationName: "Area Ball Room",
     description: "Sajian santap makan siang buffet bersama di Area Grand Ballroom.",
     badge: "Makan Siang",
@@ -1028,7 +1026,7 @@ export interface VIPArrival {
   pathWaypoints: Waypoint[];
 }
 
-export const WELCOME_GATE_COORDS: Waypoint = HELIPAD_COORDS;
+export const WELCOME_GATE_COORDS: Waypoint = { x: 77.0, y: 32.0 };
 export const TIMELINE_START_MINUTES = 960;
 export const TIMELINE_END_MINUTES = 1080;
 
@@ -1054,10 +1052,10 @@ export const VIP_ARRIVALS: VIPArrival[] = [
     roomArrivalMinutes: 1055,
     roomArrivalTimeStr: "17:35",
     pathWaypoints: [
-      SPAWN_BEHIND_HELIPAD,
-      HELIPAD_COORDS,
-      { x: 74.5, y: 31.0 },
-      { x: 71.5, y: 27.5 },
+      { x: 77.0, y: 32.0 },
+      { x: 73.0, y: 32.0 },
+      { x: 70.8, y: 29.0 },
+      { x: 71.8, y: 25.0 },
       { x: 67.0, y: 24.5 },
       { x: 62.0, y: 23.0 },
       { x: 58.5, y: 22.5 },

@@ -41,11 +41,13 @@ import {
   Tent,
   Landmark,
   PartyPopper,
+  DoorOpen,
 } from "lucide-react";
 
 // Distinct icon per map pin, instead of the same generic building icon
 // for every single stop — matched by KeyEventPinpoint.id.
 const PIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "pin-gate": DoorOpen,
   "pin-helipad": Plane,
   "pin-alpine": BedDouble,
   "pin-cave": Mountain,
@@ -206,6 +208,9 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
   const hasWalkingRoutes = agendaItem?.id === "d2-jalan-santai" || agendaItem?.id === "d2-jalan-sehat" || !!agendaItem?.walkingRoutes;
   const facilitiesList = activeRoom?.facilities || keyPinpoint?.facilities || [];
   const hasFacilities = facilitiesList.length > 0;
+  // Flag: this is the Welcome Gate popup — shows special Selamat Datang section with PJU photos
+  const isGateWelcome = keyPinpoint?.id === "pin-gate" || agendaItem?.id === "d1-arrival";
+
   const hasTabs = Boolean(hasMenu || isGames || hasWalkingRoutes || hasFacilities);
   // These agenda items reuse a map pin (for waypoint routing only) whose own description
   // doesn't belong on the agenda card: "d2-prep-jalan-santai"/"d2-freetime" were inheriting
@@ -534,6 +539,47 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                     {descriptionText}
                   </p>
                 )}
+
+                {/* Gate Special: Selamat Datang Family Gathering + Foto 5 PJU */}
+                {isGateWelcome && (
+                  <div className="mt-3 space-y-3">
+                    <div className="text-center py-2 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-400/50">
+                      <p className="text-base sm:text-lg font-black text-amber-300 tracking-wide uppercase">
+                        🎉 Selamat Datang
+                      </p>
+                      <p className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+                        Family Gathering Pusziad 2026
+                      </p>
+                      <p className="text-xs text-lime-300/90 font-bold mt-1">
+                        The Highland Park Resort, Bogor — 9-10 Oktober 2026
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[
+                        { src: "/avatars/budi_hariswanto.png", name: "Mayjen TNI Budi Hariswanto" },
+                        { src: "/avatars/nurdihin.png", name: "Brigjen TNI Nurdihin" },
+                        { src: "/avatars/faried_dh.png", name: "Brigjen TNI Faried DH" },
+                        { src: "/avatars/sujadi.png", name: "Brigjen TNI Sujadi" },
+                        { src: "/avatars/faizal.png", name: "Brigjen TNI Faizal" },
+                      ].map((pju, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-1">
+                          <div className="relative w-full aspect-square rounded-xl overflow-hidden border-2 border-amber-400/70 shadow-lg ring-2 ring-amber-400/30">
+                            <Image
+                              src={pju.src}
+                              alt={pju.name}
+                              fill
+                              unoptimized
+                              className="object-cover object-top"
+                            />
+                          </div>
+                          <p className="text-[9px] text-amber-200/80 font-semibold text-center leading-tight px-0.5 line-clamp-2">
+                            {pju.name.split(" ").slice(-1)[0]}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           ) : (
@@ -661,19 +707,21 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                         {agendaItem?.id === "d1-dinner"
                           ? "Menu Makan Malam"
                           : agendaItem?.id === "d1-games"
-                          ? "Snack Malam (CB 3)"
+                          ? "Coffee Break Malam"
+                          : agendaItem?.id === "d1-coffee-break"
+                          ? "Coffee Break Malam"
                           : agendaItem?.id === "d2-breakfast"
                           ? "Menu Sarapan Pagi"
                           : agendaItem?.id === "d2-lunch"
                           ? "Menu Makan Siang"
                           : agendaItem?.id === "d2-kopi-hip"
-                          ? "Menu Kelapa Muda & CB 1"
+                          ? "Menu Coffee Heat"
                           : agendaItem?.id === "d2-ballroom-grandprize"
-                          ? "Menu Coffee Break"
+                          ? "Menu Sajian Ballroom"
                           : keyPinpoint?.id === "pin-resto"
-                          ? "Menu Resto & CB 3"
+                          ? "Menu Resto & CB Malam"
                           : keyPinpoint?.id === "pin-kopihip"
-                          ? "Menu Kelapa Muda & CB 1"
+                          ? "Menu Coffee Heat"
                           : keyPinpoint?.id === "pin-ballroom"
                           ? "Menu Makan Siang Ballroom"
                           : "Menu Sajian"}
@@ -717,14 +765,14 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* Fasilitas */}
                   {activeTab === "fasilitas" && hasFacilities && (
                     <div className="space-y-2">
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {facilitiesList.map((fac, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start gap-2.5 p-2.5 rounded-xl bg-black/40 border border-lime-500/20 text-xs text-lime-100"
+                            className="flex items-center gap-2 p-2.5 rounded-xl bg-black/50 border border-lime-500/30 text-xs text-lime-100 hover:border-lime-400/60 transition-colors"
                           >
-                            <CheckCircle2 className="w-4 h-4 text-lime-400 shrink-0 mt-0.5" />
-                            <span className="leading-snug">{fac}</span>
+                            <CheckCircle2 className="w-4 h-4 text-lime-400 shrink-0" />
+                            <span className="leading-snug font-medium">{fac}</span>
                           </div>
                         ))}
                       </div>
@@ -737,11 +785,12 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                       {effectiveMenuCategories.map((cat, idx) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2"
+                          className="p-3.5 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2.5"
                         >
                           <div className="flex items-center justify-between flex-wrap gap-1">
-                            <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                              {cat.category}
+                            <span className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                              <span>🍽️</span>
+                              <span>{cat.category}</span>
                             </span>
                             {cat.note && (
                               <span className="text-[10px] text-lime-300/90 font-medium italic">
@@ -753,7 +802,7 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                             {cat.items.map((item, itemIdx) => (
                               <div
                                 key={itemIdx}
-                                className="text-xs text-slate-200 flex items-center gap-2"
+                                className="text-xs text-slate-200 flex items-center gap-2 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5"
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
                                 <span>{item}</span>
@@ -768,28 +817,46 @@ export const ArrivalPopupCard: React.FC<ArrivalPopupCardProps> = ({
                   {/* Games */}
                   {activeTab === "games" && isGames && (
                     <div className="space-y-3">
-                      <div className="p-3 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2">
-                        <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                          Games PJU
-                        </span>
-                        <div className="grid grid-cols-1 gap-1.5">
+                      <div className="p-3.5 rounded-2xl bg-black/50 border border-amber-500/40 space-y-2.5 shadow-lg">
+                        <div className="flex items-center justify-between flex-wrap gap-1">
+                          <span className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                            <span>♟️</span>
+                            <span>Games PJU</span>
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 border border-amber-400/50 text-amber-200">
+                            berlokasi di outdoor area resto
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           {DAY1_GAMES_PJU.items.map((g, idx) => (
-                            <div key={idx} className="text-xs text-slate-200 flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                            <div
+                              key={idx}
+                              className="text-xs text-slate-100 flex items-center gap-2 p-2 rounded-xl bg-[#14260a] border border-amber-400/30 font-semibold"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
                               <span>{g}</span>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-2xl bg-black/40 border border-lime-500/25 space-y-2">
-                        <span className="text-xs font-black uppercase tracking-wider text-pink-300">
-                          Games Ibu-Ibu PJU
-                        </span>
-                        <div className="grid grid-cols-1 gap-1.5">
+                      <div className="p-3.5 rounded-2xl bg-black/50 border border-pink-500/40 space-y-2.5 shadow-lg">
+                        <div className="flex items-center justify-between flex-wrap gap-1">
+                          <span className="text-xs font-black uppercase tracking-wider text-pink-300 flex items-center gap-1.5">
+                            <span>🎁</span>
+                            <span>Games Ibu-Ibu</span>
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-400/20 border border-pink-400/50 text-pink-200">
+                            berlokasi di indoor area resto
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {DAY1_GAMES_IBU_PJU.items.map((g, idx) => (
-                            <div key={idx} className="text-xs text-slate-200 flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-pink-400 shrink-0" />
+                            <div
+                              key={idx}
+                              className="text-xs text-slate-100 flex items-center gap-2 p-2 rounded-xl bg-[#260e1d] border border-pink-400/30 font-semibold"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-pink-400 shrink-0" />
                               <span>{g}</span>
                             </div>
                           ))}

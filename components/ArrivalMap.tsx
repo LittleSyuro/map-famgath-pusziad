@@ -277,7 +277,7 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
   const getPinIdForAgenda = useCallback((agendaId: string): string => {
     switch (agendaId) {
       case "d1-arrival":
-        return "pin-helipad";
+        return "pin-gate";
       case "d1-checkin-pju":
         return "pin-alpine";
       case "d1-checkin-the-cave":
@@ -528,8 +528,28 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
     }
 
     // 3. Popup is Open (Alpine House, Legend, or Pinpoint Detail Card)
-    // ➔ Close popup, return smoothly to Overview Map, and advance to next agenda
+    // ➔ For room slides (Alpin→Cave→Mongolian), advance DIRECTLY to next room
+    //    without returning to overview — rooms are shown "nempel" one after another.
+    //    For all other slides, close popup and return to overview as normal.
     if (Boolean(activeOpenPinId) || Boolean(selectedLegendLocation) || presentationPhase === "popup_open") {
+      const DIRECT_ROOM_SEQUENCE: Record<string, string> = {
+        "d1-checkin-pju": "d1-checkin-the-cave",
+        "d1-checkin-the-cave": "d1-checkin-mongolian",
+      };
+
+      if (activeActivityId in DIRECT_ROOM_SEQUENCE && !selectedLegendLocation) {
+        // Jump directly to the next room popup without going back to the map
+        const nextRoomId = DIRECT_ROOM_SEQUENCE[activeActivityId];
+        setActiveActivityId(nextRoomId);
+        setAnimProgress(0);
+        const nextPinId = getPinIdForAgenda(nextRoomId);
+        setOpenKeyPinpointIds({ [nextPinId]: true });
+        setPresentationPhase("popup_open");
+        const nextPin = KEY_EVENT_PINPOINTS.find((p) => p.id === nextPinId);
+        if (nextPin) focusOnCoordinate(nextPin.coords, 2.1);
+        return;
+      }
+
       returnToOverviewMap();
       // activeVIPs recomputes its pathWaypoints the instant activeActivityId
       // changes below, but animProgress (still 1 from the step we're leaving)
@@ -1486,6 +1506,126 @@ export const ArrivalMap: React.FC<ArrivalMapProps> = ({ onOpenRundownModal }) =>
                         />
                       );
                     })}
+
+                  {/* Animated Red Tracking Line (TRK) — draws the route trail behind the pawn
+                      during d1-arrival and d1-checkin-pju. Rendered as a progressive SVG reveal
+                      so only the portion already travelled is visible. */}
+                  {!isEditorOpen &&
+                    (activeActivityId === "d1-arrival" || activeActivityId === "d1-checkin-pju") &&
+                    (() => {
+                      const trkVip = activeVIPs[0];
+                      if (!trkVip || trkVip.pathWaypoints.length < 2) return null;
+                      const waypoints = trkVip.pathWaypoints;
+                      const numSegments = waypoints.length - 1;
+                      const progressSegIdx = Math.min(numSegments - 0.0001, animProgress * numSegments);
+                      const visibleSegIdx = Math.floor(progressSegIdx);
+                      const segProg = progressSegIdx - visibleSegIdx;
+
+                      // Build the "revealed so far" portion of the polyline
+                      const revealedPoints: typeof waypoints = [];
+                      for (let i = 0; i <= visibleSegIdx && i < waypoints.length; i++) {
+                        revealedPoints.push(waypoints[i]);
+                      }
+                      if (visibleSegIdx < numSegments && animProgress > 0) {
+                        const p0 = waypoints[visibleSegIdx];
+                        const p1 = waypoints[visibleSegIdx + 1];
+                        revealedPoints.push({
+                          x: p0.x + (p1.x - p0.x) * segProg,
+                          y: p0.y + (p1.y - p0.y) * segProg,
+                        });
+                      }
+
+                      if (revealedPoints.length < 2) return null;
+                      const points = revealedPoints.map((p) => `${p.x},${p.y}`).join(" ");
+                      const fullPoints = waypoints.map((p) => `${p.x},${p.y}`).join(" ");
+
+                      return (
+                        <svg
+                          key="trk-line"
+                          className="absolute inset-0 w-full h-full pointer-events-none z-15"
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                        >
+                          <defs>
+                            <filter id="trk-glow">
+                              <feGaussianBlur stdDeviation="0.6" result="blur" />
+                              <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                              </feMerge>
+                            </filter>
+                          </defs>
+                          {/* Faint ghost of the full route */}
+                          <polyline
+                            points={fullPoints}
+                            fill="none"
+                            stroke="#ff2222"
+                            strokeWidth="0.55"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.18"
+                          />
+                          {/* Thick glowing red outer glow */}
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke="#ff2222"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.35"
+                            filter="url(#trk-glow)"
+                          />
+                          {/* Solid bright red core line */}
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke="#ff2222"
+                            strokeWidth="1.0"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.95"
+                            filter="url(#trk-glow)"
+                          />
+                          {/* Animated marching ants overlay for extra motion */}
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke="#ffffff"
+                            strokeWidth="0.5"
+                            strokeDasharray="1.0 1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.55"
+                          >
+                            <animate
+                              attributeName="stroke-dashoffset"
+                              from="0"
+                              to="-2.5"
+                              dur="0.6s"
+                              repeatCount="indefinite"
+                            />
+                          </polyline>
+                          {/* TRK label at the head of the trail */}
+                          {revealedPoints.length >= 1 && (() => {
+                            const head = revealedPoints[revealedPoints.length - 1];
+                            return (
+                              <g>
+                                <circle
+                                  cx={head.x}
+                                  cy={head.y}
+                                  r="0.8"
+                                  fill="#ff2222"
+                                  stroke="#ffffff"
+                                  strokeWidth="0.25"
+                                  opacity={animProgress > 0 ? 1 : 0}
+                                />
+                              </g>
+                            );
+                          })()}
+                        </svg>
+                      );
+                    })()}
 
                   {/* Animated Pawns: Hanya tampil saat Kedatangan di Helipad dan Berjalan ke Villa Alpine House */}
                   {!isEditorOpen &&
