@@ -222,15 +222,16 @@ export const DAY2_BREAKFAST_MENU: MenuItem[] = [
 // Hari Ke-2: Menu Setelah Jalan Pagi di Kopi Hip (Coffee Heat)
 export const DAY2_AFTER_WALK_MENU: MenuItem[] = [
   {
-    category: "COFFEE HEAT (COFFEE BREAK)",
+    category: "MENU COFFEE HEAT (KOPI HIP)",
     items: [
-      "Chicken Nugget",
-      "Panettone",
-      "Velvet Roll",
+      "Pisang Rebus",
+      "Jagung Rebus",
+      "Kacang Rebus",
       "Assorted Chips",
-      "Coffee & Tea"
+      "Kelapa Muda Segar",
+      "Kopi Hitam & Teh Hangat"
     ],
-    note: "Sajian Coffee Heat (Coffee Break) di Kopi Hip"
+    note: "Sajian rebusan tradisional, chips, kopi/teh & kelapa muda segar di Kopi Hip"
   }
 ];
 
@@ -567,8 +568,9 @@ export const KEY_EVENT_PINPOINTS: KeyEventPinpoint[] = [
     name: "Kopi Hip",
     category: "Coffee Break PJU",
     isPJU: true,
-    image: "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
+    image: "/resort_media/kopi_hip/menu_kopi_hip.jpg",
     galleryImages: [
+      "/resort_media/kopi_hip/menu_kopi_hip.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0426.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0432.jpg"
@@ -909,10 +911,11 @@ export const RUNDOWN_SCHEDULE_DAY_2: RundownItem[] = [
     description: "Setelah sampai di finish line jalan santai, rombongan menikmati sajian Coffee Heat (Coffee Break) di Kopi Hip.",
     badge: "Coffee Heat",
     color: "#ca8a04",
-    destImage: "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
+    destImage: "/resort_media/kopi_hip/menu_kopi_hip.jpg",
     destCoordinates: { x: 75.5, y: 29.5 },
     menuCategories: DAY2_AFTER_WALK_MENU,
     galleryImages: [
+      "/resort_media/kopi_hip/menu_kopi_hip.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0423.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0426.jpg",
       "/resort_media/kopi_hip/Foto/DSCF0432.jpg"
