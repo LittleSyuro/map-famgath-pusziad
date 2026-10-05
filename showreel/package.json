@@ -1,0 +1,13 @@
+{
+  "name": "syuro-showreel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "audio": "node src/audio.js",
+    "render": "node src/render.js",
+    "build": "node src/audio.js && node src/render.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80"
+  }
+}
